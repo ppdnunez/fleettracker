@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -49,11 +49,13 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice 
                 zoom={13}
                 style={{ width: '100%', height: '100%' }}
                 scrollWheelZoom
+                zoomControl={false}
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                <ZoomControl position="topright" />
 
                 <FlyToSelected device={selectedDevice} />
 

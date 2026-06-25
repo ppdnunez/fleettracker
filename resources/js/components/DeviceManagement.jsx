@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import EditDeviceModal   from './EditDeviceModal.jsx';
-import ImportDeviceModal from './ImportDeviceModal.jsx';
+import EditDeviceModal    from './EditDeviceModal.jsx';
+import ImportDeviceModal  from './ImportDeviceModal.jsx';
+import ConnectionsModal   from './ConnectionsModal.jsx';
 
 const ImportSVG = () => (
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 5 }}>
@@ -14,12 +15,6 @@ const EditSVG = () => (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M2 12 L4 12 L11.5 4.5 L9.5 2.5 Z"/>
         <line x1="9.5" y1="2.5" x2="11.5" y2="4.5"/>
-    </svg>
-);
-const UserSVG = () => (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <circle cx="7.5" cy="5" r="3"/>
-        <path d="M1 14 Q1.5 9.5 7.5 9.5 Q13.5 9.5 14 14"/>
     </svg>
 );
 const PinSVG = () => (
@@ -38,12 +33,13 @@ const ListSVG = () => (
         <circle cx="2.2" cy="12" r="1" fill="currentColor" stroke="none"/>
     </svg>
 );
-const ChevronSVG = () => (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <polyline points="2,3 5,7 8,3"/>
+const LinkSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M6.2 8.8 L8.8 6.2"/>
+        <path d="M5.3 9.7 L4 11 a2.1 2.1 0 0 1-3-3 l1.3-1.3"/>
+        <path d="M9.7 5.3 L11 4 a2.1 2.1 0 0 1 3 3 l-1.3 1.3"/>
     </svg>
 );
-
 /* ── tiny components ───────────────────────────────────────── */
 const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: 5, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
 
@@ -54,17 +50,6 @@ function Btn({ children, primary, onClick }) {
         </button>
     );
 }
-function DropBtn({ children }) {
-    return (
-        <button style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', color: '#374151', fontSize: 12.5, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
-            {children}<ChevronSVG />
-        </button>
-    );
-}
-function Sep() {
-    return <div style={{ width: 1, height: 24, background: '#e5e7eb', flexShrink: 0 }} />;
-}
-
 /* ── table styles ──────────────────────────────────────────── */
 const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#374151', borderBottom: '2px solid #e5e7eb', whiteSpace: 'nowrap', background: '#f9fafb' };
 const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, borderBottom: '1px solid #f1f5f9' };
@@ -73,6 +58,7 @@ const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, border
 export default function DeviceManagement({ devices, loading, onRefresh }) {
     const [filter,      setFilter]      = useState({ imei: '', name: '', model: '' });
     const [editDevice,  setEditDevice]  = useState(null);
+    const [connDevice,  setConnDevice]  = useState(null);
     const [showImport,  setShowImport]  = useState(false);
     const [selected,    setSelected]    = useState(new Set());
 
@@ -108,14 +94,8 @@ export default function DeviceManagement({ devices, loading, onRefresh }) {
                     <option value="">All model</option>
                     {models.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: '#374151', whiteSpace: 'nowrap' }}>
-                    <input type="checkbox" /> Sub-account devices
-                </label>
                 <button onClick={() => {}} style={{ padding: '7px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
                 <button onClick={() => setFilter({ imei: '', name: '', model: '' })} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
-                <button style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    Advanced Search <ChevronSVG />
-                </button>
             </div>
 
             {/* Action buttons row 1 */}
@@ -123,23 +103,8 @@ export default function DeviceManagement({ devices, loading, onRefresh }) {
                 <button onClick={() => setShowImport(true)} style={{ padding: '6px 13px', borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
                     <ImportSVG />Import device
                 </button>
-                <Btn>Renew</Btn>
-                <Btn>Sell/move</Btn>
-                <Btn>Update user expiration</Btn>
-                <Sep />
-                <DropBtn>Send Command</DropBtn>
-                <DropBtn>Batch settings</DropBtn>
-                <Btn>Bind device</Btn>
-                <Sep />
-                <Btn>Disable</Btn>
-                <Btn>Enable</Btn>
-                <DropBtn>Batch operations</DropBtn>
-                <Sep />
-                <Btn>Set group</Btn>
-                <Btn>Allow activation</Btn>
                 <div style={{ flex: 1 }} />
                 <Btn>Export</Btn>
-                <Btn>Export all</Btn>
             </div>
 
             {/* Table */}
@@ -153,17 +118,15 @@ export default function DeviceManagement({ devices, loading, onRefresh }) {
                             <th style={TH}>Device name</th>
                             <th style={TH}>IMEI</th>
                             <th style={TH}>Device Model</th>
-                            <th style={TH}>Activated time</th>
-                            <th style={TH}>Subscription Expiration</th>
-                            <th style={TH}>Expiration Date(U)</th>
+                            <th style={TH}>Expiration</th>
                             <th style={{ ...TH, textAlign: 'center' }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={10} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={10} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data found</td></tr>
+                            <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data found</td></tr>
                         ) : filtered.map((d, i) => (
                             <tr key={d.id} style={{ background: selected.has(d.id) ? '#eff6ff' : '#fff' }}>
                                 <td style={TD}><input type="checkbox" checked={selected.has(d.id)} onChange={() => toggleOne(d.id)} /></td>
@@ -172,12 +135,10 @@ export default function DeviceManagement({ devices, loading, onRefresh }) {
                                 <td style={{ ...TD, fontWeight: 500 }}>{d.name}</td>
                                 <td style={{ ...TD, color: '#3b82f6', textAlign: 'center' }}>{d.imei ?? d.id}</td>
                                 <td style={{ ...TD, textAlign: 'center' }}>{d.tracker || '—'}</td>
-                                <td style={{ ...TD, textAlign: 'center', color: '#94a3b8' }}>—</td>
-                                <td style={{ ...TD, textAlign: 'center' }}>12Month</td>
-                                <td style={{ ...TD, textAlign: 'center', color: '#94a3b8' }}>—</td>
+                                <td style={{ ...TD, textAlign: 'center', color: d.expirationTime ? '#374151' : '#94a3b8' }}>{d.expirationTime ? new Date(d.expirationTime).toLocaleDateString() : '—'}</td>
                                 <td style={{ ...TD, textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                    <button style={iconBtn} title="Edit"    onClick={() => setEditDevice(d)}><EditSVG /></button>
-                                    <button style={iconBtn} title="Customer"><UserSVG /></button>
+                                    <button style={iconBtn} title="Edit"        onClick={() => setEditDevice(d)}><EditSVG /></button>
+                                    <button style={iconBtn} title="Connections" onClick={() => setConnDevice(d)}><LinkSVG /></button>
                                     <button style={iconBtn} title="Location"><PinSVG /></button>
                                     <button style={iconBtn} title="Detail">  <ListSVG /></button>
                                 </td>
@@ -194,7 +155,8 @@ export default function DeviceManagement({ devices, loading, onRefresh }) {
                     onSave={() => { setEditDevice(null); onRefresh(); }}
                 />
             )}
-            {showImport && <ImportDeviceModal onClose={() => setShowImport(false)} />}
+            {showImport && <ImportDeviceModal onClose={() => setShowImport(false)} onCreated={onRefresh} />}
+            {connDevice && <ConnectionsModal owner={connDevice} ownerType="device" onClose={() => setConnDevice(null)} />}
         </div>
     );
 }

@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../api.js';
 
 const TABS = ['Basic', 'Customer', 'Alerts', 'Sensors', 'Camera'];
+
+const CATEGORIES = [
+    'default', 'animal', 'bicycle', 'boat', 'bus', 'car', 'crane', 'helicopter', 'motorcycle',
+    'offroad', 'person', 'pickup', 'plane', 'ship', 'tractor', 'train', 'tram', 'trolleybus', 'van', 'scooter',
+];
 
 /* ── shared primitives ─────────────────────────────────────── */
 
@@ -54,36 +59,43 @@ function Toggle({ checked, onChange }) {
 const scrollArea = { overflowY: 'auto', flex: 1 };
 
 /* ── Basic tab ─────────────────────────────────────────────── */
-function BasicTab({ device, form, set }) {
+function BasicTab({ device, form, set, groups, calendars }) {
     const f = (k) => ({ value: form[k], onChange: e => set(p => ({ ...p, [k]: e.target.value })) });
     return (
         <div style={{ ...scrollArea, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 40px', padding: '24px 32px' }}>
-            <LF label="IMEI"><FInput value={device.imei ?? device.id} disabled /></LF>
-            <LF label="Device Model"><FInput value={device.tracker} disabled /></LF>
-
-            <LF label="ICCID"><FInput {...f('iccid')} /></LF>
-            <LF label="Import time"><FInput value={device.created_at ?? ''} disabled /></LF>
-
-            <LF label="IMSI"><FInput {...f('imsi')} /></LF>
-            <LF label="Activated time"><FInput {...f('activated_time')} /></LF>
-
-            <LF label="SIM"><FInput {...f('sim')} /></LF>
-            <LF label="Sales time"><FInput {...f('sales_time')} /></LF>
-
-            <LF label="Device name"><FInput {...f('name')} /></LF>
-            <LF label="Subscription Expiration"><FInput {...f('subscription_expiration')} /></LF>
+            <LF label="Identifier"><FInput value={device.imei ?? device.id} disabled /></LF>
+            <LF label="Name"><FInput {...f('name')} /></LF>
 
             <LF label="Group">
-                <FSelect value={form.group} onChange={e => set(p => ({ ...p, group: e.target.value }))}>
-                    <option value="default">Default Group</option>
+                <FSelect value={form.groupId} onChange={e => set(p => ({ ...p, groupId: e.target.value }))}>
+                    <option value="">None</option>
+                    {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </FSelect>
             </LF>
-            <LF label="Expiration Date(U)"><FInput {...f('expiration_date')} /></LF>
+            <LF label="Phone"><FInput {...f('phone')} /></LF>
 
-            <div />
-            <div style={{ textAlign: 'right' }}>
-                <a href="#" onClick={e => e.preventDefault()} style={{ color: '#3b82f6', fontSize: 13, textDecoration: 'none' }}>More sub-account &gt;&gt;</a>
-            </div>
+            <LF label="Model"><FInput {...f('model')} /></LF>
+            <LF label="Contact"><FInput {...f('contact')} /></LF>
+
+            <LF label="Category">
+                <FSelect value={form.category} onChange={e => set(p => ({ ...p, category: e.target.value }))}>
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c[0].toUpperCase() + c.slice(1)}</option>)}
+                </FSelect>
+            </LF>
+            <LF label="Calendar">
+                <FSelect value={form.calendarId} onChange={e => set(p => ({ ...p, calendarId: e.target.value }))}>
+                    <option value="">None</option>
+                    {calendars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </FSelect>
+            </LF>
+
+            <LF label="Expiration">
+                <input type="date" value={form.expirationTime} max="2038-01-19" onChange={e => set(p => ({ ...p, expirationTime: e.target.value }))}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none' }} />
+            </LF>
+            <LF label="Disabled">
+                <Toggle checked={form.disabled} onChange={() => set(p => ({ ...p, disabled: !p.disabled }))} />
+            </LF>
         </div>
     );
 }
@@ -255,12 +267,18 @@ function CameraTab({ form, set }) {
 export default function EditDeviceModal({ device, onClose, onSave }) {
     const [tab,    setTab]    = useState('Basic');
     const [saving, setSaving] = useState(false);
+    const [groups,    setGroups]    = useState([]);
+    const [calendars, setCalendars] = useState([]);
     const [form,   setForm]   = useState({
-        name: device.name ?? '',
-        iccid: '', imsi: '', sim: '',
-        activated_time: '', sales_time: '',
-        subscription_expiration: '', expiration_date: '',
-        group: 'default',
+        name:           device.name ?? '',
+        groupId:        device.groupId ? String(device.groupId) : '',
+        phone:          device.phone ?? '',
+        model:          device.model ?? '',
+        contact:        device.contact ?? '',
+        category:       device.category || 'default',
+        calendarId:     device.calendarId ? String(device.calendarId) : '',
+        expirationTime: device.expirationTime ? device.expirationTime.slice(0, 10) : '',
+        disabled:       device.disabled ?? false,
         temp_min: '', temp_max: '',
         speed_limit: '', speed_duration: '',
         mileage_enabled: false, current_mileage: '', trip_mileage: '', total_mileage: '',
@@ -268,10 +286,25 @@ export default function EditDeviceModal({ device, onClose, onSave }) {
         cameras: [{ id: 'CH1', name: 'CH1', enabled: true }],
     });
 
+    useEffect(() => {
+        api.getTraccarGroups().then(res => setGroups(res.data)).catch(() => {});
+        api.getTraccarCalendars().then(res => setCalendars(res.data)).catch(() => {});
+    }, []);
+
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.updateDevice(device.id, { name: form.name });
+            await api.updateTraccarDevice(device.id, {
+                name:           form.name,
+                groupId:        form.groupId ? Number(form.groupId) : 0,
+                phone:          form.phone || undefined,
+                model:          form.model || undefined,
+                contact:        form.contact || undefined,
+                category:       form.category || undefined,
+                calendarId:     form.calendarId ? Number(form.calendarId) : 0,
+                expirationTime: form.expirationTime ? new Date(form.expirationTime).toISOString() : undefined,
+                disabled:       form.disabled,
+            });
             onSave();
         } catch (e) {
             console.error('Save failed:', e);
@@ -304,7 +337,7 @@ export default function EditDeviceModal({ device, onClose, onSave }) {
 
                 {/* Content */}
                 <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    {tab === 'Basic'    && <BasicTab    device={device} form={form} set={setForm} />}
+                    {tab === 'Basic'    && <BasicTab    device={device} form={form} set={setForm} groups={groups} calendars={calendars} />}
                     {tab === 'Customer' && <CustomerTab />}
                     {tab === 'Alerts'   && <AlertsTab   form={form} set={setForm} />}
                     {tab === 'Sensors'  && <SensorsTab  form={form} set={setForm} />}

@@ -9,45 +9,169 @@ import LogoutModal      from '../components/LogoutModal.jsx';
 import DeviceManagement from '../components/DeviceManagement.jsx';
 import ReportPage       from '../components/ReportPage.jsx';
 import FleetPage        from '../components/FleetPage.jsx';
+import GeofencePage     from '../components/GeofencePage.jsx';
+import NotificationPage from '../components/NotificationPage.jsx';
+import CalendarPage     from '../components/CalendarPage.jsx';
+import ComputedAttributePage from '../components/ComputedAttributePage.jsx';
+import MaintenancePage  from '../components/MaintenancePage.jsx';
+import SavedCommandPage from '../components/SavedCommandPage.jsx';
+import GroupPage        from '../components/GroupPage.jsx';
+import DriverPage       from '../components/DriverPage.jsx';
+
+/* Traccar's device/position shape -> the shape DeviceList/MapCanvas/TopBar already expect,
+   plus the raw Traccar fields (groupId, phone, model, ...) EditDeviceModal needs to edit a device. */
+function normalizeLiveDevice(device, positionsByDeviceId) {
+    const pos = positionsByDeviceId[device.id];
+    return {
+        id:      device.id,
+        name:    device.name,
+        tracker: device.model || device.uniqueId,
+        imei:    device.uniqueId,
+        status:  device.status === 'online' ? 'ONLINE' : 'OFFLINE',
+        lat:     pos ? pos.latitude  : null,
+        lng:     pos ? pos.longitude : null,
+        signal:  pos?.attributes?.batteryLevel ?? pos?.attributes?.rssi ?? 0,
+        groupId:        device.groupId,
+        calendarId:     device.calendarId,
+        phone:          device.phone,
+        model:          device.model,
+        contact:        device.contact,
+        category:       device.category,
+        disabled:       device.disabled,
+        expirationTime: device.expirationTime,
+        attributes:     device.attributes,
+    };
+}
+
+// Merge a Traccar websocket {"positions": [...]} push into existing device list
+function applyLivePositions(devices, positions) {
+    const byDeviceId = {};
+    for (const p of positions) byDeviceId[p.deviceId] = p;
+    return devices.map(d => {
+        const p = byDeviceId[d.id];
+        if (!p) return d;
+        return {
+            ...d,
+            lat:    p.latitude,
+            lng:    p.longitude,
+            signal: p.attributes?.batteryLevel ?? p.attributes?.rssi ?? d.signal,
+        };
+    });
+}
+
+// Merge a Traccar websocket {"devices": [...]} push (device attribute changes) into existing device list
+function applyLiveDevices(devices, updates) {
+    const byId = {};
+    for (const u of updates) byId[u.id] = u;
+    return devices.map(d => {
+        const u = byId[d.id];
+        if (!u) return d;
+        return {
+            ...d,
+            name:    u.name,
+            tracker: u.model || u.uniqueId,
+            imei:    u.uniqueId,
+            status:  u.status === 'online' ? 'ONLINE' : 'OFFLINE',
+            groupId:        u.groupId,
+            calendarId:     u.calendarId,
+            phone:          u.phone,
+            model:          u.model,
+            contact:        u.contact,
+            category:       u.category,
+            disabled:       u.disabled,
+            expirationTime: u.expirationTime,
+            attributes:     u.attributes,
+        };
+    });
+}
 
 export default function Dashboard({ user, onLogout }) {
-    const [devices,        setDevices]        = useState([]);
-    const [selected,       setSelected]       = useState(null);
     const [search,         setSearch]         = useState('');
     const [page,           setPage]           = useState('Dashboard');
     const [showLogout,     setShowLogout]      = useState(false);
     const [mapMode,        setMapMode]        = useState('Map');
-    const [loading,        setLoading]        = useState(true);
     const [panelOpen,      setPanelOpen]      = useState(true);
     const [sidebarOpen,    setSidebarOpen]    = useState(true);
     const [reportSection,  setReportSection]  = useState('Internal Battery');
     const [fleetPage,      setFleetPage]      = useState('Dashboard');
-    const pollRef = useRef(null);
 
-    const fetchDevices = async () => {
+    // Live Traccar data (Device Management + Device Map & Video) — initial load via REST,
+    // then kept live via Traccar's own websocket (see effect below).
+    const [liveDevices, setLiveDevices] = useState([]);
+    const [liveSelected, setLiveSelected] = useState(null);
+    const [liveLoading, setLiveLoading] = useState(true);
+    const wsRef = useRef(null);
+    const wsReconnectRef = useRef(null);
+
+    const fetchLiveDevices = async () => {
         try {
-            const res = await api.getDevices();
-            setDevices(res.data);
-            if (!selected && res.data.length > 0) setSelected(res.data[0].id);
+            const [devicesRes, positionsRes] = await Promise.all([
+                api.getTraccarDevices(),
+                api.getLatestPositions(),
+            ]);
+            const positionsByDeviceId = {};
+            for (const p of positionsRes.data) positionsByDeviceId[p.deviceId] = p;
+            const normalized = devicesRes.data.map(d => normalizeLiveDevice(d, positionsByDeviceId));
+            setLiveDevices(normalized);
+            setLiveSelected(curr => curr ?? normalized[0]?.id ?? null);
         } catch (e) {
-            console.error('Failed to load devices:', e);
+            console.error('Failed to load Traccar devices:', e);
         } finally {
-            setLoading(false);
+            setLiveLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchDevices();
-        pollRef.current = setInterval(fetchDevices, 5000);
-        return () => clearInterval(pollRef.current);
+        fetchLiveDevices();
     }, []);
 
-    const filtered       = devices.filter(d =>
+    // Open Traccar's websocket directly from the browser for live position/device updates.
+    // Auth mirrors the REST API: a short-lived Traccar bearer token is minted server-side
+    // (GET /api/traccar/ws-token, behind auth:sanctum) and handed to the browser, which passes
+    // it as ?token=... on the websocket URL — the Traccar admin password never reaches the browser.
+    useEffect(() => {
+        let cancelled = false;
+
+        const connect = async () => {
+            try {
+                const { data } = await api.getWsToken();
+                if (cancelled) return;
+
+                const ws = new WebSocket(`${data.url}?token=${encodeURIComponent(data.token)}`);
+                wsRef.current = ws;
+
+                ws.onmessage = (evt) => {
+                    let msg;
+                    try { msg = JSON.parse(evt.data); } catch { return; }
+                    if (msg.positions) setLiveDevices(ds => applyLivePositions(ds, msg.positions));
+                    if (msg.devices)   setLiveDevices(ds => applyLiveDevices(ds, msg.devices));
+                };
+
+                ws.onclose = () => {
+                    if (!cancelled) wsReconnectRef.current = setTimeout(connect, 3000);
+                };
+                ws.onerror = () => ws.close();
+            } catch (e) {
+                console.error('Failed to open Traccar websocket:', e);
+                if (!cancelled) wsReconnectRef.current = setTimeout(connect, 3000);
+            }
+        };
+
+        connect();
+
+        return () => {
+            cancelled = true;
+            clearTimeout(wsReconnectRef.current);
+            wsRef.current?.close();
+        };
+    }, []);
+
+    const filtered       = liveDevices.filter(d =>
         d.name.toLowerCase().includes(search.toLowerCase()) ||
         (d.tracker || '').toLowerCase().includes(search.toLowerCase())
     );
-    const onlineCount    = devices.filter(d => d.status === 'ONLINE').length;
-    const selectedDevice = devices.find(d => d.id === selected);
+    const onlineCount    = liveDevices.filter(d => d.status === 'ONLINE').length;
+    const selectedDevice = liveDevices.find(d => d.id === liveSelected);
 
     return (
         <div style={{ display: 'flex', height: '100vh', fontFamily: 'Inter,system-ui,sans-serif', background: '#f1f5f9', overflow: 'hidden' }}>
@@ -66,7 +190,23 @@ export default function Dashboard({ user, onLogout }) {
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {page === 'Device Management' ? (
-                    <DeviceManagement devices={devices} loading={loading} onRefresh={fetchDevices} />
+                    <DeviceManagement devices={liveDevices} loading={liveLoading} onRefresh={fetchLiveDevices} />
+                ) : page === 'Geofence' ? (
+                    <GeofencePage onBack={() => setPage('Dashboard')} />
+                ) : page === 'Notification' ? (
+                    <NotificationPage />
+                ) : page === 'Calendars' ? (
+                    <CalendarPage />
+                ) : page === 'Computed Attributes' ? (
+                    <ComputedAttributePage />
+                ) : page === 'Maintenance' ? (
+                    <MaintenancePage />
+                ) : page === 'Saved Commands' ? (
+                    <SavedCommandPage />
+                ) : page === 'Groups' ? (
+                    <GroupPage />
+                ) : page === 'Drivers' ? (
+                    <DriverPage />
                 ) : page === 'Report' ? (
                     <ReportPage reportSection={reportSection} setReportSection={setReportSection} />
                 ) : page === 'Fleet' ? (
@@ -75,7 +215,7 @@ export default function Dashboard({ user, onLogout }) {
                     <>
                         <TopBar
                             onlineCount={onlineCount}
-                            total={devices.length}
+                            total={liveDevices.length}
                             mapMode={mapMode}
                             setMapMode={setMapMode}
                             selectedDevice={selectedDevice}
@@ -83,11 +223,11 @@ export default function Dashboard({ user, onLogout }) {
                         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
                             <DeviceList
                                 devices={filtered}
-                                selected={selected}
-                                onSelect={setSelected}
+                                selected={liveSelected}
+                                onSelect={setLiveSelected}
                                 search={search}
                                 setSearch={setSearch}
-                                loading={loading}
+                                loading={liveLoading}
                                 open={panelOpen}
                                 onToggle={() => setPanelOpen(o => !o)}
                             />
@@ -96,9 +236,9 @@ export default function Dashboard({ user, onLogout }) {
                                 <VideoMode selectedDevice={selectedDevice} />
                             ) : (
                                 <MapCanvas
-                                    devices={devices}
-                                    selected={selected}
-                                    onSelect={setSelected}
+                                    devices={liveDevices}
+                                    selected={liveSelected}
+                                    onSelect={setLiveSelected}
                                     selectedDevice={selectedDevice}
                                     mapMode={mapMode}
                                 />

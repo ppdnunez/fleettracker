@@ -104,13 +104,17 @@ function TabBar({ tabs, active, onChange }) {
         </div>
     );
 }
-function EmptyTable({ cols }) {
+function EmptyTable({ cols, rows }) {
     return (
         <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                 <thead><tr>{cols.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
-                    <tr><td colSpan={cols.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                    {rows && rows.length ? rows.map((r, i) => (
+                        <tr key={i}>{r.map((cell, j) => <td key={j} style={TD}>{cell}</td>)}</tr>
+                    )) : (
+                        <tr><td colSpan={cols.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                    )}
                 </tbody>
             </table>
         </div>
@@ -129,14 +133,14 @@ function PageShell({ title, children }) {
 /*  Fleet Dashboard helpers                                        */
 /* ══════════════════════════════════════════════════════════════ */
 
-function StatCard({ label }) {
+function StatCard({ label, value }) {
     return (
         <div style={{ flex: 1, background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', padding: '14px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 12.5, color: '#6b7280' }}>{label}</span>
                 <button style={{ padding: '2px 8px', border: '1px solid #e5e7eb', borderRadius: 12, fontSize: 11, background: '#fff', color: '#6b7280', cursor: 'pointer' }}>This week ▾</button>
             </div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#111827' }}>0</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#111827' }}>{value ?? 0}</div>
         </div>
     );
 }
@@ -204,7 +208,11 @@ function AlarmRankingCard() {
             <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 80px', fontSize: 12, fontWeight: 600, color: '#6b7280', paddingBottom: 6, borderBottom: '1px solid #f1f5f9' }}>
                 <span>Ranking</span><span>Number plate</span><span style={{ textAlign: 'right' }}>Alert Times</span>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px 0', color: '#94a3b8', fontSize: 13 }}>—</div>
+            {[['1','TRK-9982',14],['2','TRK-2201',9],['3','TRK-8834',6],['4','TRK-4821',3]].map(([rank, plate, count]) => (
+                <div key={rank} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 80px', fontSize: 13, color: '#374151', padding: '7px 0', borderBottom: '1px solid #f8fafc' }}>
+                    <span>{rank}</span><span>{plate}</span><span style={{ textAlign: 'right', fontWeight: 600 }}>{count}</span>
+                </div>
+            ))}
         </div>
     );
 }
@@ -228,14 +236,14 @@ function FleetDashboard() {
             <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
                 <div style={{ flex: 2, background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)', borderRadius: 10, padding: '20px 24px', color: '#fff', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 40, marginBottom: 10 }}>
-                        <div><div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Total Drivers</div><div style={{ fontSize: 36, fontWeight: 800 }}>0</div></div>
-                        <div><div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Total Vehicles</div><div style={{ fontSize: 36, fontWeight: 800 }}>0</div></div>
+                        <div><div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Total Drivers</div><div style={{ fontSize: 36, fontWeight: 800 }}>6</div></div>
+                        <div><div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Total Vehicles</div><div style={{ fontSize: 36, fontWeight: 800 }}>8</div></div>
                     </div>
                     <div style={{ fontSize: 11, opacity: 0.6 }}>Updated to {new Date().toISOString().slice(0,10)}</div>
                 </div>
-                <StatCard label="driven distance(km)" />
-                <StatCard label="Total driving time(H)" />
-                <StatCard label="Total Fuel Consumption (L)" />
+                <StatCard label="driven distance(km)" value="1,248" />
+                <StatCard label="Total driving time(H)" value="86" />
+                <StatCard label="Total Fuel Consumption (L)" value="312.4" />
             </div>
 
             {/* Reminder + Motion */}
@@ -251,7 +259,22 @@ function FleetDashboard() {
                         <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Alarm type ratio</span>
                         <button style={{ padding: '2px 8px', border: '1px solid #e5e7eb', borderRadius: 12, fontSize: 11, background: '#fff', color: '#6b7280', cursor: 'pointer' }}>Last 7 days ▾</button>
                     </div>
-                    <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontSize: 13 }}>No data</div>
+                    <div style={{ height: 140, display: 'flex', alignItems: 'center', gap: 16, padding: '0 8px' }}>
+                        <svg width="110" height="110" viewBox="0 0 32 32" style={{ flexShrink: 0 }}>
+                            <circle r="16" cx="16" cy="16" fill="#f1f5f9" />
+                            <circle r="8" cx="16" cy="16" fill="transparent" stroke="#3b82f6" strokeWidth="16" strokeDasharray="35.17 64.83" transform="rotate(-90 16 16)" />
+                            <circle r="8" cx="16" cy="16" fill="transparent" stroke="#f59e0b" strokeWidth="16" strokeDasharray="25.12 74.88" strokeDashoffset="-35.17" transform="rotate(-90 16 16)" />
+                            <circle r="8" cx="16" cy="16" fill="transparent" stroke="#ef4444" strokeWidth="16" strokeDasharray="20.10 79.90" strokeDashoffset="-60.29" transform="rotate(-90 16 16)" />
+                            <circle r="8" cx="16" cy="16" fill="transparent" stroke="#10b981" strokeWidth="16" strokeDasharray="20.10 79.90" strokeDashoffset="-80.39" transform="rotate(-90 16 16)" />
+                        </svg>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, color: '#374151' }}>
+                            {[['#3b82f6','Overspeed','35%'],['#f59e0b','Geo-fence','25%'],['#ef4444','SOS','20%'],['#10b981','Low Battery','20%']].map(([c,l,p]) => (
+                                <span key={l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: c, display: 'inline-block' }} />{l}<span style={{ color: '#9ca3af' }}>{p}</span>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
                 </div>
                 <AlarmRankingCard />
             </div>
@@ -284,7 +307,12 @@ function DriverPage() {
             <ActionRow
                 left={[<Btn primary>Add</Btn>, <DropBtn>Batch operations</DropBtn>, <Btn>Fleet Management</Btn>, <Btn>Associated Fleet</Btn>]}
             />
-            <EmptyTable cols={['No.','Driver No.','Driver Name','License No.','RFID Card No.','KC208','Register Place','Register Date','Expired Date','License Status','Driving license reminder','Status','Action']} />
+            <EmptyTable cols={['No.','Driver No.','Driver Name','License No.','RFID Card No.','KC208','Register Place','Register Date','Expired Date','License Status','Driving license reminder','Status','Action']} rows={[
+                [1,'D-1001','Juan Dela Cruz','N01-12-345678','RFID-88231','—','Manila','2022-03-10','2027-03-10','Valid','Normal','Active','Edit'],
+                [2,'D-1002','Maria Santos','N02-09-887766','RFID-88232','—','Quezon City','2021-11-02','2026-11-02','Valid','Expiring soon','Active','Edit'],
+                [3,'D-1003','Pedro Reyes','N03-44-221199','RFID-88233','—','Pasig City','2020-07-21','2025-07-21','Expired','Expired','Inactive','Edit'],
+                [4,'D-1004','Ana Garcia','N04-77-554433','RFID-88234','—','Taguig City','2023-01-15','2028-01-15','Valid','Normal','Active','Edit'],
+            ]} />
         </PageShell>
     );
 }
@@ -303,7 +331,12 @@ function VehiclePage() {
                 <SearchBtn /><ResetBtn />
             </FilterBar>
             <ActionRow left={[<Btn primary>Add</Btn>, <DropBtn>Batch operations</DropBtn>]} />
-            <EmptyTable cols={['No.','Vehicle No.','Vehicle Type','Max Speed','Device Name','Device IMEI','Status','Insurance status','Insurance reminder','Action']} />
+            <EmptyTable cols={['No.','Vehicle No.','Vehicle Type','Max Speed','Device Name','Device IMEI','Status','Insurance status','Insurance reminder','Action']} rows={[
+                [1,'NCR-1234','Sedan','120 km/h','Device 001','123456789012001','Online','Active','Normal','Edit'],
+                [2,'NCR-5678','Van','100 km/h','Device 002','123456789012002','Online','Active','Normal','Edit'],
+                [3,'NCR-9012','Truck','90 km/h','Device 004','123456789012004','Offline','Expired','Expired','Edit'],
+                [4,'NCR-3456','Motorcycle','110 km/h','Device 007','123456789012007','Online','Active','Expiring soon','Edit'],
+            ]} />
         </PageShell>
     );
 }
@@ -328,7 +361,11 @@ function CheckInPage() {
                 <SearchBtn />
             </FilterBar>
             <ActionRow left={[]} />
-            <EmptyTable cols={['No.','Card ID','IMEI','Device name','Driver Name','Number plate','Driver No.','Photo','Operation Time']} />
+            <EmptyTable cols={['No.','Card ID','IMEI','Device name','Driver Name','Number plate','Driver No.','Photo','Operation Time']} rows={[
+                [1,'RFID-88231','123456789012001','Device 001','Juan Dela Cruz','NCR-1234','D-1001','—','2026-06-18 06:00:02'],
+                [2,'RFID-88232','123456789012002','Device 002','Maria Santos','NCR-5678','D-1002','—','2026-06-18 05:45:18'],
+                [3,'RFID-88234','123456789012007','Device 007','Ana Garcia','NCR-3456','D-1004','—','2026-06-18 05:40:55'],
+            ]} />
         </PageShell>
     );
 }
@@ -347,7 +384,11 @@ function RoutePlanningPage() {
                 <Btn primary>Add</Btn>
                 <Btn red>Delete</Btn>
             </div>
-            <EmptyTable cols={['No.','Route name','Start location','End location','Total Mileage(km)','Stop','Action']} />
+            <EmptyTable cols={['No.','Route name','Start location','End location','Total Mileage(km)','Stop','Action']} rows={[
+                [1,'Manila → Makati Daily Run','Manila Warehouse','Makati Depot','14.2','2','Edit'],
+                [2,'Quezon City Distribution','Quezon City Hub','Pasig Distribution Center','21.6','3','Edit'],
+                [3,'Caloocan Cold Chain','Caloocan Yard','Taguig Cold Storage','27.9','1','Edit'],
+            ]} />
         </PageShell>
     );
 }
@@ -370,8 +411,16 @@ function FleetReportPage() {
             </FilterBar>
             <ActionRow left={[]} />
             {tab === 'Attendance Daily'
-                ? <EmptyTable cols={['Driver Name','Driver No.','Clock In Time','Clock Out Time','Work Duration','Driving Duration','Associated Vehicle']} />
-                : <EmptyTable cols={['No.','Driver Name','Driver No.','Vehicle No.','Start Time','End Time','Mileage (km)','Duration','Associated Fleet']} />
+                ? <EmptyTable cols={['Driver Name','Driver No.','Clock In Time','Clock Out Time','Work Duration','Driving Duration','Associated Vehicle']} rows={[
+                    ['Juan Dela Cruz','D-1001','2026-06-18 06:00','2026-06-18 15:30','9h 30m','3h 30m','NCR-1234'],
+                    ['Maria Santos','D-1002','2026-06-18 05:45','2026-06-18 14:50','9h 05m','2h 50m','NCR-5678'],
+                    ['Ana Garcia','D-1004','2026-06-18 05:40','2026-06-18 16:10','10h 30m','4h 15m','NCR-3456'],
+                  ]} />
+                : <EmptyTable cols={['No.','Driver Name','Driver No.','Vehicle No.','Start Time','End Time','Mileage (km)','Duration','Associated Fleet']} rows={[
+                    [1,'Juan Dela Cruz','D-1001','NCR-1234','2026-06-18 06:00','2026-06-18 09:30','84.2','3h 30m','NextGen PNG'],
+                    [2,'Maria Santos','D-1002','NCR-5678','2026-06-18 07:10','2026-06-18 10:05','72.8','2h 55m','NextGen PNG'],
+                    [3,'Ana Garcia','D-1004','NCR-3456','2026-06-18 05:45','2026-06-18 07:58','27.9','2h 13m','NextGen PNG'],
+                  ]} />
             }
         </PageShell>
     );

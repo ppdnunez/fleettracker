@@ -1,123 +1,328 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../api.js';
 
-/* ── vehicle application icons ─────────────────────────────── */
-const APP_ICONS = [
-    { key: 'sedan',    label: 'Sedan',        d: 'M3 13V16 M17 13V16 M1 13H19 M4 9H16L18 13H2L4 9Z M4.5 9L6 6H14L16 9 M5 13A2 2 0 0 0 9 13 M11 13A2 2 0 0 0 15 13' },
-    { key: 'truck',    label: 'Semi Truck',   d: 'M1 12V16 M17 12V16 M1 8H13V14H1Z M13 10H19V14H13Z M4 14A2 2 0 0 0 8 14 M15 14A1.5 1.5 0 0 0 18 14' },
-    { key: 'bus',      label: 'Bus',          d: 'M2 4H18V16H2Z M2 8H18 M6 16A2 2 0 0 0 10 16 M12 16A2 2 0 0 0 16 16 M2 12H18 M5 4V8 M9 4V8 M13 4V8 M17 4V8' },
-    { key: 'van',      label: 'Van',          d: 'M2 8H14L17 11V15H2V8Z M4 8V5H12L14 8 M5 15A2 2 0 0 0 9 15 M12 15A2 2 0 0 0 16 15 M5 8H11V12H5Z' },
-    { key: 'moto',     label: 'Motorcycle',   d: 'M4 14A4 4 0 0 0 12 14 M16 14A4 4 0 0 0 20 14 M8 14L10 8H14L16 10 M10 8L8 5H12 M4 14H0' },
-    { key: 'person',   label: 'Person',       d: 'M10 4A2 2 0 0 0 10 8 M10 8V14 M7 10H13 M8 14L7 19 M12 14L13 19' },
-    { key: 'animal',   label: 'Animal',       d: 'M3 10C3 7 5 5 8 5C11 5 14 7 14 10V14H3V10Z M3 12H14 M5 14V17 M12 14V17 M14 8L17 6 M14 9L17 9 M7 5L6 2 M10 5L11 2' },
-    { key: 'drone',    label: 'Drone',        d: 'M3 3L7 7 M17 3L13 7 M3 17L7 13 M17 17L13 13 M7 7H13V13H7Z M9 9H11V11H9Z M3 3L1 1 M17 3L19 1 M3 17L1 19 M17 17L19 19' },
-    { key: 'taxi',     label: 'Taxi',         d: 'M3 13V16 M17 13V16 M1 13H19 M4 9H16L18 13H2L4 9Z M8 7H12V9H8Z M5 13A2 2 0 0 0 9 13 M11 13A2 2 0 0 0 15 13' },
-    { key: 'ev',       label: 'Electric',     d: 'M3 12V15 M15 12V15 M1 12H17 M4 8H14L16 12H2L4 8Z M5 12A2 2 0 0 0 9 12 M11 12A2 2 0 0 0 15 12 M8 3L6 7H9L7 11' },
-    { key: 'minibus',  label: 'Minibus',      d: 'M1 9H17V15H1Z M1 12H17 M17 11H20V15H17Z M4 15A2 2 0 0 0 8 15 M12 15A2 2 0 0 0 16 15 M3 9V6H15V9' },
-    { key: 'pickup',   label: 'Pickup',       d: 'M1 10H19V15H1Z M1 10L4 5H10V10 M10 10H19V15 M4 15A2 2 0 0 0 8 15 M14 15A2 2 0 0 0 18 15' },
-    { key: 'excavator',label: 'Excavator',    d: 'M2 14H14 M2 10H8V14H2Z M8 12H14L16 10L14 8H10L8 10 M14 14V18 M12 14V18 M16 8L18 4 M18 4L20 6 M18 4L16 6' },
-    { key: 'ship',     label: 'Ship',         d: 'M1 14H19 M4 14V9H16V14 M10 9V6 M7 6H13 M1 14C1 16 4 18 10 18C16 18 19 16 19 14' },
-    { key: 'tractor',  label: 'Tractor',      d: 'M4 13A5 5 0 0 0 14 13 M15 13A3 3 0 0 0 21 13 M4 13H1 M9 7H16V10L14 13 M9 7V13 M9 7L7 5' },
-    { key: 'dumptruck',label: 'Dump Truck',   d: 'M1 12H13V16H1Z M13 8H19V16H13Z M3 16A2 2 0 0 0 7 16 M15 16A2 2 0 0 0 19 16 M3 8H11V12H3Z M11 12L13 8' },
-    { key: 'schoolbus',label: 'School Bus',   d: 'M1 6H19V15H1Z M1 10H19 M1 13H19 M5 15A2 2 0 0 0 9 15 M13 15A2 2 0 0 0 17 15 M4 6V3H16V6 M8 6V10 M12 6V10' },
-    { key: 'transit',  label: 'Transit',      d: 'M2 7H18V15H2Z M2 11H18 M6 15A2 2 0 0 0 10 15 M12 15A2 2 0 0 0 16 15 M18 9H21V15H18' },
-    { key: 'heli',     label: 'Helicopter',   d: 'M1 9H19 M5 9V13 M15 9V13 M8 13H12 M10 13V17 M8 17H12 M3 9A2 2 0 0 0 17 9' },
-    { key: 'delivery', label: 'Delivery',     d: 'M1 9H15V15H1Z M15 11H19L20 13V15H15Z M4 15A2 2 0 0 0 8 15 M15 15A2 2 0 0 0 19 15 M3 9V7H10V9' },
-    { key: 'server',   label: 'Equipment',    d: 'M2 3H18V8H2Z M2 9H18V14H2Z M2 15H18V20H2Z M5 5.5A.5.5 0 0 0 6 5.5 M5 11.5A.5.5 0 0 0 6 11.5 M5 17.5A.5.5 0 0 0 6 17.5 M8 5H16 M8 11H16 M8 17H16' },
-    { key: 'cargo',    label: 'Cargo',        d: 'M2 6H18V18H2Z M2 6L10 2L18 6 M6 18V12H14V18 M6 9H14 M10 9V12' },
-    { key: 'tracker',  label: 'Tracker',      d: 'M10 1A6 6 0 0 0 4 7C4 11 10 19 10 19C10 19 16 11 16 7A6 6 0 0 0 10 1Z M10 5A2 2 0 0 0 10 9A2 2 0 0 0 10 5' },
-    { key: 'plane',    label: 'Airplane',     d: 'M2 12L8 9L10 2L12 9L18 12L12 12L11 16L10 18L9 16L8 12Z' },
+/* ── Traccar's known device attribute keys ─────────────────── */
+const ATTRIBUTE_DEFS = [
+    { key: 'commandChannel',              label: 'Command Channel',                type: 'string'  },
+    { key: 'deviceImage',                 label: 'Device Image',                   type: 'string'  },
+    { key: 'deviceInactivityPeriod',      label: 'Device Inactivity Period',       type: 'number'  },
+    { key: 'deviceInactivityStart',       label: 'Device Inactivity Start',        type: 'number'  },
+    { key: 'devicePassword',              label: 'Device Password',                type: 'string'  },
+    { key: 'filter.accuracy',             label: 'Filter: Accuracy',               type: 'number'  },
+    { key: 'filter.approximate',          label: 'Filter: Approximate',            type: 'boolean' },
+    { key: 'filter.dailyLimit',           label: 'Filter: Daily Limit',            type: 'number'  },
+    { key: 'filter.dailyLimitInterval',   label: 'Filter: Daily Limit Interval',   type: 'number'  },
+    { key: 'filter.distance',             label: 'Filter: Distance',               type: 'number'  },
+    { key: 'filter.duplicate',            label: 'Filter: Duplicate',              type: 'boolean' },
+    { key: 'filter.future',               label: 'Filter: Future Limit',           type: 'number'  },
+    { key: 'filter.invalid',              label: 'Filter: Invalid',                type: 'boolean' },
+    { key: 'filter.maxSpeed',             label: 'Filter: Max Speed',              type: 'number'  },
+    { key: 'filter.minPeriod',            label: 'Filter: Min Period',             type: 'number'  },
+    { key: 'filter.outdated',             label: 'Filter: Outdated',               type: 'boolean' },
+    { key: 'filter.past',                 label: 'Filter: Past Limit',             type: 'number'  },
+    { key: 'filter.skipAttributes',       label: 'Filter: Skip Attributes',        type: 'string'  },
+    { key: 'filter.skipAttributesEnable', label: 'Filter: Skip Attributes Enable', type: 'boolean' },
+    { key: 'filter.skipLimit',            label: 'Filter: Skip Limit',             type: 'number'  },
+    { key: 'filter.static',               label: 'Filter: Static',                 type: 'boolean' },
+    { key: 'filter.zero',                 label: 'Filter: Zero',                   type: 'boolean' },
+    { key: 'forward.url',                 label: 'Forward URL',                    type: 'string'  },
+    { key: 'fuelDropThreshold',           label: 'Fuel Drop Threshold',            type: 'number'  },
+    { key: 'fuelIncreaseThreshold',       label: 'Fuel Increase Threshold',        type: 'number'  },
+    { key: 'notificationTokens',          label: 'Notification Tokens',            type: 'string'  },
+    { key: 'processing.copyAttributes',   label: 'Processing: Copy Attributes',    type: 'string'  },
+    { key: 'proximity.enterDistance',     label: 'Proximity Enter Distance',       type: 'number'  },
+    { key: 'proximity.exitDistance',      label: 'Proximity Exit Distance',        type: 'number'  },
+    { key: 'report.ignoreOdometer',       label: 'Report: Ignore Odometer',        type: 'boolean' },
+    { key: 'speedLimit',                  label: 'Speed Limit',                    type: 'number'  },
+    { key: 'time.override',               label: 'Time Override',                  type: 'string'  },
+    { key: 'decoder.timezone',            label: 'Timezone',                       type: 'string'  },
+    { key: 'unaccompaniedMotionDistance', label: 'Unaccompanied Motion Distance',  type: 'number'  },
+    { key: 'web.reportColor',             label: 'Web: Report Color',              type: 'string'  },
 ];
 
-/* ── styles ──────────────────────────────────────────────────── */
-const sel = { width: '100%', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', background: '#fff', cursor: 'pointer', color: '#111827', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%23999\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' };
-const LF = ({ label, required, children }) => (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 18 }}>
-        <span style={{ minWidth: 120, textAlign: 'right', fontSize: 14, color: required ? '#111827' : '#6b7280', paddingTop: 9, flexShrink: 0 }}>
-            {required && <span style={{ color: '#ef4444', marginRight: 3 }}>*</span>}{label}:
-        </span>
-        <div style={{ flex: 1 }}>{children}</div>
-    </div>
-);
+const CATEGORIES = [
+    'default', 'animal', 'bicycle', 'boat', 'bus', 'car', 'crane', 'helicopter', 'motorcycle',
+    'offroad', 'person', 'pickup', 'plane', 'ship', 'tractor', 'train', 'tram', 'trolleybus', 'van', 'scooter',
+];
 
-export default function ImportDeviceModal({ onClose }) {
-    const [form, setForm]       = useState({ model: '', service: '', account: 'NextGen PNG', remarks: '', allowBind: true });
-    const [selected, setSelected] = useState(new Set());
+/* ── shared field primitives ────────────────────────────────── */
+const inputStyle  = { width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', color: '#111827' };
+const selectStyle = { ...inputStyle, background: '#fff', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%23999\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' };
 
-    const toggleIcon = (key) => setSelected(s => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; });
+function Field({ label, hint, children }) {
+    return (
+        <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>{label}</label>
+            {children}
+            {hint && <p style={{ margin: '5px 2px 0', fontSize: 11.5, color: '#9ca3af', lineHeight: 1.4 }}>{hint}</p>}
+        </div>
+    );
+}
+
+function ChevronSVG({ open }) {
+    return (
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#374151" strokeWidth="1.8" strokeLinecap="round"
+            style={{ transform: open ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.15s' }}>
+            <polyline points="2.5,8.5 6.5,4.5 10.5,8.5" />
+        </svg>
+    );
+}
+
+function Section({ title, open, onToggle, children }) {
+    return (
+        <div style={{ borderBottom: '8px solid #f1f5f9' }}>
+            <button onClick={onToggle} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', background: 'none', border: 'none', cursor: 'pointer' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{title}</span>
+                <ChevronSVG open={open} />
+            </button>
+            {open && <div style={{ padding: '0 24px 18px' }}>{children}</div>}
+        </div>
+    );
+}
+
+function AttributeValueInput({ def, value, onChange }) {
+    if (def.type === 'boolean') {
+        return (
+            <select value={value ? 'true' : 'false'} onChange={e => onChange(e.target.value === 'true')} style={selectStyle}>
+                <option value="false">False</option>
+                <option value="true">True</option>
+            </select>
+        );
+    }
+    return (
+        <input type={def.type === 'number' ? 'number' : 'text'} value={value ?? ''} onChange={e => onChange(e.target.value)} style={inputStyle} />
+    );
+}
+
+/* ── "+ ADD" attribute picker dialog ────────────────────────── */
+function AddAttributeDialog({ existingKeys, onAdd, onCancel }) {
+    const [query,  setQuery]  = useState('');
+    const [picked, setPicked] = useState(null);
+    const [type,   setType]   = useState('string');
+
+    const matches = ATTRIBUTE_DEFS.filter(d =>
+        !existingKeys.includes(d.key) && d.label.toLowerCase().includes(query.toLowerCase())
+    );
+
+    const pick = (def) => { setPicked(def); setQuery(def.label); setType(def.type); };
+
+    return (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1300 }}>
+            <div style={{ background: '#fff', borderRadius: 10, width: 340, padding: '18px 20px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+                <div style={{ position: 'relative', marginBottom: 14 }}>
+                    <label style={{ display: 'block', fontSize: 11.5, color: '#3b82f6', fontWeight: 600, marginBottom: 4 }}>Attribute</label>
+                    <input autoFocus value={query} onChange={e => { setQuery(e.target.value); setPicked(null); }}
+                        style={{ ...inputStyle, borderColor: '#3b82f6' }} />
+                    {query && !picked && matches.length > 0 && (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 10 }}>
+                            {matches.map(d => (
+                                <div key={d.key} onMouseDown={e => e.preventDefault()} onClick={() => pick(d)}
+                                    style={{ padding: '8px 14px', fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+                                    {d.label}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div style={{ marginBottom: 18 }}>
+                    <label style={{ display: 'block', fontSize: 11.5, color: '#6b7280', fontWeight: 600, marginBottom: 4 }}>Type</label>
+                    <select value={type} onChange={e => setType(e.target.value)} style={selectStyle}>
+                        <option value="string">String</option>
+                        <option value="number">Number</option>
+                        <option value="boolean">Boolean</option>
+                    </select>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 18 }}>
+                    <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>CANCEL</button>
+                    <button onClick={() => picked && onAdd({ ...picked, type })} disabled={!picked}
+                        style={{ background: 'none', border: 'none', color: picked ? '#3b82f6' : '#cbd5e1', fontSize: 13, fontWeight: 700, cursor: picked ? 'pointer' : 'not-allowed' }}>
+                        ADD
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ── main modal ──────────────────────────────────────────────── */
+export default function ImportDeviceModal({ onClose, onCreated }) {
+    const [openSections, setOpenSections] = useState({ required: true, extra: true, sensors: true, attributes: true });
+    const toggle = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
+
+    const [groups,    setGroups]    = useState([]);
+    const [calendars, setCalendars] = useState([]);
+
+    const [form, setForm] = useState({
+        name: '', identifier: '',
+        groupId: '', phone: '', model: '', contact: '',
+        category: 'default', calendarId: '',
+        expirationTime: '', disabled: false,
+    });
+    const [sensors, setSensors] = useState({ fuel: false, temperature: false });
+    const [attributes,   setAttributes]   = useState([]); // [{ key, label, type, value }]
+    const [showAddAttr,  setShowAddAttr]  = useState(false);
+    const [error,        setError]        = useState('');
+    const [saving,       setSaving]       = useState(false);
+
+    useEffect(() => {
+        api.getTraccarGroups().then(res => setGroups(res.data)).catch(() => {});
+        api.getTraccarCalendars().then(res => setCalendars(res.data)).catch(() => {});
+    }, []);
+
+    const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+    const addAttribute = (def) => {
+        setAttributes(a => [...a, { ...def, value: def.type === 'boolean' ? false : '' }]);
+        setShowAddAttr(false);
+    };
+    const updateAttributeValue = (key, value) => setAttributes(a => a.map(at => at.key === key ? { ...at, value } : at));
+    const removeAttribute = (key) => setAttributes(a => a.filter(at => at.key !== key));
+
+    const handleSubmit = async () => {
+        setError('');
+        if (!form.name.trim() || !form.identifier.trim()) {
+            setError('Name and Identifier are required.');
+            return;
+        }
+        setSaving(true);
+        try {
+            const attrObj = {};
+            attributes.forEach(a => { attrObj[a.key] = a.type === 'number' ? Number(a.value) : a.value; });
+
+            if (sensors.fuel) {
+                attrObj.fuelSensor = true;
+                if (attrObj.fuelDropThreshold === undefined)     attrObj.fuelDropThreshold = 15;
+                if (attrObj.fuelIncreaseThreshold === undefined) attrObj.fuelIncreaseThreshold = 15;
+            }
+            if (sensors.temperature) {
+                attrObj.temperatureSensor = true;
+            }
+
+            await api.createTraccarDevice({
+                name:           form.name.trim(),
+                uniqueId:       form.identifier.trim(),
+                groupId:        form.groupId ? Number(form.groupId) : 0,
+                phone:          form.phone || undefined,
+                model:          form.model || undefined,
+                contact:        form.contact || undefined,
+                category:       form.category || undefined,
+                calendarId:     form.calendarId ? Number(form.calendarId) : 0,
+                expirationTime: form.expirationTime ? new Date(form.expirationTime).toISOString() : undefined,
+                disabled:       form.disabled,
+                attributes:     attrObj,
+            });
+            onCreated?.();
+            onClose();
+        } catch (e) {
+            const errors = e.response?.data?.errors;
+            setError(errors ? Object.values(errors).flat().join(' ') : (e.response?.data?.message || 'Failed to register device.'));
+        } finally {
+            setSaving(false);
+        }
+    };
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
-            <div style={{ background: '#fff', borderRadius: 10, width: 580, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ background: '#fff', borderRadius: 10, width: 480, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Import device</h3>
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Register Device</h3>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 22, lineHeight: 1 }}>×</button>
                 </div>
 
                 {/* Body */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 8px' }}>
-                    <LF label="Device Model" required>
-                        <div style={{ position: 'relative' }}>
-                            <select value={form.model} onChange={e => setForm(f => ({ ...f, model: e.target.value }))} style={sel}>
-                                <option value="">Please select</option>
-                                <option value="VL863">VL863</option>
-                                <option value="VL502">VL502</option>
-                                <option value="VG502">VG502</option>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <Section title="Required" open={openSections.required} onToggle={() => toggle('required')}>
+                        <Field label="Name">
+                            <input value={form.name} onChange={e => set('name', e.target.value)} style={inputStyle} />
+                        </Field>
+                        <Field label="Identifier" hint="IMEI, serial number or other id. It has to match the identifier device reports to the server.">
+                            <input value={form.identifier} onChange={e => set('identifier', e.target.value)} style={inputStyle} />
+                        </Field>
+                    </Section>
+
+                    <Section title="Extra" open={openSections.extra} onToggle={() => toggle('extra')}>
+                        <Field label="Group">
+                            <select value={form.groupId} onChange={e => set('groupId', e.target.value)} style={selectStyle}>
+                                <option value="">None</option>
+                                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                             </select>
-                        </div>
-                    </LF>
-
-                    <LF label="Service type" required>
-                        <select value={form.service} onChange={e => setForm(f => ({ ...f, service: e.target.value }))} style={sel}>
-                            <option value="">Please select</option>
-                            <option value="gps">GPS Tracking</option>
-                            <option value="fleet">Fleet Management</option>
-                        </select>
-                    </LF>
-
-                    <LF label="unit price">
-                        <span style={{ color: '#3b82f6', fontSize: 14, cursor: 'pointer' }}>Select price</span>
-                    </LF>
-
-                    <LF label="To account" required>
-                        <select value={form.account} onChange={e => setForm(f => ({ ...f, account: e.target.value }))} style={sel}>
-                            <option value="NextGen PNG">NextGen PNG</option>
-                        </select>
-                    </LF>
-
-                    <LF label="Remarks">
-                        <textarea value={form.remarks} onChange={e => setForm(f => ({ ...f, remarks: e.target.value }))}
-                            rows={4} style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
-                    </LF>
-
-                    <LF label="Application">
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                            {APP_ICONS.map(({ key, label, d }) => (
-                                <button key={key} title={label} onClick={() => toggleIcon(key)} style={{
-                                    width: 36, height: 36, borderRadius: 6, border: `1.5px solid ${selected.has(key) ? '#3b82f6' : '#e2e8f0'}`,
-                                    background: selected.has(key) ? '#eff6ff' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-                                }}>
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={selected.has(key) ? '#1e40af' : '#334155'} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d={d} />
-                                    </svg>
-                                </button>
-                            ))}
-                        </div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
-                            <input type="checkbox" checked={form.allowBind} onChange={e => setForm(f => ({ ...f, allowBind: e.target.checked }))}
-                                style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
-                            Allow to be bound by APP account
+                        </Field>
+                        <Field label="Phone">
+                            <input value={form.phone} onChange={e => set('phone', e.target.value)} style={inputStyle} />
+                        </Field>
+                        <Field label="Model">
+                            <input value={form.model} onChange={e => set('model', e.target.value)} style={inputStyle} />
+                        </Field>
+                        <Field label="Contact">
+                            <input value={form.contact} onChange={e => set('contact', e.target.value)} style={inputStyle} />
+                        </Field>
+                        <Field label="Category">
+                            <select value={form.category} onChange={e => set('category', e.target.value)} style={selectStyle}>
+                                {CATEGORIES.map(c => <option key={c} value={c}>{c[0].toUpperCase() + c.slice(1)}</option>)}
+                            </select>
+                        </Field>
+                        <Field label="Calendar">
+                            <select value={form.calendarId} onChange={e => set('calendarId', e.target.value)} style={selectStyle}>
+                                <option value="">None</option>
+                                {calendars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                        </Field>
+                        <Field label="Expiration" hint="Leave blank for no expiration. Max year 2038 (MySQL TIMESTAMP limit).">
+                            <input type="date" value={form.expirationTime} max="2038-01-19" onChange={e => set('expirationTime', e.target.value)} style={inputStyle} />
+                        </Field>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
+                            <input type="checkbox" checked={form.disabled} onChange={e => set('disabled', e.target.checked)} style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
+                            Disabled
                         </label>
-                    </LF>
+                    </Section>
+
+                    <Section title="Sensors" open={openSections.sensors} onToggle={() => toggle('sensors')}>
+                        <p style={{ margin: '0 0 12px', fontSize: 11.5, color: '#9ca3af', lineHeight: 1.4 }}>
+                            Marks this device as sensor-equipped so it's included in the matching reports under Report → Device Statistics.
+                        </p>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151', marginBottom: 10 }}>
+                            <input type="checkbox" checked={sensors.fuel} onChange={e => setSensors(s => ({ ...s, fuel: e.target.checked }))} style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
+                            Fuel Consumption Sensor — ready for Fuel Consumption &amp; Current Fuel Value reports
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
+                            <input type="checkbox" checked={sensors.temperature} onChange={e => setSensors(s => ({ ...s, temperature: e.target.checked }))} style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
+                            Temperature Sensor — ready for Temperature &amp; Humidity report
+                        </label>
+                    </Section>
+
+                    <Section title="Attributes" open={openSections.attributes} onToggle={() => toggle('attributes')}>
+                        {attributes.map(a => (
+                            <div key={a.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                                <div style={{ flex: 1 }}>
+                                    <Field label={a.label}>
+                                        <AttributeValueInput def={a} value={a.value} onChange={v => updateAttributeValue(a.key, v)} />
+                                    </Field>
+                                </div>
+                                <button onClick={() => removeAttribute(a.key)} title="Remove" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 18, marginTop: 22 }}>×</button>
+                            </div>
+                        ))}
+                        <button onClick={() => setShowAddAttr(true)} style={{ width: '100%', padding: '9px 0', border: '1.5px solid #3b82f6', borderRadius: 8, background: '#fff', color: '#3b82f6', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                            + ADD
+                        </button>
+                    </Section>
                 </div>
 
                 {/* Footer */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, padding: '14px 24px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
-                    <span style={{ fontSize: 13, color: '#374151', marginRight: 'auto' }}>Total: <span style={{ color: '#3b82f6', fontWeight: 600 }}>0 Mi Coins</span></span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 24px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+                    <span style={{ flex: 1, fontSize: 12.5, color: '#ef4444' }}>{error}</span>
                     <button onClick={onClose} style={{ padding: '8px 22px', border: '1px solid #d1d5db', borderRadius: 8, background: '#fff', fontSize: 13, cursor: 'pointer', color: '#374151' }}>Cancel</button>
-                    <button style={{ padding: '8px 22px', border: 'none', borderRadius: 8, background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Confirm</button>
+                    <button onClick={handleSubmit} disabled={saving} style={{ padding: '8px 22px', border: 'none', borderRadius: 8, background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+                        {saving ? 'Registering…' : 'Register'}
+                    </button>
                 </div>
             </div>
+
+            {showAddAttr && (
+                <AddAttributeDialog existingKeys={attributes.map(a => a.key)} onAdd={addAttribute} onCancel={() => setShowAddAttr(false)} />
+            )}
         </div>
     );
 }

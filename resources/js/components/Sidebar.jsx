@@ -132,7 +132,7 @@ export default function Sidebar({ user, page, setPage, onLogoutClick, open, onTo
     const reportTo = (section) => { setReportSection(section); setPage('Report'); };
 
     const isReportActive = page === 'Report';
-    const isDeviceActive = page === 'Device Management' || page === 'Dashboard';
+    const isDeviceActive = page === 'Device Management' || page === 'Dashboard' || page === 'Geofence' || page === 'Notification' || page === 'Calendars' || page === 'Computed Attributes' || page === 'Maintenance' || page === 'Saved Commands' || page === 'Groups' || page === 'Drivers';
     const isFleetActive  = page === 'Fleet';
 
     return (
@@ -217,6 +217,30 @@ export default function Sidebar({ user, page, setPage, onLogoutClick, open, onTo
                         <NavItem label="Device Map & Video" depth={1} sidebarOpen={open}
                             active={page === 'Dashboard' && !isReportActive}
                             onClick={() => navTo('Dashboard')} />
+                        <NavItem label="Geofence" depth={1} sidebarOpen={open}
+                            active={page === 'Geofence'}
+                            onClick={() => navTo('Geofence')} />
+                        <NavItem label="Notification" depth={1} sidebarOpen={open}
+                            active={page === 'Notification'}
+                            onClick={() => navTo('Notification')} />
+                        <NavItem label="Calendars" depth={1} sidebarOpen={open}
+                            active={page === 'Calendars'}
+                            onClick={() => navTo('Calendars')} />
+                        <NavItem label="Computed Attributes" depth={1} sidebarOpen={open}
+                            active={page === 'Computed Attributes'}
+                            onClick={() => navTo('Computed Attributes')} />
+                        <NavItem label="Maintenance" depth={1} sidebarOpen={open}
+                            active={page === 'Maintenance'}
+                            onClick={() => navTo('Maintenance')} />
+                        <NavItem label="Saved Commands" depth={1} sidebarOpen={open}
+                            active={page === 'Saved Commands'}
+                            onClick={() => navTo('Saved Commands')} />
+                        <NavItem label="Groups" depth={1} sidebarOpen={open}
+                            active={page === 'Groups'}
+                            onClick={() => navTo('Groups')} />
+                        <NavItem label="Drivers" depth={1} sidebarOpen={open}
+                            active={page === 'Drivers'}
+                            onClick={() => navTo('Drivers')} />
                     </div>
                 )}
 

@@ -1,40 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
+import { api, setAuthToken } from './api.js';
+import './bootstrap.js';
 import LoginPage from './pages/LoginPage.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 
-// ── Axios setup ───────────────────────────────────────────────────────────────
-axios.defaults.baseURL = '/';
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
-if (csrfToken) axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
-const savedToken = localStorage.getItem('fleet_token');
-if (savedToken) axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
-
-// ── Auth token helper ─────────────────────────────────────────────────────────
-export function setAuthToken(token) {
-    if (token) {
-        localStorage.setItem('fleet_token', token);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-        localStorage.removeItem('fleet_token');
-        delete axios.defaults.headers.common['Authorization'];
-    }
-}
-
-// ── API calls ─────────────────────────────────────────────────────────────────
-export const api = {
-    login:   (email, password) => axios.post('/api/login', { email, password }),
-    logout:  ()                => axios.post('/api/logout'),
-    me:      ()                => axios.get('/api/user'),
-    getDevices:   ()           => axios.get('/api/devices'),
-    createDevice: (data)       => axios.post('/api/devices', data),
-    updateDevice: (id, data)   => axios.put(`/api/devices/${id}`, data),
-    deleteDevice: (id)         => axios.delete(`/api/devices/${id}`),
-};
-
-// ── Root App ──────────────────────────────────────────────────────────────────
 function App() {
     const [user,    setUser]    = useState(null);
     const [loading, setLoading] = useState(true);
