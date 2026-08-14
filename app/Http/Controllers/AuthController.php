@@ -24,12 +24,39 @@ class AuthController extends Controller
             ]);
         }
 
+        // A suspended tenant can still hold valid app credentials; stop them at the door rather
+        // than letting them in to a dashboard that will 403 on every request.
+        $client = $user->client;
+        if ($client && !$client->isActive()) {
+            throw ValidationException::withMessages([
+                'email' => ['This client account is suspended.'],
+            ]);
+        }
+
         $user->tokens()->delete();
         $token = $user->createToken('fleet-token')->plainTextToken;
 
         return response()->json([
-            'user'  => $user->only(['id', 'name', 'email', 'role']),
+            'user'  => $this->profile($user),
             'token' => $token,
+        ]);
+    }
+
+    /**
+     * Identity plus the tenant it belongs to. `client` is null for platform administrators,
+     * which is what the UI keys off to decide whether it is showing one tenant or the fleet.
+     */
+    private function profile(User $user): array
+    {
+        $user->loadMissing('client');
+
+        return array_merge($user->only(['id', 'name', 'email', 'role']), [
+            'is_admin' => $user->isPlatformAdmin(),
+            'client'   => $user->client ? [
+                'id'     => $user->client->id,
+                'name'   => $user->client->name,
+                'status' => $user->client->status,
+            ] : null,
         ]);
     }
 
@@ -41,6 +68,6 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        return response()->json($request->user()->only(['id', 'name', 'email', 'role']));
+        return response()->json($this->profile($request->user()));
     }
 }

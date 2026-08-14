@@ -5,6 +5,13 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\TraccarController;
+use App\Http\Controllers\VehicleMaintenanceController;
+use App\Http\Controllers\DriverFaceController;
+use App\Http\Controllers\FaceImportController;
+use App\Http\Controllers\GeofenceController;
+use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\VehicleDriverController;
+use App\Http\Controllers\VehicleSettingController;
 
 // Public
 Route::post('/login',  [AuthController::class, 'login']);
@@ -16,6 +23,37 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('devices', DeviceController::class);
     Route::apiResource('drivers', DriverController::class)->except(['show']);
+    Route::apiResource('vehicle-maintenances', VehicleMaintenanceController::class)->except(['show']);
+    Route::apiResource('vehicles', VehicleController::class)->except(['show']);
+
+    // Work-zone rules. Local rather than Traccar-side because each device link carries an
+    // alert direction that Traccar's geofence permissions cannot express.
+    Route::apiResource('geofences', GeofenceController::class)->except(['show']);
+    Route::post('/geofences/{geofence}/devices',          [GeofenceController::class, 'linkDevice']);
+    Route::put('/geofences/{geofence}/devices/{imei}',    [GeofenceController::class, 'updateDeviceDirection']);
+    Route::delete('/geofences/{geofence}/devices/{imei}', [GeofenceController::class, 'unlinkDevice']);
+
+    // Per-vehicle configuration and driver assignment, both keyed by the vehicle's IMEI.
+    Route::get('/vehicle-settings',          [VehicleSettingController::class, 'index']);
+    Route::get('/vehicle-settings/{imei}',   [VehicleSettingController::class, 'show']);
+    Route::put('/vehicle-settings/{imei}',   [VehicleSettingController::class, 'update']);
+    Route::get('/vehicle-drivers/{imei}',    [VehicleDriverController::class, 'index']);
+    Route::put('/vehicle-drivers/{imei}',    [VehicleDriverController::class, 'sync']);
+
+    // Face enrolment. Every action here is an EVENTSET command relayed to the device through
+    // Traccar; the device reports results back on the public webhooks in routes/web.php.
+    Route::prefix('face')->group(function () {
+        Route::get('/',              [DriverFaceController::class, 'index']);
+        Route::post('/enroll',       [DriverFaceController::class, 'enroll']);
+        Route::post('/capture',      [DriverFaceController::class, 'capture']);
+        Route::post('/download',     [DriverFaceController::class, 'downloadBatch']);
+        Route::post('/fetch-photo',  [DriverFaceController::class, 'fetchPhoto']);
+        Route::post('/test',         [DriverFaceController::class, 'test']);
+        Route::post('/roster',       [DriverFaceController::class, 'roster']);
+        Route::post('/upload-url',   [DriverFaceController::class, 'setUploadUrl']);
+        Route::delete('/',           [DriverFaceController::class, 'destroy']);
+        Route::get('/import-logs',   [FaceImportController::class, 'index']);
+    });
 
     Route::prefix('traccar')->group(function () {
         Route::get('/devices',   [TraccarController::class, 'devices']);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\UsesTraccarApi;
 use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,21 +16,22 @@ use Illuminate\Support\Facades\Http;
 // Traccar's existing permission/attribute mechanisms elsewhere in the app.
 class DriverController extends Controller
 {
-    private string $baseUrl;
-    private array  $auth;
+    use UsesTraccarApi;
 
-    public function __construct()
-    {
-        $this->baseUrl = rtrim(config('services.traccar.url'), '/') . '/api';
-        $this->auth    = [
-            config('services.traccar.email'),
-            config('services.traccar.password'),
-        ];
-    }
-
+    /**
+     * Each driver carries the IMEIs they are assigned to, so the Vehicle table can show its
+     * drivers from one request instead of an assignment lookup per vehicle row.
+     */
     public function index()
     {
-        return response()->json(Driver::orderBy('name')->get());
+        $drivers = Driver::with('links:id,driver_id,imei')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Driver $driver) => array_merge($driver->toArray(), [
+                'imeis' => $driver->links->pluck('imei')->all(),
+            ]));
+
+        return response()->json($drivers);
     }
 
     private function validationRules(): array
@@ -40,10 +42,10 @@ class DriverController extends Controller
             'phone'                 => 'nullable|string|max:30',
             'license_no'            => 'nullable|string|max:50',
             'rfid_card_no'          => 'nullable|string|max:50',
+            'ibutton_no'            => 'nullable|string|max:50',
             'register_place'        => 'nullable|string|max:100',
             'register_date'         => 'nullable|date',
             'license_expiry'        => 'nullable|date',
-            'safety_sticker_expiry' => 'nullable|date',
             'notify_days_before'    => 'nullable|integer|min:1|max:365',
             'status'                => 'nullable|in:Active,Inactive',
         ];
@@ -58,9 +60,9 @@ class DriverController extends Controller
         return DB::transaction(function () use ($data) {
             $driver = Driver::create($data);
 
-            $traccarResponse = Http::withBasicAuth(...$this->auth)
+            $traccarResponse = Http::withBasicAuth(...$this->traccarAuth())
                 ->withHeaders(['Content-Type' => 'application/json'])
-                ->post("{$this->baseUrl}/drivers", [
+                ->post("{$this->traccarBaseUrl()}/drivers", [
                     'name'       => $driver->name,
                     'uniqueId'   => $driver->badge_no,
                     'attributes' => (object) [],
@@ -92,9 +94,9 @@ class DriverController extends Controller
         $driver->update($data);
 
         if ($driver->traccar_driver_id) {
-            Http::withBasicAuth(...$this->auth)
+            Http::withBasicAuth(...$this->traccarAuth())
                 ->withHeaders(['Content-Type' => 'application/json'])
-                ->put("{$this->baseUrl}/drivers/{$driver->traccar_driver_id}", [
+                ->put("{$this->traccarBaseUrl()}/drivers/{$driver->traccar_driver_id}", [
                     'id'         => $driver->traccar_driver_id,
                     'name'       => $driver->name,
                     'uniqueId'   => $driver->traccar_unique_id,
@@ -108,8 +110,8 @@ class DriverController extends Controller
     public function destroy(Driver $driver)
     {
         if ($driver->traccar_driver_id) {
-            $response = Http::withBasicAuth(...$this->auth)
-                ->delete("{$this->baseUrl}/drivers/{$driver->traccar_driver_id}");
+            $response = Http::withBasicAuth(...$this->traccarAuth())
+                ->delete("{$this->traccarBaseUrl()}/drivers/{$driver->traccar_driver_id}");
             if (!$response->successful() && $response->status() !== 404) {
                 return response()->json(['message' => 'Failed to remove driver from Traccar.'], 502);
             }

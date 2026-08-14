@@ -9,16 +9,19 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 
-// Scheduled daily (see routes/console.php). For each driver, checks license_expiry and
-// safety_sticker_expiry against that driver's notify_days_before (or DEFAULT_NOTICE_DAYS),
-// and emails every registered FleetTrack user once the expiry falls within that window.
-// "Once" per expiry date is enforced via {license,sticker}_notified_at — see the migration
-// comment on those columns for why a notified date is stored rather than a boolean.
+// Scheduled daily (see routes/console.php). For each driver, checks license_expiry against that
+// driver's notify_days_before (or DEFAULT_NOTICE_DAYS), and emails every registered FleetTrack
+// user once the expiry falls within that window. "Once" per expiry date is enforced via
+// license_notified_at — a notified date rather than a boolean, so renewing the licence re-arms
+// the reminder while a re-run on the same date does not resend.
+//
+// Safety-sticker expiry is NOT checked here: it belongs to the vehicle, not the driver, and
+// lives on vehicle_settings.
 class NotifyDriverExpirations extends Command
 {
     protected $signature = 'drivers:notify-expirations';
 
-    protected $description = 'Email registered users about drivers with an upcoming or past license/safety-sticker expiry';
+    protected $description = 'Email registered users about drivers with an upcoming or past license expiry';
 
     private const DEFAULT_NOTICE_DAYS = 14;
 
@@ -33,7 +36,6 @@ class NotifyDriverExpirations extends Command
         $today = Carbon::today();
         $checks = [
             ['field' => 'license_expiry', 'notifiedField' => 'license_notified_at', 'label' => 'License'],
-            ['field' => 'safety_sticker_expiry', 'notifiedField' => 'sticker_notified_at', 'label' => 'Safety Sticker'],
         ];
 
         $sent = 0;

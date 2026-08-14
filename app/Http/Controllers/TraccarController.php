@@ -2,28 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\UsesTraccarApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 
 class TraccarController extends Controller
 {
-    private string $baseUrl;
-    private array  $auth;
-
-    public function __construct()
-    {
-        $this->baseUrl = rtrim(config('services.traccar.url'), '/') . '/api';
-        $this->auth    = [
-            config('services.traccar.email'),
-            config('services.traccar.password'),
-        ];
-    }
+    use UsesTraccarApi;
 
     public function devices()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/devices");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/devices");
         return response()->json($response->json(), $response->status());
     }
 
@@ -47,9 +38,9 @@ class TraccarController extends Controller
         // Traccar expects `attributes` to be a JSON object, never a JSON array.
         $data['attributes'] = (object) ($data['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/devices", $data);
+            ->post("{$this->traccarBaseUrl()}/devices", $data);
         return response()->json($response->json(), $response->status());
     }
 
@@ -67,8 +58,8 @@ class TraccarController extends Controller
             'disabled'       => 'nullable|boolean',
         ]);
 
-        $existing = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/devices", ['id' => $id]);
+        $existing = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/devices", ['id' => $id]);
         $device = $existing->json()[0] ?? null;
         if (!$device) {
             return response()->json(['message' => 'Device not found.'], 404);
@@ -78,23 +69,23 @@ class TraccarController extends Controller
         // Same empty-array/object ambiguity as storeDevice() - Traccar expects an object here.
         $merged['attributes'] = (object) ($merged['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/devices/{$id}", $merged);
+            ->put("{$this->traccarBaseUrl()}/devices/{$id}", $merged);
         return response()->json($response->json(), $response->status());
     }
 
     public function notifications()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/notifications");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/notifications");
         return response()->json($response->json(), $response->status());
     }
 
     public function drivers()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/drivers");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/drivers");
         return response()->json($response->json(), $response->status());
     }
 
@@ -112,9 +103,9 @@ class TraccarController extends Controller
         $data = $request->validate($this->driverValidationRules());
         $data['attributes'] = (object) ($data['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/drivers", $data);
+            ->post("{$this->traccarBaseUrl()}/drivers", $data);
         return response()->json($response->json(), $response->status());
     }
 
@@ -122,8 +113,8 @@ class TraccarController extends Controller
     {
         $data = $request->validate($this->driverValidationRules());
 
-        $existing = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/drivers/{$id}");
+        $existing = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/drivers/{$id}");
         $driver = $existing->json();
         if (!$driver) {
             return response()->json(['message' => 'Driver not found.'], 404);
@@ -132,16 +123,16 @@ class TraccarController extends Controller
         $merged = array_merge($driver, $data);
         $merged['attributes'] = (object) ($data['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/drivers/{$id}", $merged);
+            ->put("{$this->traccarBaseUrl()}/drivers/{$id}", $merged);
         return response()->json($response->json(), $response->status());
     }
 
     public function destroyDriver(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->delete("{$this->baseUrl}/drivers/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->delete("{$this->traccarBaseUrl()}/drivers/{$id}");
         return response()->json(null, $response->status());
     }
 
@@ -159,8 +150,8 @@ class TraccarController extends Controller
 
     public function deviceConnections(int $id)
     {
-        $fetch = fn (string $path) => Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/{$path}", ['deviceId' => $id])
+        $fetch = fn (string $path) => Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/{$path}", ['deviceId' => $id])
             ->json();
 
         return response()->json([
@@ -180,9 +171,9 @@ class TraccarController extends Controller
             'id'   => 'required|integer',
         ]);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/permissions", [
+            ->post("{$this->traccarBaseUrl()}/permissions", [
                 'deviceId' => $id,
                 self::CONNECTION_KEYS[$data['type']] => $data['id'],
             ]);
@@ -196,9 +187,9 @@ class TraccarController extends Controller
             'id'   => 'required|integer',
         ]);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->delete("{$this->baseUrl}/permissions", [
+            ->delete("{$this->traccarBaseUrl()}/permissions", [
                 'deviceId' => $id,
                 self::CONNECTION_KEYS[$data['type']] => $data['id'],
             ]);
@@ -207,15 +198,15 @@ class TraccarController extends Controller
 
     public function notificationTypes()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/notifications/types");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/notifications/types");
         return response()->json($response->json(), $response->status());
     }
 
     public function notificators()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/notifications/notificators");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/notifications/notificators");
         return response()->json($response->json(), $response->status());
     }
 
@@ -235,8 +226,8 @@ class TraccarController extends Controller
         // mask the others' results.
         $results = [];
         foreach ($data['channels'] as $channel) {
-            $response = Http::withBasicAuth(...$this->auth)
-                ->post("{$this->baseUrl}/notifications/test/{$channel}");
+            $response = Http::withBasicAuth(...$this->traccarAuth())
+                ->post("{$this->traccarBaseUrl()}/notifications/test/{$channel}");
             $results[] = [
                 'channel' => $channel,
                 'success' => $response->successful(),
@@ -249,15 +240,15 @@ class TraccarController extends Controller
 
     public function commands()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/commands");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/commands");
         return response()->json($response->json(), $response->status());
     }
 
     public function commandTypes()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/commands/types");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/commands/types");
         return response()->json($response->json(), $response->status());
     }
 
@@ -286,9 +277,9 @@ class TraccarController extends Controller
         $data = $request->validate($this->savedCommandValidationRules());
         $payload = $this->savedCommandPayload($data);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/commands", $payload);
+            ->post("{$this->traccarBaseUrl()}/commands", $payload);
         return response()->json($response->json(), $response->status());
     }
 
@@ -297,8 +288,8 @@ class TraccarController extends Controller
         $data = $request->validate($this->savedCommandValidationRules());
         $payload = $this->savedCommandPayload($data);
 
-        $existing = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/commands/{$id}");
+        $existing = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/commands/{$id}");
         $command = $existing->json();
         if (!$command) {
             return response()->json(['message' => 'Saved command not found.'], 404);
@@ -306,23 +297,23 @@ class TraccarController extends Controller
 
         $merged = array_merge($command, $payload);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/commands/{$id}", $merged);
+            ->put("{$this->traccarBaseUrl()}/commands/{$id}", $merged);
         return response()->json($response->json(), $response->status());
     }
 
     public function destroySavedCommand(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->delete("{$this->baseUrl}/commands/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->delete("{$this->traccarBaseUrl()}/commands/{$id}");
         return response()->json(null, $response->status());
     }
 
     public function computedAttributes()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/attributes/computed");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/attributes/computed");
         return response()->json($response->json(), $response->status());
     }
 
@@ -341,9 +332,9 @@ class TraccarController extends Controller
     {
         $data = $request->validate($this->attributeValidationRules());
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/attributes/computed", $data);
+            ->post("{$this->traccarBaseUrl()}/attributes/computed", $data);
         return response()->json($response->json(), $response->status());
     }
 
@@ -351,8 +342,8 @@ class TraccarController extends Controller
     {
         $data = $request->validate($this->attributeValidationRules());
 
-        $existing = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/attributes/computed/{$id}");
+        $existing = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/attributes/computed/{$id}");
         $attribute = $existing->json();
         if (!$attribute) {
             return response()->json(['message' => 'Computed attribute not found.'], 404);
@@ -360,16 +351,16 @@ class TraccarController extends Controller
 
         $merged = array_merge($attribute, $data);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/attributes/computed/{$id}", $merged);
+            ->put("{$this->traccarBaseUrl()}/attributes/computed/{$id}", $merged);
         return response()->json($response->json(), $response->status());
     }
 
     public function destroyComputedAttribute(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->delete("{$this->baseUrl}/attributes/computed/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->delete("{$this->traccarBaseUrl()}/attributes/computed/{$id}");
         return response()->json(null, $response->status());
     }
 
@@ -386,9 +377,9 @@ class TraccarController extends Controller
         $deviceId = $data['deviceId'];
         unset($data['deviceId']);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/attributes/computed/test?deviceId={$deviceId}", $data);
+            ->post("{$this->traccarBaseUrl()}/attributes/computed/test?deviceId={$deviceId}", $data);
 
         if (!$response->successful()) {
             return response()->json(['message' => $response->body() ?: 'Test failed.'], $response->status());
@@ -398,8 +389,8 @@ class TraccarController extends Controller
 
     public function maintenances()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/maintenance");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/maintenance");
         return response()->json($response->json(), $response->status());
     }
 
@@ -417,9 +408,9 @@ class TraccarController extends Controller
     {
         $data = $request->validate($this->maintenanceValidationRules());
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/maintenance", $data);
+            ->post("{$this->traccarBaseUrl()}/maintenance", $data);
         return response()->json($response->json(), $response->status());
     }
 
@@ -427,8 +418,8 @@ class TraccarController extends Controller
     {
         $data = $request->validate($this->maintenanceValidationRules());
 
-        $existing = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/maintenance/{$id}");
+        $existing = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/maintenance/{$id}");
         $maintenance = $existing->json();
         if (!$maintenance) {
             return response()->json(['message' => 'Maintenance not found.'], 404);
@@ -437,23 +428,23 @@ class TraccarController extends Controller
         $merged = array_merge($maintenance, $data);
         $merged['attributes'] = (object) ($merged['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/maintenance/{$id}", $merged);
+            ->put("{$this->traccarBaseUrl()}/maintenance/{$id}", $merged);
         return response()->json($response->json(), $response->status());
     }
 
     public function destroyMaintenance(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->delete("{$this->baseUrl}/maintenance/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->delete("{$this->traccarBaseUrl()}/maintenance/{$id}");
         return response()->json(null, $response->status());
     }
 
     public function notification(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/notifications/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/notifications/{$id}");
         return response()->json($response->json(), $response->status());
     }
 
@@ -477,9 +468,9 @@ class TraccarController extends Controller
         $data = $request->validate($this->notificationValidationRules());
         $data['attributes'] = (object) ($data['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/notifications", $data);
+            ->post("{$this->traccarBaseUrl()}/notifications", $data);
         return response()->json($response->json(), $response->status());
     }
 
@@ -490,8 +481,8 @@ class TraccarController extends Controller
         // Unlike geofences, a path-based GET-by-id works fine for notifications, so we can
         // safely fetch-and-merge here. Traccar's PUT writes every column from the submitted
         // entity (it doesn't skip ones you omit), so a partial payload would null out the rest.
-        $existing = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/notifications/{$id}");
+        $existing = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/notifications/{$id}");
         $notification = $existing->json();
         if (!$notification) {
             return response()->json(['message' => 'Notification not found.'], 404);
@@ -500,16 +491,16 @@ class TraccarController extends Controller
         $merged = array_merge($notification, $data);
         $merged['attributes'] = (object) ($merged['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/notifications/{$id}", $merged);
+            ->put("{$this->traccarBaseUrl()}/notifications/{$id}", $merged);
         return response()->json($response->json(), $response->status());
     }
 
     public function destroyNotification(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->delete("{$this->baseUrl}/notifications/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->delete("{$this->traccarBaseUrl()}/notifications/{$id}");
         return response()->json(null, $response->status());
     }
 
@@ -519,14 +510,14 @@ class TraccarController extends Controller
     // relation by asking each device for its own notifications (a filter that does work).
     public function notificationDevices(int $id)
     {
-        $devices = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         if (empty($devices)) {
             return response()->json([]);
         }
 
         $responses = Http::pool(fn ($pool) => array_map(
-            fn ($d) => $pool->as($d['id'])->withBasicAuth(...$this->auth)
-                ->get("{$this->baseUrl}/notifications", ['deviceId' => $d['id']]),
+            fn ($d) => $pool->as($d['id'])->withBasicAuth(...$this->traccarAuth())
+                ->get("{$this->traccarBaseUrl()}/notifications", ['deviceId' => $d['id']]),
             $devices
         ));
 
@@ -540,8 +531,8 @@ class TraccarController extends Controller
 
     public function groups()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/groups");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/groups");
         return response()->json($response->json(), $response->status());
     }
 
@@ -555,9 +546,9 @@ class TraccarController extends Controller
         $data['groupId']    = $data['groupId'] ?? 0;
         $data['attributes'] = (object) ($data['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/groups", $data);
+            ->post("{$this->traccarBaseUrl()}/groups", $data);
         return response()->json($response->json(), $response->status());
     }
 
@@ -569,8 +560,8 @@ class TraccarController extends Controller
             'attributes' => 'nullable|array',
         ]);
 
-        $existing = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/groups/{$id}");
+        $existing = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/groups/{$id}");
         $group = $existing->json();
         if (!$group) {
             return response()->json(['message' => 'Group not found.'], 404);
@@ -580,16 +571,16 @@ class TraccarController extends Controller
         $merged['groupId']    = $data['groupId'] ?? 0;
         $merged['attributes'] = (object) ($data['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/groups/{$id}", $merged);
+            ->put("{$this->traccarBaseUrl()}/groups/{$id}", $merged);
         return response()->json($response->json(), $response->status());
     }
 
     public function destroyGroup(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->delete("{$this->baseUrl}/groups/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->delete("{$this->traccarBaseUrl()}/groups/{$id}");
         return response()->json(null, $response->status());
     }
 
@@ -600,8 +591,8 @@ class TraccarController extends Controller
     // same ordering requirement as the device-keyed tables.
     public function groupConnections(int $id)
     {
-        $fetch = fn (string $path) => Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/{$path}", ['groupId' => $id])
+        $fetch = fn (string $path) => Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/{$path}", ['groupId' => $id])
             ->json();
 
         return response()->json([
@@ -621,9 +612,9 @@ class TraccarController extends Controller
             'id'   => 'required|integer',
         ]);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/permissions", [
+            ->post("{$this->traccarBaseUrl()}/permissions", [
                 'groupId' => $id,
                 self::CONNECTION_KEYS[$data['type']] => $data['id'],
             ]);
@@ -637,9 +628,9 @@ class TraccarController extends Controller
             'id'   => 'required|integer',
         ]);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->delete("{$this->baseUrl}/permissions", [
+            ->delete("{$this->traccarBaseUrl()}/permissions", [
                 'groupId' => $id,
                 self::CONNECTION_KEYS[$data['type']] => $data['id'],
             ]);
@@ -648,8 +639,8 @@ class TraccarController extends Controller
 
     public function calendars()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/calendars");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/calendars");
         return response()->json($response->json(), $response->status());
     }
 
@@ -660,9 +651,9 @@ class TraccarController extends Controller
             'data' => 'required|string',
         ]);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/calendars", $data);
+            ->post("{$this->traccarBaseUrl()}/calendars", $data);
         return response()->json($response->json(), $response->status());
     }
 
@@ -673,8 +664,8 @@ class TraccarController extends Controller
             'data' => 'required|string',
         ]);
 
-        $existing = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/calendars/{$id}");
+        $existing = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/calendars/{$id}");
         $calendar = $existing->json();
         if (!$calendar) {
             return response()->json(['message' => 'Calendar not found.'], 404);
@@ -683,23 +674,23 @@ class TraccarController extends Controller
         $merged = array_merge($calendar, $data);
         $merged['attributes'] = (object) ($merged['attributes'] ?? []);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/calendars/{$id}", $merged);
+            ->put("{$this->traccarBaseUrl()}/calendars/{$id}", $merged);
         return response()->json($response->json(), $response->status());
     }
 
     public function destroyCalendar(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->delete("{$this->baseUrl}/calendars/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->delete("{$this->traccarBaseUrl()}/calendars/{$id}");
         return response()->json(null, $response->status());
     }
 
     public function latestPositions()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/positions");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/positions");
         return response()->json($response->json(), $response->status());
     }
 
@@ -711,9 +702,15 @@ class TraccarController extends Controller
     // frontend re-mints a fresh one on every (re)connect).
     public function wsToken()
     {
-        $response = Http::withBasicAuth(...$this->auth)
+        // `expiration` must actually be sent: Traccar reads it with @FormParam, and Jersey
+        // rejects the request outright ("The @FormParam is utilized when the content type of the
+        // request entity is not application/x-www-form-urlencoded") when the body is empty,
+        // because Laravel omits the form content type for a bodyless asForm() post.
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->asForm()
-            ->post("{$this->baseUrl}/session/token");
+            ->post("{$this->traccarBaseUrl()}/session/token", [
+                'expiration' => now()->addDay()->toIso8601ZuluString(),
+            ]);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to mint websocket token.'], $response->status());
@@ -729,8 +726,8 @@ class TraccarController extends Controller
 
     public function position(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/positions", ['deviceId' => $id]);
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/positions", ['deviceId' => $id]);
         return response()->json($response->json(), $response->status());
     }
 
@@ -757,27 +754,27 @@ class TraccarController extends Controller
             $params['type'] = $request->type;
         }
 
-        $eventsResponse = Http::withBasicAuth(...$this->auth)
+        $eventsResponse = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/events", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/events", $params);
 
         if (!$eventsResponse->successful()) {
             return response()->json(['message' => 'Failed to load alert events.'], $eventsResponse->status());
         }
         $events = $eventsResponse->json() ?? [];
 
-        $devices    = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices    = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
-        $groups      = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/groups")->json() ?? [];
+        $groups      = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/groups")->json() ?? [];
         $groupsById  = collect($groups)->keyBy('id');
-        $drivers     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/drivers")->json() ?? [];
+        $drivers     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/drivers")->json() ?? [];
         $driversByUniqueId = collect($drivers)->keyBy('uniqueId');
 
         $positionIds = array_values(array_unique(array_filter(array_column($events, 'positionId'))));
         $positionsById = [];
         if (!empty($positionIds)) {
             $posResponses = Http::pool(fn ($pool) => array_map(
-                fn ($pid) => $pool->as($pid)->withBasicAuth(...$this->auth)->get("{$this->baseUrl}/positions", ['id' => $pid]),
+                fn ($pid) => $pool->as($pid)->withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/positions", ['id' => $pid]),
                 $positionIds
             ));
             foreach ($positionIds as $pid) {
@@ -839,16 +836,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load battery report.'], $response->status());
         }
         $positions = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $statusOf = function ($level) {
@@ -927,16 +924,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load external battery report.'], $response->status());
         }
         $positions = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $rows = [];
@@ -989,16 +986,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load fuel consumption report.'], $response->status());
         }
         $positions = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $byDevice = [];
@@ -1105,10 +1102,10 @@ class TraccarController extends Controller
             'deviceId' => 'nullable|integer',
         ]);
 
-        $positions = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/positions")->json() ?? [];
+        $positions = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/positions")->json() ?? [];
         $positionsByDeviceId = collect($positions)->keyBy('deviceId');
 
-        $devices = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         if ($request->filled('deviceId')) {
             $devices = array_values(array_filter($devices, fn ($d) => $d['id'] == $request->deviceId));
         }
@@ -1175,16 +1172,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load fuel curve.'], $response->status());
         }
         $positions = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $rows = [];
@@ -1240,16 +1237,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
 
         if (!$response->successful()) {
             return [];
         }
         $positions = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $byDevice = [];
@@ -1338,9 +1335,9 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $routeResponse = Http::withBasicAuth(...$this->auth)
+        $routeResponse = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
         $positions = $routeResponse->successful() ? ($routeResponse->json() ?? []) : [];
 
         $byDevice = [];
@@ -1352,7 +1349,7 @@ class TraccarController extends Controller
         }
         unset($pts);
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $rows = [];
@@ -1416,12 +1413,12 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
-        $routeResponse = Http::withBasicAuth(...$this->auth)
+        $routeResponse = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
         $positions = $routeResponse->successful() ? ($routeResponse->json() ?? []) : [];
         $byDevice  = [];
         foreach ($positions as $p) {
@@ -1458,12 +1455,12 @@ class TraccarController extends Controller
         }
 
         // 'route' and 'driver' both start from individual trips.
-        $tripsResponse = Http::withBasicAuth(...$this->auth)
+        $tripsResponse = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/trips", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/trips", $params);
         $trips = $tripsResponse->successful() ? ($tripsResponse->json() ?? []) : [];
 
-        $drivers           = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/drivers")->json() ?? [];
+        $drivers           = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/drivers")->json() ?? [];
         $driversByUniqueId = collect($drivers)->keyBy('uniqueId');
 
         $tripRows = [];
@@ -1542,16 +1539,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load temperature & humidity report.'], $response->status());
         }
         $positions = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $rows = [];
@@ -1598,16 +1595,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load positioning & battery report.'], $response->status());
         }
         $positions = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $rows = [];
@@ -1658,21 +1655,21 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/trips", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/trips", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load travel statistics report.'], $response->status());
         }
         $trips = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
-        $routeResponse = Http::withBasicAuth(...$this->auth)
+        $routeResponse = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
         $positionsByDevice = [];
         foreach ($routeResponse->successful() ? ($routeResponse->json() ?? []) : [] as $p) {
             $positionsByDevice[$p['deviceId']][] = $p;
@@ -1748,16 +1745,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/summary", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/summary", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load mileage report.'], $response->status());
         }
         $summary = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $byDevice = [];
@@ -1821,21 +1818,21 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/trips", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/trips", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load trips report.'], $response->status());
         }
         $trips = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
-        $routeResponse = Http::withBasicAuth(...$this->auth)
+        $routeResponse = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
         $positionsByDevice = [];
         foreach ($routeResponse->successful() ? ($routeResponse->json() ?? []) : [] as $p) {
             $positionsByDevice[$p['deviceId']][] = $p;
@@ -1905,16 +1902,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/route", $params);
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load overspeed report.'], $response->status());
         }
         $positions = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $byDevice = [];
@@ -1992,25 +1989,25 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/stops", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/stops", $params);
 
         if (!$response->successful()) {
             return [];
         }
         $stops = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
-        $groups      = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/groups")->json() ?? [];
+        $groups      = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/groups")->json() ?? [];
         $groupsById  = collect($groups)->keyBy('id');
 
         $positionIds = array_values(array_unique(array_filter(array_column($stops, 'positionId'))));
         $positionsById = [];
         if (!empty($positionIds)) {
             $posResponses = Http::pool(fn ($pool) => array_map(
-                fn ($pid) => $pool->as($pid)->withBasicAuth(...$this->auth)->get("{$this->baseUrl}/positions", ['id' => $pid]),
+                fn ($pid) => $pool->as($pid)->withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/positions", ['id' => $pid]),
                 $positionIds
             ));
             foreach ($positionIds as $pid) {
@@ -2087,16 +2084,16 @@ class TraccarController extends Controller
         // silently fails to bind, making the filter a no-op (returns every event type instead).
         $query = http_build_query($params) . '&type=ignitionOn&type=ignitionOff';
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/events?{$query}");
+            ->get("{$this->traccarBaseUrl()}/reports/events?{$query}");
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load ignition report.'], $response->status());
         }
         $events = $response->json() ?? [];
 
-        $devices     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById = collect($devices)->keyBy('id');
 
         $byDevice = [];
@@ -2155,18 +2152,18 @@ class TraccarController extends Controller
         // Same repeated-plain-key requirement as ignitionReport() — see the comment there.
         $query = http_build_query($params) . '&type=geofenceEnter&type=geofenceExit';
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/events?{$query}");
+            ->get("{$this->traccarBaseUrl()}/reports/events?{$query}");
 
         if (!$response->successful()) {
             return response()->json(['message' => 'Failed to load geofence report.'], $response->status());
         }
         $events = $response->json() ?? [];
 
-        $devices       = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
+        $devices       = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
         $devicesById   = collect($devices)->keyBy('id');
-        $geofences     = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/geofences")->json() ?? [];
+        $geofences     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/geofences")->json() ?? [];
         $geofencesById = collect($geofences)->keyBy('id');
 
         $byKey = [];
@@ -2228,8 +2225,8 @@ class TraccarController extends Controller
     // read from attributes.sim, blank if the device has none set.
     private function deviceStatusRows(bool $online): array
     {
-        $devices   = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/devices")->json() ?? [];
-        $positions = Http::withBasicAuth(...$this->auth)->get("{$this->baseUrl}/positions")->json() ?? [];
+        $devices   = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/devices")->json() ?? [];
+        $positions = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/positions")->json() ?? [];
         $positionsByDeviceId = collect($positions)->keyBy('deviceId');
 
         $rows = [];
@@ -2279,9 +2276,9 @@ class TraccarController extends Controller
             'to'   => 'required|date|after:from',
         ]);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/route", [
+            ->get("{$this->traccarBaseUrl()}/reports/route", [
                 'deviceId' => $id,
                 'from'     => Carbon::parse($request->from)->utc()->toISOString(),
                 'to'       => Carbon::parse($request->to)->utc()->toISOString(),
@@ -2296,9 +2293,9 @@ class TraccarController extends Controller
             'to'   => 'required|date|after:from',
         ]);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->baseUrl}/reports/trips", [
+            ->get("{$this->traccarBaseUrl()}/reports/trips", [
                 'deviceId' => $id,
                 'from'     => Carbon::parse($request->from)->utc()->toISOString(),
                 'to'       => Carbon::parse($request->to)->utc()->toISOString(),
@@ -2314,9 +2311,9 @@ class TraccarController extends Controller
         ]);
 
         $xlsxType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => $xlsxType])
-            ->get("{$this->baseUrl}/reports/trips", [
+            ->get("{$this->traccarBaseUrl()}/reports/trips", [
                 'deviceId' => $id,
                 'from'     => Carbon::parse($request->from)->utc()->toISOString(),
                 'to'       => Carbon::parse($request->to)->utc()->toISOString(),
@@ -2333,8 +2330,8 @@ class TraccarController extends Controller
 
     public function geofences()
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->get("{$this->baseUrl}/geofences");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/geofences");
         return response()->json($response->json(), $response->status());
     }
 
@@ -2346,9 +2343,9 @@ class TraccarController extends Controller
             'description' => 'nullable|string|max:255',
         ]);
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->post("{$this->baseUrl}/geofences", $data);
+            ->post("{$this->traccarBaseUrl()}/geofences", $data);
         return response()->json($response->json(), $response->status());
     }
 
@@ -2365,16 +2362,16 @@ class TraccarController extends Controller
         // update off the `id` in the body (not the URL), and accepts a partial payload fine.
         $data['id'] = $id;
 
-        $response = Http::withBasicAuth(...$this->auth)
+        $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
-            ->put("{$this->baseUrl}/geofences/{$id}", $data);
+            ->put("{$this->traccarBaseUrl()}/geofences/{$id}", $data);
         return response()->json($response->json(), $response->status());
     }
 
     public function destroyGeofence(int $id)
     {
-        $response = Http::withBasicAuth(...$this->auth)
-            ->delete("{$this->baseUrl}/geofences/{$id}");
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->delete("{$this->traccarBaseUrl()}/geofences/{$id}");
         return response()->json(null, $response->status());
     }
 }

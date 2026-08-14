@@ -5,6 +5,7 @@ import DeviceList       from '../components/DeviceList.jsx';
 import MapCanvas        from '../components/MapCanvas.jsx';
 import VideoMode        from '../components/VideoMode.jsx';
 import TopBar           from '../components/TopBar.jsx';
+import AppHeader        from '../components/AppHeader.jsx';
 import LogoutModal      from '../components/LogoutModal.jsx';
 import DeviceManagement from '../components/DeviceManagement.jsx';
 import ReportPage       from '../components/ReportPage.jsx';
@@ -176,7 +177,6 @@ export default function Dashboard({ user, onLogout }) {
     return (
         <div style={{ display: 'flex', height: '100vh', fontFamily: 'Inter,system-ui,sans-serif', background: '#f1f5f9', overflow: 'hidden' }}>
             <Sidebar
-                user={user}
                 page={page}
                 setPage={setPage}
                 onLogoutClick={() => setShowLogout(true)}
@@ -189,6 +189,7 @@ export default function Dashboard({ user, onLogout }) {
             />
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <AppHeader user={user} />
                 {page === 'Device Management' ? (
                     <DeviceManagement devices={liveDevices} loading={liveLoading} onRefresh={fetchLiveDevices} />
                 ) : page === 'Geofence' ? (

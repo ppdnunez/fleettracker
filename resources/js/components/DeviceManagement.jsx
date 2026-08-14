@@ -43,13 +43,6 @@ const LinkSVG = () => (
 /* ── tiny components ───────────────────────────────────────── */
 const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: 5, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
 
-function Btn({ children, primary, onClick }) {
-    return (
-        <button onClick={onClick} style={{ padding: '6px 13px', borderRadius: 6, border: primary ? 'none' : '1px solid #d1d5db', background: primary ? '#3b82f6' : '#fff', color: primary ? '#fff' : '#374151', fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: primary ? 600 : 400 }}>
-            {children}
-        </button>
-    );
-}
 /* ── table styles ──────────────────────────────────────────── */
 const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#374151', borderBottom: '2px solid #e5e7eb', whiteSpace: 'nowrap', background: '#f9fafb' };
 const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, borderBottom: '1px solid #f1f5f9' };
@@ -104,7 +97,6 @@ export default function DeviceManagement({ devices, loading, onRefresh }) {
                     <ImportSVG />Import device
                 </button>
                 <div style={{ flex: 1 }} />
-                <Btn>Export</Btn>
             </div>
 
             {/* Table */}

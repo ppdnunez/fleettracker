@@ -25,6 +25,47 @@ export const api = {
     updateFleetDriver:  (id, data) => axios.put(`/api/drivers/${id}`, data),
     deleteFleetDriver:  (id)       => axios.delete(`/api/drivers/${id}`),
 
+    // Work-zone rules — the local geofence module (Vehicle Track > Work-zone Rules).
+    // Distinct from getGeofences() below, which reads Traccar's own geofences: those are what the
+    // Geo Fence report and the device Connections modal key off. Work-zones are local because each
+    // device link carries an alert direction Traccar cannot store.
+    getWorkZones:              ()              => axios.get('/api/geofences'),
+    createWorkZone:            (data)          => axios.post('/api/geofences', data),
+    updateWorkZone:            (id, data)      => axios.put(`/api/geofences/${id}`, data),
+    deleteWorkZone:            (id)            => axios.delete(`/api/geofences/${id}`),
+    linkWorkZoneDevice:        (id, imei, dir) => axios.post(`/api/geofences/${id}/devices`, { imei, alert_direction: dir || 'both' }),
+    unlinkWorkZoneDevice:      (id, imei)      => axios.delete(`/api/geofences/${id}/devices/${imei}`),
+    setWorkZoneDeviceDirection:(id, imei, dir) => axios.put(`/api/geofences/${id}/devices/${imei}`, { alert_direction: dir }),
+
+    // Vehicle registry, its per-IMEI settings, and driver assignment.
+    getVehicles:        ()          => axios.get('/api/vehicles'),
+    createVehicle:      (data)      => axios.post('/api/vehicles', data),
+    updateVehicle:      (id, data)  => axios.put(`/api/vehicles/${id}`, data),
+    deleteVehicle:      (id)        => axios.delete(`/api/vehicles/${id}`),
+    getVehicleSettings: ()          => axios.get('/api/vehicle-settings'),
+    getVehicleSetting:  (imei)      => axios.get(`/api/vehicle-settings/${imei}`),
+    setVehicleSetting:  (imei, data)=> axios.put(`/api/vehicle-settings/${imei}`, data),
+    getVehicleDrivers:  (imei)      => axios.get(`/api/vehicle-drivers/${imei}`),
+    setVehicleDrivers:  (imei, ids) => axios.put(`/api/vehicle-drivers/${imei}`, { driverIds: ids }),
+
+    // Face enrolment. Every mutating call relays an EVENTSET command to the device via Traccar;
+    // results come back later on the device webhooks, so an OK here means "accepted", not "done".
+    getDriverFaces:      (params)        => axios.get('/api/face', { params }),
+    enrollFace:          (driverId, imei)=> axios.post('/api/face/enroll', { driver_id: driverId, imei }),
+    captureFace:         (formData)      => axios.post('/api/face/capture', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    downloadFaceBatch:   (imei, ids)     => axios.post('/api/face/download', { imei, driver_ids: ids }),
+    fetchFacePhoto:      (driverId, imei)=> axios.post('/api/face/fetch-photo', { driver_id: driverId, imei }),
+    testFaceRecognition: (imei)          => axios.post('/api/face/test', { imei }),
+    checkFaceRoster:     (imei)          => axios.post('/api/face/roster', { imei }),
+    setFaceUploadUrl:    (imei, url)     => axios.post('/api/face/upload-url', { imei, url }),
+    deleteFace:          (driverId, imei)=> axios.delete('/api/face', { data: { driver_id: driverId, imei } }),
+    getFaceImportLogs:   (params)        => axios.get('/api/face/import-logs', { params }),
+
+    getVehicleMaintenances:   ()         => axios.get('/api/vehicle-maintenances'),
+    createVehicleMaintenance: (data)     => axios.post('/api/vehicle-maintenances', data),
+    updateVehicleMaintenance: (id, data) => axios.put(`/api/vehicle-maintenances/${id}`, data),
+    deleteVehicleMaintenance: (id)       => axios.delete(`/api/vehicle-maintenances/${id}`),
+
     getTraccarDevices:    ()             => axios.get('/api/traccar/devices'),
     createTraccarDevice:  (data)         => axios.post('/api/traccar/devices', data),
     updateTraccarDevice:  (id, data)     => axios.put(`/api/traccar/devices/${id}`, data),

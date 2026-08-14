@@ -12,7 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // The JC171 posts to these with a shared-secret signature, not a session — it has no
+        // CSRF token to send. FaceImportService verifies the signature instead.
+        $middleware->validateCsrfTokens(except: [
+            'img/uploads/face/upload',
+            'img/uploads/face/dowloadCallback',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -73,7 +73,6 @@ function FilterBar({ children, onSearch }) {
             {children}
             <button onClick={onSearch} style={{ padding: '7px 22px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
             <button style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
-            <button style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Export</button>
         </div>
     );
 }
@@ -1503,7 +1502,7 @@ function TrackDetails() {
 /* ══════════════════════════════════════════════════════════════ */
 /*  REPLAY                                                        */
 /* ══════════════════════════════════════════════════════════════ */
-const REPLAY_DEFAULT_CENTER = [14.5995, 120.9842];
+const REPLAY_DEFAULT_CENTER = [-9.4438, 147.1803]; // Port Moresby
 const PLAYBACK_RATES = [
     { label: '1x', ms: 1000 },
     { label: '2x', ms: 500 },

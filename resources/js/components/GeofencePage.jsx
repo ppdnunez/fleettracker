@@ -5,7 +5,12 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import { api } from '../api.js';
 
-const CENTER = [14.5995, 120.9842];
+const CENTER = [-9.4438, 147.1803]; // Port Moresby
+const ALERT_DIRECTIONS = [
+    { value: 'enter', label: 'Enter only' },
+    { value: 'exit',  label: 'Exit only' },
+    { value: 'both',  label: 'Both' },
+];
 const SHAPE_STYLE = { color: '#3b82f6', weight: 2, fillOpacity: 0.15 };
 const SHAPE_STYLE_SELECTED = { color: '#f59e0b', weight: 3, fillOpacity: 0.25 };
 
@@ -106,7 +111,8 @@ function DrawLayer({ geofences, selectedId, editingId, onCreate, onEditSave, onE
             const style = g.id === selectedId ? SHAPE_STYLE_SELECTED : SHAPE_STYLE;
             const layer = shapeToLayer(shape, style);
             if (!layer) return;
-            layer.bindTooltip(g.name);
+            // Permanent, centred label so every zone is identifiable without hovering.
+            layer.bindTooltip(g.name, { permanent: true, direction: 'center', className: 'geofence-label' });
             layer.on('click', () => { if (deleteModeRef.current) onDeleteShape(g.id); });
             layer.addTo(groupRef.current);
             layersById.current[g.id] = layer;
@@ -205,6 +211,138 @@ function DrawLayer({ geofences, selectedId, editingId, onCreate, onEditSave, onE
     );
 }
 
+/* Free-text place lookup so a zone can be drawn somewhere by name rather than by panning.
+   Uses OpenStreetMap's Nominatim, the same service behind the map tiles. Lives inside the
+   MapContainer so it can drive the map directly. */
+function LocationSearch() {
+    const map = useMap();
+    const [query, setQuery]     = useState('');
+    const [results, setResults] = useState([]);
+    const [busy, setBusy]       = useState(false);
+    const [message, setMessage] = useState('');
+
+    const search = async (e) => {
+        e?.preventDefault();
+        const q = query.trim();
+        if (!q) return;
+        setBusy(true);
+        setMessage('');
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=0&q=${encodeURIComponent(q)}`
+            );
+            const found = await res.json();
+            setResults(found);
+            if (found.length === 0) setMessage('No match for that place.');
+        } catch (err) {
+            setMessage('Location search is unavailable right now.');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const goTo = (r) => {
+        map.flyTo([Number(r.lat), Number(r.lon)], 16, { duration: 1 });
+        setResults([]);
+        setQuery(r.display_name.split(',')[0]);
+    };
+
+    return (
+        <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 900, width: 320, maxWidth: '70%' }}>
+            <form onSubmit={search} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '6px 10px', boxShadow: '0 4px 14px rgba(0,0,0,0.12)' }}>
+                <input
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    placeholder="Search location…"
+                    style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#0f172a', background: 'transparent', minWidth: 0 }}
+                />
+                <button type="submit" disabled={busy} style={{ background: 'none', border: 'none', cursor: busy ? 'wait' : 'pointer', fontSize: 14, padding: 0 }}>🔍</button>
+            </form>
+
+            {(results.length > 0 || message) && (
+                <div style={{ marginTop: 4, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 8px 20px rgba(0,0,0,0.14)', overflow: 'hidden' }}>
+                    {message && <p style={{ margin: 0, padding: '9px 12px', fontSize: 12, color: '#94a3b8' }}>{message}</p>}
+                    {results.map(r => (
+                        <button key={r.place_id} onClick={() => goTo(r)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px', border: 'none', borderBottom: '1px solid #f8fafc', background: '#fff', cursor: 'pointer', fontSize: 12.5, color: '#374151' }}>
+                            {r.display_name}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* Which devices this zone applies to, and on which crossing direction each should alert. */
+function LinkedDevices({ zone, devices, onChanged }) {
+    const [busy, setBusy] = useState('');
+
+    if (!zone) {
+        return (
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #f1f5f9', fontSize: 12, color: '#94a3b8' }}>
+                Select a geofence to manage its linked devices.
+            </div>
+        );
+    }
+
+    const directionByImei = {};
+    (zone.links ?? []).forEach(l => { directionByImei[l.imei] = l.alert_direction; });
+
+    const toggle = async (imei, linked) => {
+        setBusy(imei);
+        try {
+            if (linked) await api.unlinkWorkZoneDevice(zone.id, imei);
+            else        await api.linkWorkZoneDevice(zone.id, imei, 'both');
+            await onChanged();
+        } finally {
+            setBusy('');
+        }
+    };
+
+    const setDirection = async (imei, direction) => {
+        setBusy(imei);
+        try {
+            await api.setWorkZoneDeviceDirection(zone.id, imei, direction);
+            await onChanged();
+        } finally {
+            setBusy('');
+        }
+    };
+
+    return (
+        <div style={{ borderTop: '1px solid #e2e8f0', padding: '10px 14px', maxHeight: 200, overflowY: 'auto', flexShrink: 0 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: '#64748b', marginBottom: 8, letterSpacing: 0.3 }}>
+                Linked Devices — {zone.name}
+            </div>
+            {devices.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>No devices available.</p>
+            ) : devices.map(d => {
+                const linked = directionByImei[d.uniqueId] !== undefined;
+                return (
+                    <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, opacity: busy === d.uniqueId ? 0.5 : 1 }}>
+                        <input
+                            type="checkbox"
+                            checked={linked}
+                            disabled={!!busy}
+                            onChange={() => toggle(d.uniqueId, linked)}
+                            style={{ accentColor: '#3b82f6', width: 15, height: 15, flexShrink: 0 }}
+                        />
+                        <span style={{ flex: 1, fontSize: 12.5, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                        <select
+                            value={directionByImei[d.uniqueId] ?? 'both'}
+                            disabled={!linked || !!busy}
+                            onChange={e => setDirection(d.uniqueId, e.target.value)}
+                            style={{ padding: '3px 6px', border: '1px solid #d1d5db', borderRadius: 5, fontSize: 12, background: linked ? '#fff' : '#f8fafc', cursor: linked ? 'pointer' : 'not-allowed', flexShrink: 0 }}
+                        >
+                            {ALERT_DIRECTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 /* ── Root export ───────────────────────────────────────────────── */
 export default function GeofencePage({ onBack }) {
     const [geofences, setGeofences] = useState([]);
@@ -212,11 +350,12 @@ export default function GeofencePage({ onBack }) {
     const [selectedId, setSelectedId] = useState(null);
     const [editingId,  setEditingId]  = useState(null);
     const [error,      setError]      = useState('');
+    const [devices,    setDevices]    = useState([]);
     const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
     const fetchGeofences = async () => {
         try {
-            const res = await api.getGeofences();
+            const res = await api.getWorkZones();
             setGeofences(res.data);
         } catch (e) {
             setError('Failed to load geofences.');
@@ -225,11 +364,15 @@ export default function GeofencePage({ onBack }) {
         }
     };
 
-    useEffect(() => { fetchGeofences(); }, []);
+    useEffect(() => {
+        fetchGeofences();
+        // Device list for the link panel; the zones still render if Traccar is unreachable.
+        api.getTraccarDevices().then(r => setDevices(r.data || [])).catch(() => {});
+    }, []);
 
     const handleCreate = async (name, area) => {
         try {
-            await api.createGeofence({ name, area });
+            await api.createWorkZone({ name, area });
             await fetchGeofences();
         } catch (e) {
             setError('Failed to create geofence.');
@@ -240,7 +383,7 @@ export default function GeofencePage({ onBack }) {
         const g = geofences.find(g => g.id === id);
         if (!g) return;
         try {
-            await api.updateGeofence(id, { name: g.name, area });
+            await api.updateWorkZone(id, { name: g.name, area });
             setEditingId(null);
             await fetchGeofences();
         } catch (e) {
@@ -250,7 +393,7 @@ export default function GeofencePage({ onBack }) {
 
     const handleDelete = async (id) => {
         try {
-            await api.deleteGeofence(id);
+            await api.deleteWorkZone(id);
             if (selectedId === id) setSelectedId(null);
             if (editingId === id) setEditingId(null);
             await fetchGeofences();
@@ -299,11 +442,18 @@ export default function GeofencePage({ onBack }) {
                         </div>
                     ))}
                 </div>
+
+                <LinkedDevices
+                    zone={geofences.find(g => g.id === selectedId) || null}
+                    devices={devices}
+                    onChanged={fetchGeofences}
+                />
             </div>
 
             {/* Map */}
             <div style={{ flex: 1, position: 'relative' }}>
                 <MapContainer center={CENTER} zoom={13} style={{ width: '100%', height: '100%' }} scrollWheelZoom zoomControl={false}>
+                    <LocationSearch />
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

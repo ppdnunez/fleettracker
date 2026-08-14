@@ -1,5 +1,18 @@
 import { useState } from 'react';
 
+/* ── palette (shares the cockpit dashboard's dark operations tokens) ── */
+const S = {
+    bg:         '#0c1322',
+    border:     '#1e2c46',
+    hairline:   '#16233c',
+    text:       '#eaeff9',
+    secondary:  '#9daec9',
+    muted:      '#5e7094',
+    accent:     '#4da8ff',
+    activeBg:   '#16233c',
+    danger:     '#ef4444',
+};
+
 /* ── SVG icons ─────────────────────────────────────────────── */
 const HamSVG = () => (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -39,6 +52,47 @@ const FleetSVG = () => (
         <rect x="13" y="1" width="3" height="14" rx="1"/>
     </svg>
 );
+/* Fleet sub-module icons */
+const PersonSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+        <circle cx="7.5" cy="4.6" r="2.9"/>
+        <path d="M1.8 13.6c0-2.8 2.4-4.6 5.7-4.6s5.7 1.8 5.7 4.6"/>
+    </svg>
+);
+const CarSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1.6 9.6V7.4l1.5-3.3a1.3 1.3 0 0 1 1.2-.8h6.4a1.3 1.3 0 0 1 1.2.8l1.5 3.3v2.2"/>
+        <path d="M1.6 9.6h11.8v2H1.6z"/>
+        <circle cx="4.2" cy="11.6" r="1.1"/>
+        <circle cx="10.8" cy="11.6" r="1.1"/>
+    </svg>
+);
+const PinSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <path d="M7.5 1.4c-2.6 0-4.7 2.1-4.7 4.7 0 3.3 4.7 7.5 4.7 7.5s4.7-4.2 4.7-7.5c0-2.6-2.1-4.7-4.7-4.7Z"/>
+        <circle cx="7.5" cy="6.1" r="1.8"/>
+    </svg>
+);
+const WrenchSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.2 1.7a3.9 3.9 0 0 0-4.4 5.1L1.7 10.9a1.4 1.4 0 0 0 2 2l4.1-4.1a3.9 3.9 0 0 0 5.1-4.4l-2.2 2.2-1.9-.5-.5-1.9Z"/>
+    </svg>
+);
+const FuelSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2.3 13.4V2.8a1.3 1.3 0 0 1 1.3-1.3h3.7a1.3 1.3 0 0 1 1.3 1.3v10.6"/>
+        <line x1="1.4" y1="13.4" x2="9.9" y2="13.4"/>
+        <line x1="3.9" y1="5.3" x2="7" y2="5.3"/>
+        <path d="M9.2 4.4l2.1 2.1v4.6a1.2 1.2 0 0 0 2.3 0V5.9l-1.9-1.9"/>
+    </svg>
+);
+const CheckInSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1.5" y="2.6" width="12" height="9.8" rx="1.5"/>
+        <line x1="1.5" y1="5.7" x2="13.5" y2="5.7"/>
+        <polyline points="5.2,9.1 6.7,10.5 9.8,7.5"/>
+    </svg>
+);
 const ChevSVG = ({ open }) => (
     <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
         style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s ease', flexShrink: 0 }}>
@@ -69,18 +123,20 @@ const EXPANDED_W = 220;
 const COLLAPSED_W = 62;
 
 function NavItem({ icon, label, active, onClick, depth = 0, open, sidebarOpen }) {
-    const bg   = active ? '#eff6ff' : 'transparent';
-    const col  = active ? '#1e40af' : '#4b5563';
     const left = 8 + depth * 14;
     return (
         <button onClick={onClick} title={!sidebarOpen ? label : undefined} style={{
             display: 'flex', alignItems: 'center', gap: 9, width: '100%', textAlign: 'left',
-            padding: sidebarOpen ? `8px ${8}px 8px ${left}px` : '8px 0',
+            padding: sidebarOpen ? `8px 8px 8px ${left}px` : '8px 0',
             justifyContent: sidebarOpen ? 'flex-start' : 'center',
-            borderRadius: 8, border: 'none', cursor: 'pointer', background: bg, color: col,
+            borderRadius: 8, border: 'none', cursor: 'pointer',
+            borderLeft: `3px solid ${active ? S.accent : 'transparent'}`,
+            background: active ? S.activeBg : 'transparent',
+            color: active ? S.text : S.secondary,
             fontSize: 13, fontWeight: active ? 700 : 500, marginBottom: 1, flexShrink: 0,
+            transition: 'background 0.14s, color 0.14s',
         }}>
-            {icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, opacity: active ? 1 : 0.75 }}>{icon}</span>}
+            {icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, color: active ? S.accent : S.muted }}>{icon}</span>}
             {sidebarOpen && <span style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{label}</span>}
             {sidebarOpen && open !== undefined && <ChevSVG open={open} />}
         </button>
@@ -94,7 +150,7 @@ function SubGroup({ label, items, openKey, activePage, onItemClick, onToggle, si
             <button onClick={onToggle} style={{
                 display: 'flex', alignItems: 'center', gap: 7, width: '100%', textAlign: 'left',
                 padding: '6px 8px 6px 22px', borderRadius: 7, border: 'none', cursor: 'pointer',
-                background: 'transparent', color: '#6b7280', fontSize: 12.5, fontWeight: 600, marginBottom: 1,
+                background: 'transparent', color: S.muted, fontSize: 12.5, fontWeight: 600, marginBottom: 1,
             }}>
                 <span style={{ flex: 1 }}>{label}</span>
                 <ChevSVG open={isOpen} />
@@ -109,17 +165,29 @@ function SubGroup({ label, items, openKey, activePage, onItemClick, onToggle, si
 
 /* ── main component ─────────────────────────────────────────── */
 const FLEET_ITEMS = [
-    { label: 'Dashboard',       key: 'Dashboard' },
-    { label: 'Driver',          key: 'Driver' },
-    { label: 'Vehicle',         key: 'Vehicle' },
-    { label: 'Vehicle Track',   key: 'VehicleTrack' },
-    { label: 'Fuel Management', key: 'FuelManagement' },
-    { label: 'Check in Record', key: 'CheckIn' },
-    { label: 'Route Planning',  key: 'RoutePlanning' },
-    { label: 'Fleet Report',    key: 'FleetReport' },
+    { label: 'Dashboard',           key: 'Dashboard',          icon: <DashSVG /> },
+    { label: 'Driver',              key: 'Driver',             icon: <PersonSVG /> },
+    { label: 'Vehicle',             key: 'Vehicle',            icon: <CarSVG /> },
+    { label: 'Vehicle Track',       key: 'VehicleTrack',       icon: <PinSVG /> },
+    { label: 'Vehicle Maintenance', key: 'VehicleMaintenance', icon: <WrenchSVG /> },
+    { label: 'Fuel Management',     key: 'FuelManagement',     icon: <FuelSVG /> },
+    { label: 'Check in Record',     key: 'CheckIn',            icon: <CheckInSVG /> },
 ];
 
-export default function Sidebar({ user, page, setPage, onLogoutClick, open, onToggle, reportSection, setReportSection, fleetPage, setFleetPage }) {
+const DEVICE_ITEMS = [
+    { label: 'Device Management',  page: 'Device Management',  icon: <DeviceSVG /> },
+    { label: 'Device Map & Video', page: 'Dashboard',          icon: <PinSVG /> },
+    { label: 'Geofence',           page: 'Geofence',           icon: <PinSVG /> },
+    { label: 'Notification',       page: 'Notification',       icon: <ReportSVG /> },
+    { label: 'Calendars',          page: 'Calendars',          icon: <CheckInSVG /> },
+    { label: 'Computed Attributes',page: 'Computed Attributes',icon: <DashSVG /> },
+    { label: 'Maintenance',        page: 'Maintenance',        icon: <WrenchSVG /> },
+    { label: 'Saved Commands',     page: 'Saved Commands',     icon: <ReportSVG /> },
+    { label: 'Groups',             page: 'Groups',             icon: <FleetSVG /> },
+    { label: 'Drivers',            page: 'Drivers',            icon: <PersonSVG /> },
+];
+
+export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, reportSection, setReportSection, fleetPage, setFleetPage }) {
     const [reportOpen,   setReportOpen]   = useState(false);
     const [deviceOpen,   setDeviceOpen]   = useState(false);
     const [fleetOpen,    setFleetOpen]    = useState(false);
@@ -134,47 +202,28 @@ export default function Sidebar({ user, page, setPage, onLogoutClick, open, onTo
     const reportTo = (section) => { setReportSection(section); setPage('Report'); };
 
     const isReportActive = page === 'Report';
-    const isDeviceActive = page === 'Device Management' || page === 'Dashboard' || page === 'Geofence' || page === 'Notification' || page === 'Calendars' || page === 'Computed Attributes' || page === 'Maintenance' || page === 'Saved Commands' || page === 'Groups' || page === 'Drivers';
+    const isDeviceActive = DEVICE_ITEMS.some(i => i.page === page);
     const isFleetActive  = page === 'Fleet';
 
     return (
         <aside style={{
-            width: W, minWidth: W, background: '#fff', borderRight: '1px solid #e2e8f0',
+            width: W, minWidth: W, background: S.bg, borderRight: `1px solid ${S.border}`,
             display: 'flex', flexDirection: 'column', zIndex: 10, flexShrink: 0, overflow: 'hidden',
             transition: `width 0.22s ease, min-width 0.22s ease`,
         }}>
             {/* Logo + hamburger */}
-            <div style={{ height: 58, display: 'flex', alignItems: 'center', borderBottom: '1px solid #f1f5f9', flexShrink: 0, paddingLeft: open ? 14 : 0, justifyContent: open ? 'flex-start' : 'center', gap: 10, overflow: 'hidden' }}>
+            <div style={{ height: 58, display: 'flex', alignItems: 'center', borderBottom: `1px solid ${S.border}`, flexShrink: 0, paddingLeft: open ? 14 : 0, justifyContent: open ? 'flex-start' : 'center', gap: 10, overflow: 'hidden' }}>
                 {open && (
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg,#1e40af,#3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>📡</div>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg,#14b8a6,#0d9488)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>📡</div>
                 )}
-                {open && <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', flex: 1 }}>FleetTrack</span>}
-                <button onClick={onToggle} title="Toggle sidebar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 6, flexShrink: 0 }}>
+                {open && <span style={{ fontSize: 14, fontWeight: 800, color: S.text, whiteSpace: 'nowrap', flex: 1 }}>FleetTrack</span>}
+                <button onClick={onToggle} title="Toggle sidebar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.secondary, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 6, flexShrink: 0 }}>
                     <HamSVG />
                 </button>
             </div>
 
-            {/* User info (only when expanded) */}
-            {open && (
-                <div style={{ padding: '10px 14px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                            {user.name[0]}
-                        </div>
-                        <div style={{ overflow: 'hidden' }}>
-                            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</p>
-                            <p style={{ margin: 0, fontSize: 10, color: '#94a3b8', textTransform: 'capitalize' }}>{user.role || 'Administrator'}</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Nav */}
             <nav style={{ flex: 1, padding: open ? '10px 8px' : '10px 6px', overflowY: 'auto', overflowX: 'hidden' }}>
-                {/* Dashboard */}
-                <NavItem icon={<DashSVG />} label="Dashboard" active={page === 'Dashboard' && !isReportActive}
-                    onClick={() => navTo('Dashboard')} sidebarOpen={open} />
-
                 {/* Report */}
                 <NavItem icon={<ReportSVG />} label="Report" active={isReportActive}
                     open={open ? reportOpen : undefined}
@@ -183,22 +232,18 @@ export default function Sidebar({ user, page, setPage, onLogoutClick, open, onTo
 
                 {open && reportOpen && (
                     <div style={{ marginLeft: 4 }}>
-                        {/* Device Statistics */}
                         <SubGroup label="Device Statistics" openKey={devStatOpen} onToggle={() => setDevStatOpen(o => !o)}
                             items={REPORT_DEVICE} activePage={isReportActive ? reportSection : null}
                             onItemClick={reportTo} sidebarOpen={open} />
 
-                        {/* Motion Statistics */}
                         <SubGroup label="Motion Statistics" openKey={motStatOpen} onToggle={() => setMotStatOpen(o => !o)}
                             items={REPORT_MOTION} activePage={isReportActive ? reportSection : null}
                             onItemClick={reportTo} sidebarOpen={open} />
 
-                        {/* State Statistics */}
                         <SubGroup label="State Statistics" openKey={stateStatOpen} onToggle={() => setStateStatOpen(o => !o)}
                             items={['Offline', 'Online']} activePage={isReportActive ? reportSection : null}
                             onItemClick={reportTo} sidebarOpen={open} />
 
-                        {/* Alert Statistics */}
                         <SubGroup label="Alert Statistics" openKey={alertOpen} onToggle={() => setAlertOpen(o => !o)}
                             items={REPORT_ALERT} activePage={isReportActive ? reportSection : null}
                             onItemClick={reportTo} sidebarOpen={open} />
@@ -213,36 +258,11 @@ export default function Sidebar({ user, page, setPage, onLogoutClick, open, onTo
 
                 {open && deviceOpen && (
                     <div style={{ marginLeft: 4 }}>
-                        <NavItem label="Device Management" depth={1} sidebarOpen={open}
-                            active={page === 'Device Management'}
-                            onClick={() => navTo('Device Management')} />
-                        <NavItem label="Device Map & Video" depth={1} sidebarOpen={open}
-                            active={page === 'Dashboard' && !isReportActive}
-                            onClick={() => navTo('Dashboard')} />
-                        <NavItem label="Geofence" depth={1} sidebarOpen={open}
-                            active={page === 'Geofence'}
-                            onClick={() => navTo('Geofence')} />
-                        <NavItem label="Notification" depth={1} sidebarOpen={open}
-                            active={page === 'Notification'}
-                            onClick={() => navTo('Notification')} />
-                        <NavItem label="Calendars" depth={1} sidebarOpen={open}
-                            active={page === 'Calendars'}
-                            onClick={() => navTo('Calendars')} />
-                        <NavItem label="Computed Attributes" depth={1} sidebarOpen={open}
-                            active={page === 'Computed Attributes'}
-                            onClick={() => navTo('Computed Attributes')} />
-                        <NavItem label="Maintenance" depth={1} sidebarOpen={open}
-                            active={page === 'Maintenance'}
-                            onClick={() => navTo('Maintenance')} />
-                        <NavItem label="Saved Commands" depth={1} sidebarOpen={open}
-                            active={page === 'Saved Commands'}
-                            onClick={() => navTo('Saved Commands')} />
-                        <NavItem label="Groups" depth={1} sidebarOpen={open}
-                            active={page === 'Groups'}
-                            onClick={() => navTo('Groups')} />
-                        <NavItem label="Drivers" depth={1} sidebarOpen={open}
-                            active={page === 'Drivers'}
-                            onClick={() => navTo('Drivers')} />
+                        {DEVICE_ITEMS.map(({ label, page: target, icon }) => (
+                            <NavItem key={label} icon={icon} label={label} depth={1} sidebarOpen={open}
+                                active={page === target && !isReportActive}
+                                onClick={() => navTo(target)} />
+                        ))}
                     </div>
                 )}
 
@@ -254,8 +274,8 @@ export default function Sidebar({ user, page, setPage, onLogoutClick, open, onTo
 
                 {open && fleetOpen && (
                     <div style={{ marginLeft: 4 }}>
-                        {FLEET_ITEMS.map(({ label, key }) => (
-                            <NavItem key={key} label={label} depth={1} sidebarOpen={open}
+                        {FLEET_ITEMS.map(({ label, key, icon }) => (
+                            <NavItem key={key} icon={icon} label={label} depth={1} sidebarOpen={open}
                                 active={isFleetActive && fleetPage === key}
                                 onClick={() => { navTo('Fleet'); setFleetPage(key); }} />
                         ))}
@@ -264,11 +284,11 @@ export default function Sidebar({ user, page, setPage, onLogoutClick, open, onTo
             </nav>
 
             {/* Sign out */}
-            <div style={{ padding: open ? '10px 8px' : '10px 6px', borderTop: '1px solid #f1f5f9', flexShrink: 0 }}>
+            <div style={{ padding: open ? '10px 8px' : '10px 6px', borderTop: `1px solid ${S.border}`, flexShrink: 0 }}>
                 <button onClick={onLogoutClick} title={!open ? 'Sign Out' : undefined} style={{
                     display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: open ? '9px 12px' : '9px 0',
                     justifyContent: open ? 'flex-start' : 'center',
-                    borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 600,
+                    borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: S.danger, fontSize: 13, fontWeight: 600,
                 }}>
                     <LogoutSVG />
                     {open && 'Sign Out'}
