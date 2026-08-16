@@ -96,9 +96,16 @@ trait UsesTraccarApi
      * Because the command is sent as the caller's own Traccar identity, a tenant can only
      * command devices Traccar already grants them — the multi-tenant boundary holds here too.
      *
+     * $viaSms switches Traccar to its text channel, which delivers the same string as an SMS to
+     * the device's stored phone number instead of down a live GPRS connection. That is the only
+     * way to reach a device that is asleep or out of data, and it is what the iButton and
+     * driving-behaviour panels use — those settings normally have to be applied to a parked
+     * vehicle. It needs two things Traccar will complain about if missing: a phone number on the
+     * device, and an SMS gateway configured on the Traccar server.
+     *
      * @return array{ok: bool, status: int, queued: bool, body: mixed, message: ?string}
      */
-    protected function sendTraccarCommand(string $imei, string $data): array
+    protected function sendTraccarCommand(string $imei, string $data, bool $viaSms = false): array
     {
         $deviceId = $this->traccarDeviceIdForImei($imei);
 
@@ -115,11 +122,14 @@ trait UsesTraccarApi
         try {
             $response = Http::withBasicAuth(...$this->traccarAuth())
                 ->timeout(20)
-                ->post("{$this->traccarBaseUrl()}/commands/send", [
-                    'deviceId'   => $deviceId,
-                    'type'       => 'custom',
-                    'attributes' => ['data' => $data],
-                ]);
+                ->post("{$this->traccarBaseUrl()}/commands/send", array_filter([
+                    'deviceId'    => $deviceId,
+                    'type'        => 'custom',
+                    'attributes'  => ['data' => $data],
+                    // Only sent when true: Traccar treats the key's presence as the switch, and an
+                    // explicit false on a server with no SMS gateway is still a valid GPRS send.
+                    'textChannel' => $viaSms ?: null,
+                ], fn ($value) => $value !== null));
         } catch (\Throwable $e) {
             return [
                 'ok'      => false,
@@ -130,15 +140,68 @@ trait UsesTraccarApi
             ];
         }
 
+        // Traccar answers a rejection with a plain-text stack trace; its first line carries the
+        // actual reason ("Phone number is missing", "SMS is not enabled"), which is exactly what
+        // an operator needs to see rather than a bare status code.
+        $reason = $response->successful() ? null : trim(strtok($response->body(), "\n") ?: '');
+
         return [
             'ok'      => $response->successful(),
             'status'  => $response->status(),
             'queued'  => $response->status() === 202,
-            'body'    => $response->json() ?? $response->body(),
+            // On failure this would otherwise be Traccar's entire Java stack trace — kilobytes of
+            // it, shipped to the browser on every rejected command. The first line is the reason;
+            // the rest is Jetty internals.
+            'body'    => $response->successful() ? ($response->json() ?? $response->body()) : $reason,
             'message' => $response->successful()
-                ? ($response->status() === 202 ? 'Queued — device is offline.' : 'Sent to device.')
-                : ('Traccar rejected the command (HTTP ' . $response->status() . ').'),
+                ? ($response->status() === 202
+                    ? ($viaSms ? 'Queued for SMS delivery.' : 'Queued — device is offline.')
+                    : ($viaSms ? 'Sent as SMS to the device.' : 'Sent to device.'))
+                : ('Traccar rejected the command (HTTP ' . $response->status() . ').'
+                    . ($reason !== '' ? " {$reason}" : '')),
             'command' => $data,
+            'channel' => $viaSms ? 'sms' : 'gprs',
+        ];
+    }
+
+    /**
+     * Sends over the data connection and falls back to SMS if Traccar refuses it.
+     *
+     * The fallback fires only on an outright rejection — Traccar answering 4xx/5xx, or being
+     * unreachable. A 202 is deliberately *not* treated as failure: it means Traccar accepted the
+     * command and queued it for a device that is currently offline, and it will be delivered on
+     * reconnect. Sending an SMS as well would apply the same setting twice, once now and once
+     * whenever the vehicle powers up, and Traccar exposes no way to cancel the queued copy. When
+     * a setting is needed on a parked device right now, that is what the explicit SMS option is
+     * for — the caller decides, rather than this quietly double-sending.
+     *
+     * @return array the final attempt, plus `attempts` describing each one in order
+     */
+    protected function sendTraccarCommandWithSmsFallback(string $imei, string $data): array
+    {
+        $viaData = $this->sendTraccarCommand($imei, $data, viaSms: false);
+
+        $summarise = fn (array $r) => [
+            'channel' => $r['channel'] ?? null,
+            'ok'      => $r['ok'],
+            'status'  => $r['status'],
+            'message' => $r['message'],
+        ];
+
+        // A device the caller cannot see will not become visible over SMS either, so there is
+        // nothing to retry — the failure is about permissions, not about the channel.
+        if ($viaData['ok'] || $viaData['status'] === 404) {
+            return [...$viaData, 'attempts' => [$summarise($viaData)]];
+        }
+
+        $viaSms = $this->sendTraccarCommand($imei, $data, viaSms: true);
+
+        return [
+            ...$viaSms,
+            'message'  => $viaSms['ok']
+                ? "Data connection failed, sent by SMS instead. {$viaSms['message']}"
+                : "Both channels failed. Data: {$viaData['message']} SMS: {$viaSms['message']}",
+            'attempts' => [$summarise($viaData), $summarise($viaSms)],
         ];
     }
 }

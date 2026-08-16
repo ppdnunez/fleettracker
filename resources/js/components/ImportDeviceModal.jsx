@@ -46,15 +46,15 @@ const CATEGORIES = [
 ];
 
 /* ── shared field primitives ────────────────────────────────── */
-const inputStyle  = { width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', color: '#111827' };
-const selectStyle = { ...inputStyle, background: '#fff', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%23999\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' };
+const inputStyle  = { width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #24344f', borderRadius: 8, fontSize: 14, outline: 'none', color: '#eaeff9' };
+const selectStyle = { ...inputStyle, background: '#111c33', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%23999\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' };
 
 function Field({ label, hint, children }) {
     return (
         <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>{label}</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#9daec9', marginBottom: 5 }}>{label}</label>
             {children}
-            {hint && <p style={{ margin: '5px 2px 0', fontSize: 11.5, color: '#9ca3af', lineHeight: 1.4 }}>{hint}</p>}
+            {hint && <p style={{ margin: '5px 2px 0', fontSize: 11.5, color: '#5e7094', lineHeight: 1.4 }}>{hint}</p>}
         </div>
     );
 }
@@ -70,9 +70,9 @@ function ChevronSVG({ open }) {
 
 function Section({ title, open, onToggle, children }) {
     return (
-        <div style={{ borderBottom: '8px solid #f1f5f9' }}>
+        <div style={{ borderBottom: '8px solid #1e2c46' }}>
             <button onClick={onToggle} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', background: 'none', border: 'none', cursor: 'pointer' }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{title}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#eaeff9' }}>{title}</span>
                 <ChevronSVG open={open} />
             </button>
             {open && <div style={{ padding: '0 24px 18px' }}>{children}</div>}
@@ -108,16 +108,16 @@ function AddAttributeDialog({ existingKeys, onAdd, onCancel }) {
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1300 }}>
-            <div style={{ background: '#fff', borderRadius: 10, width: 340, padding: '18px 20px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ background: '#111c33', borderRadius: 10, width: 340, padding: '18px 20px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
                 <div style={{ position: 'relative', marginBottom: 14 }}>
                     <label style={{ display: 'block', fontSize: 11.5, color: '#3b82f6', fontWeight: 600, marginBottom: 4 }}>Attribute</label>
                     <input autoFocus value={query} onChange={e => { setQuery(e.target.value); setPicked(null); }}
                         style={{ ...inputStyle, borderColor: '#3b82f6' }} />
                     {query && !picked && matches.length > 0 && (
-                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 10 }}>
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#111c33', border: '1px solid #1e2c46', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 10 }}>
                             {matches.map(d => (
                                 <div key={d.key} onMouseDown={e => e.preventDefault()} onClick={() => pick(d)}
-                                    style={{ padding: '8px 14px', fontSize: 13, color: '#374151', cursor: 'pointer' }}>
+                                    style={{ padding: '8px 14px', fontSize: 13, color: '#cfdcf0', cursor: 'pointer' }}>
                                     {d.label}
                                 </div>
                             ))}
@@ -126,7 +126,7 @@ function AddAttributeDialog({ existingKeys, onAdd, onCancel }) {
                 </div>
 
                 <div style={{ marginBottom: 18 }}>
-                    <label style={{ display: 'block', fontSize: 11.5, color: '#6b7280', fontWeight: 600, marginBottom: 4 }}>Type</label>
+                    <label style={{ display: 'block', fontSize: 11.5, color: '#9daec9', fontWeight: 600, marginBottom: 4 }}>Type</label>
                     <select value={type} onChange={e => setType(e.target.value)} style={selectStyle}>
                         <option value="string">String</option>
                         <option value="number">Number</option>
@@ -135,9 +135,9 @@ function AddAttributeDialog({ existingKeys, onAdd, onCancel }) {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 18 }}>
-                    <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>CANCEL</button>
+                    <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>CANCEL</button>
                     <button onClick={() => picked && onAdd({ ...picked, type })} disabled={!picked}
-                        style={{ background: 'none', border: 'none', color: picked ? '#3b82f6' : '#cbd5e1', fontSize: 13, fontWeight: 700, cursor: picked ? 'pointer' : 'not-allowed' }}>
+                        style={{ background: 'none', border: 'none', color: picked ? '#3b82f6' : '#24344f', fontSize: 13, fontWeight: 700, cursor: picked ? 'pointer' : 'not-allowed' }}>
                         ADD
                     </button>
                 </div>
@@ -148,7 +148,7 @@ function AddAttributeDialog({ existingKeys, onAdd, onCancel }) {
 
 /* ── main modal ──────────────────────────────────────────────── */
 export default function ImportDeviceModal({ onClose, onCreated }) {
-    const [openSections, setOpenSections] = useState({ required: true, extra: true, sensors: true, attributes: true });
+    const [openSections, setOpenSections] = useState({ required: true, extra: true, attributes: true });
     const toggle = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
 
     const [groups,    setGroups]    = useState([]);
@@ -160,7 +160,6 @@ export default function ImportDeviceModal({ onClose, onCreated }) {
         category: 'default', calendarId: '',
         expirationTime: '', disabled: false,
     });
-    const [sensors, setSensors] = useState({ fuel: false, temperature: false });
     const [attributes,   setAttributes]   = useState([]); // [{ key, label, type, value }]
     const [showAddAttr,  setShowAddAttr]  = useState(false);
     const [error,        setError]        = useState('');
@@ -191,15 +190,6 @@ export default function ImportDeviceModal({ onClose, onCreated }) {
             const attrObj = {};
             attributes.forEach(a => { attrObj[a.key] = a.type === 'number' ? Number(a.value) : a.value; });
 
-            if (sensors.fuel) {
-                attrObj.fuelSensor = true;
-                if (attrObj.fuelDropThreshold === undefined)     attrObj.fuelDropThreshold = 15;
-                if (attrObj.fuelIncreaseThreshold === undefined) attrObj.fuelIncreaseThreshold = 15;
-            }
-            if (sensors.temperature) {
-                attrObj.temperatureSensor = true;
-            }
-
             await api.createTraccarDevice({
                 name:           form.name.trim(),
                 uniqueId:       form.identifier.trim(),
@@ -225,11 +215,11 @@ export default function ImportDeviceModal({ onClose, onCreated }) {
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
-            <div style={{ background: '#fff', borderRadius: 10, width: 480, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ background: '#111c33', borderRadius: 10, width: 480, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
                 {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Register Device</h3>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 22, lineHeight: 1 }}>×</button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #1e2c46', flexShrink: 0 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#eaeff9' }}>Register Device</h3>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 22, lineHeight: 1 }}>×</button>
                 </div>
 
                 {/* Body */}
@@ -273,23 +263,9 @@ export default function ImportDeviceModal({ onClose, onCreated }) {
                         <Field label="Expiration" hint="Leave blank for no expiration. Max year 2038 (MySQL TIMESTAMP limit).">
                             <input type="date" value={form.expirationTime} max="2038-01-19" onChange={e => set('expirationTime', e.target.value)} style={inputStyle} />
                         </Field>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#cfdcf0' }}>
                             <input type="checkbox" checked={form.disabled} onChange={e => set('disabled', e.target.checked)} style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
                             Disabled
-                        </label>
-                    </Section>
-
-                    <Section title="Sensors" open={openSections.sensors} onToggle={() => toggle('sensors')}>
-                        <p style={{ margin: '0 0 12px', fontSize: 11.5, color: '#9ca3af', lineHeight: 1.4 }}>
-                            Marks this device as sensor-equipped so it's included in the matching reports under Report → Device Statistics.
-                        </p>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151', marginBottom: 10 }}>
-                            <input type="checkbox" checked={sensors.fuel} onChange={e => setSensors(s => ({ ...s, fuel: e.target.checked }))} style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
-                            Fuel Consumption Sensor — ready for Fuel Consumption &amp; Current Fuel Value reports
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#374151' }}>
-                            <input type="checkbox" checked={sensors.temperature} onChange={e => setSensors(s => ({ ...s, temperature: e.target.checked }))} style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
-                            Temperature Sensor — ready for Temperature &amp; Humidity report
                         </label>
                     </Section>
 
@@ -304,16 +280,16 @@ export default function ImportDeviceModal({ onClose, onCreated }) {
                                 <button onClick={() => removeAttribute(a.key)} title="Remove" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 18, marginTop: 22 }}>×</button>
                             </div>
                         ))}
-                        <button onClick={() => setShowAddAttr(true)} style={{ width: '100%', padding: '9px 0', border: '1.5px solid #3b82f6', borderRadius: 8, background: '#fff', color: '#3b82f6', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        <button onClick={() => setShowAddAttr(true)} style={{ width: '100%', padding: '9px 0', border: '1.5px solid #3b82f6', borderRadius: 8, background: '#111c33', color: '#3b82f6', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                             + ADD
                         </button>
                     </Section>
                 </div>
 
                 {/* Footer */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 24px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 24px', borderTop: '1px solid #1e2c46', flexShrink: 0 }}>
                     <span style={{ flex: 1, fontSize: 12.5, color: '#ef4444' }}>{error}</span>
-                    <button onClick={onClose} style={{ padding: '8px 22px', border: '1px solid #d1d5db', borderRadius: 8, background: '#fff', fontSize: 13, cursor: 'pointer', color: '#374151' }}>Cancel</button>
+                    <button onClick={onClose} style={{ padding: '8px 22px', border: '1px solid #24344f', borderRadius: 8, background: '#111c33', fontSize: 13, cursor: 'pointer', color: '#cfdcf0' }}>Cancel</button>
                     <button onClick={handleSubmit} disabled={saving} style={{ padding: '8px 22px', border: 'none', borderRadius: 8, background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
                         {saving ? 'Registering…' : 'Register'}
                     </button>

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\FaceImportLog;
+use App\Models\Vehicle;
 use App\Services\FaceImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -59,6 +61,14 @@ class FaceImportController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = FaceImportLog::orderByDesc('created_at');
+
+        // Written by the public webhooks, so these rows carry no owner — only the IMEI the device
+        // announced. A tenant therefore sees the log lines for its own registered vehicles, which
+        // is what makes this useful for diagnosing a device without exposing anyone else's fleet.
+        // Vehicle::pluck is scoped; platform administrators skip the restriction entirely.
+        if (!Auth::user()?->isPlatformAdmin()) {
+            $query->whereIn('imei', Vehicle::pluck('imei'));
+        }
 
         if ($imei = $request->query('imei')) {
             $query->where('imei', $imei);

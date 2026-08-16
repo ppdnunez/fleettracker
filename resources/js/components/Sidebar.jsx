@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { REPORT_GROUPS, groupForSection } from './reportSections.js';
 
 /* ── palette (shares the cockpit dashboard's dark operations tokens) ── */
 const S = {
@@ -93,6 +94,33 @@ const CheckInSVG = () => (
         <polyline points="5.2,9.1 6.7,10.5 9.8,7.5"/>
     </svg>
 );
+/* Settings group + its two new sub-modules */
+const SettingsSVG = () => (
+    <svg width="17" height="17" viewBox="0 0 17 17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="8.5" cy="8.5" r="2.4"/>
+        <path d="M13.6 10.4a1.2 1.2 0 0 0 .24 1.32l.05.05a1.4 1.4 0 1 1-2 2l-.04-.05a1.2 1.2 0 0 0-1.33-.24 1.2 1.2 0 0 0-.73 1.1v.13a1.4 1.4 0 1 1-2.8 0v-.07a1.2 1.2 0 0 0-.78-1.1 1.2 1.2 0 0 0-1.33.24l-.04.05a1.4 1.4 0 1 1-2-2l.05-.04a1.2 1.2 0 0 0 .24-1.33 1.2 1.2 0 0 0-1.1-.73H1.9a1.4 1.4 0 1 1 0-2.8h.07a1.2 1.2 0 0 0 1.1-.78 1.2 1.2 0 0 0-.24-1.33l-.05-.04a1.4 1.4 0 1 1 2-2l.04.05a1.2 1.2 0 0 0 1.33.24h.06a1.2 1.2 0 0 0 .73-1.1V1.9a1.4 1.4 0 1 1 2.8 0v.07a1.2 1.2 0 0 0 .73 1.1 1.2 1.2 0 0 0 1.33-.24l.04-.05a1.4 1.4 0 1 1 2 2l-.05.04a1.2 1.2 0 0 0-.24 1.33v.06a1.2 1.2 0 0 0 1.1.73h.13a1.4 1.4 0 1 1 0 2.8h-.07a1.2 1.2 0 0 0-1.1.73Z"/>
+    </svg>
+);
+const SimSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+        <path d="M2.6 1.9h6.1l3.7 3.6v7.6H2.6z"/>
+        <rect x="5" y="7.4" width="5" height="3.6" rx="0.8"/>
+    </svg>
+);
+const CompanySVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1.6" y="4.4" width="7" height="9" rx="1"/>
+        <path d="M8.6 7.4h4.8v6h-4.8"/>
+        <line x1="3.8" y1="7" x2="6.4" y2="7"/>
+        <line x1="3.8" y1="9.6" x2="6.4" y2="9.6"/>
+    </svg>
+);
+const MailSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1.4" y="3" width="12.2" height="9" rx="1.6"/>
+        <polyline points="1.9,4 7.5,8.2 13.1,4"/>
+    </svg>
+);
 const ChevSVG = ({ open }) => (
     <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
         style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s ease', flexShrink: 0 }}>
@@ -107,16 +135,23 @@ const LogoutSVG = () => (
     </svg>
 );
 
+const AlertSVG = () => (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 2.2 14.4 13H1.6L8 2.2Z"/>
+        <line x1="8" y1="6.6" x2="8" y2="9.4"/>
+        <circle cx="8" cy="11.2" r="0.7" fill="currentColor" stroke="none"/>
+    </svg>
+);
+
 /* ── nav tree structure ─────────────────────────────────────── */
-const REPORT_DEVICE = [
-    'Internal Battery','External Battery','Fuel Consumption','Current fuel Value',
-    'Temperature & Humidity','Driver Behavior','Positioning & Battery',
-    'Travel statistics (OBD)',
-];
-const REPORT_MOTION = [
-    'Track Details','Replay','Mileage','Trips','Overspeed','Parking','Idling','Ignition','Geo Fence',
-];
-const REPORT_ALERT = ['Alert Details'];
+/* The reports themselves live in reportSections.js, shared with ReportPage, which renders one tab
+   per report. Only the icon is a sidebar concern, so only the icon is chosen here. */
+const REPORT_ICONS = {
+    'Device Statistics': <DeviceSVG />,
+    'Motion Statistics': <CarSVG />,
+    'State Statistics':  <DashSVG />,
+    'Alert Statistics':  <AlertSVG />,
+};
 
 /* ── helpers ─────────────────────────────────────────────────── */
 const EXPANDED_W = 220;
@@ -130,8 +165,10 @@ function NavItem({ icon, label, active, onClick, depth = 0, open, sidebarOpen })
             padding: sidebarOpen ? `8px 8px 8px ${left}px` : '8px 0',
             justifyContent: sidebarOpen ? 'flex-start' : 'center',
             borderRadius: 8, border: 'none', cursor: 'pointer',
+            // The active item is marked by the accent bar and the brighter type alone. A filled
+            // block behind it read as a button rather than as "you are here".
             borderLeft: `3px solid ${active ? S.accent : 'transparent'}`,
-            background: active ? S.activeBg : 'transparent',
+            background: 'transparent',
             color: active ? S.text : S.secondary,
             fontSize: 13, fontWeight: active ? 700 : 500, marginBottom: 1, flexShrink: 0,
             transition: 'background 0.14s, color 0.14s',
@@ -143,26 +180,6 @@ function NavItem({ icon, label, active, onClick, depth = 0, open, sidebarOpen })
     );
 }
 
-function SubGroup({ label, items, openKey, activePage, onItemClick, onToggle, sidebarOpen }) {
-    const isOpen = openKey;
-    return (
-        <>
-            <button onClick={onToggle} style={{
-                display: 'flex', alignItems: 'center', gap: 7, width: '100%', textAlign: 'left',
-                padding: '6px 8px 6px 22px', borderRadius: 7, border: 'none', cursor: 'pointer',
-                background: 'transparent', color: S.muted, fontSize: 12.5, fontWeight: 600, marginBottom: 1,
-            }}>
-                <span style={{ flex: 1 }}>{label}</span>
-                <ChevSVG open={isOpen} />
-            </button>
-            {isOpen && items.map(item => (
-                <NavItem key={item} label={item} depth={2} sidebarOpen={sidebarOpen}
-                    active={activePage === item} onClick={() => onItemClick(item)} />
-            ))}
-        </>
-    );
-}
-
 /* ── main component ─────────────────────────────────────────── */
 const FLEET_ITEMS = [
     { label: 'Dashboard',           key: 'Dashboard',          icon: <DashSVG /> },
@@ -171,39 +188,53 @@ const FLEET_ITEMS = [
     { label: 'Vehicle Track',       key: 'VehicleTrack',       icon: <PinSVG /> },
     { label: 'Vehicle Maintenance', key: 'VehicleMaintenance', icon: <WrenchSVG /> },
     { label: 'Fuel Management',     key: 'FuelManagement',     icon: <FuelSVG /> },
-    { label: 'Check in Record',     key: 'CheckIn',            icon: <CheckInSVG /> },
 ];
 
-const DEVICE_ITEMS = [
-    { label: 'Device Management',  page: 'Device Management',  icon: <DeviceSVG /> },
-    { label: 'Device Map & Video', page: 'Dashboard',          icon: <PinSVG /> },
-    { label: 'Geofence',           page: 'Geofence',           icon: <PinSVG /> },
-    { label: 'Notification',       page: 'Notification',       icon: <ReportSVG /> },
-    { label: 'Calendars',          page: 'Calendars',          icon: <CheckInSVG /> },
-    { label: 'Computed Attributes',page: 'Computed Attributes',icon: <DashSVG /> },
-    { label: 'Maintenance',        page: 'Maintenance',        icon: <WrenchSVG /> },
-    { label: 'Saved Commands',     page: 'Saved Commands',     icon: <ReportSVG /> },
-    { label: 'Groups',             page: 'Groups',             icon: <FleetSVG /> },
-    { label: 'Drivers',            page: 'Drivers',            icon: <PersonSVG /> },
-];
+/* Device and platform configuration. `hidden` keeps an entry out of the nav without unrouting it:
+   Dashboard.jsx still renders these pages, so anything already pointing at one (a bookmark, a deep
+   link) keeps working. Drop the flag to bring an item back.
 
-export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, reportSection, setReportSection, fleetPage, setFleetPage }) {
+   `adminOnly` is a different thing: it hides an entry from anyone who cannot use it. It is a
+   convenience, not the control — the API refuses these calls on its own (platform.admin
+   middleware, and CompanyUserController's per-request check). */
+const SETTINGS_ITEMS = [
+    { label: 'Companies & Users',   page: 'Companies',           icon: <CompanySVG />, adminOnly: true },
+    { label: 'Device Management',   page: 'Device Management',   icon: <DeviceSVG /> },
+    { label: 'Sim Data Management', page: 'Sim Data Management', icon: <SimSVG /> },
+    { label: 'Device Map & Video',  page: 'Dashboard',           icon: <PinSVG />,    hidden: true },
+    { label: 'Geofence',            page: 'Geofence',            icon: <PinSVG /> },
+    { label: 'Alert Recipients',    page: 'Alert Recipients',    icon: <MailSVG /> },
+    { label: 'Saved Commands',      page: 'Saved Commands',      icon: <ReportSVG />, hidden: true },
+    { label: 'Notification',        page: 'Notification',        icon: <ReportSVG />, hidden: true },
+    { label: 'Calendars',           page: 'Calendars',           icon: <CheckInSVG />,hidden: true },
+    { label: 'Computed Attributes', page: 'Computed Attributes', icon: <DashSVG />,   hidden: true },
+    { label: 'Maintenance',         page: 'Maintenance',         icon: <WrenchSVG />, hidden: true },
+    { label: 'Groups',              page: 'Groups',              icon: <FleetSVG />,  hidden: true },
+    { label: 'Drivers',             page: 'Drivers',             icon: <PersonSVG />, hidden: true },
+];
+export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, reportSection, setReportSection, fleetPage, setFleetPage, user }) {
+    // Platform administrators manage every company; a company's own administrator manages just
+    // its logins. Everyone else has no user administration to reach.
+    const canManageUsers = !!(user?.is_admin || user?.is_company_admin);
+    const visibleSettingsItems = SETTINGS_ITEMS.filter(i => !i.hidden && (!i.adminOnly || canManageUsers));
+
     const [reportOpen,   setReportOpen]   = useState(false);
-    const [deviceOpen,   setDeviceOpen]   = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const [fleetOpen,    setFleetOpen]    = useState(false);
-    const [devStatOpen,  setDevStatOpen]  = useState(false);
-    const [motStatOpen,  setMotStatOpen]  = useState(false);
-    const [stateStatOpen,setStateStatOpen]= useState(false);
-    const [alertOpen,    setAlertOpen]    = useState(false);
 
     const W = open ? EXPANDED_W : COLLAPSED_W;
 
     const navTo = (p) => { setPage(p); };
     const reportTo = (section) => { setReportSection(section); setPage('Report'); };
 
-    const isReportActive = page === 'Report';
-    const isDeviceActive = DEVICE_ITEMS.some(i => i.page === page);
-    const isFleetActive  = page === 'Fleet';
+    const isReportActive   = page === 'Report';
+    // Which statistics module the open report belongs to, so the module stays highlighted while the
+    // reader moves between its tabs.
+    const activeReportGroup = isReportActive ? groupForSection(reportSection) : null;
+    // Matches against the full list, hidden entries included, so landing on a hidden page still
+    // highlights its parent group rather than showing nothing as selected.
+    const isSettingsActive = SETTINGS_ITEMS.some(i => i.page === page);
+    const isFleetActive    = page === 'Fleet';
 
     return (
         <aside style={{
@@ -216,7 +247,7 @@ export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, 
                 {open && (
                     <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg,#14b8a6,#0d9488)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>📡</div>
                 )}
-                {open && <span style={{ fontSize: 14, fontWeight: 800, color: S.text, whiteSpace: 'nowrap', flex: 1 }}>FleetTrack</span>}
+                {open && <span style={{ fontSize: 14, fontWeight: 800, color: S.text, whiteSpace: 'nowrap', flex: 1 }}>Turprotrack</span>}
                 <button onClick={onToggle} title="Toggle sidebar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.secondary, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 6, flexShrink: 0 }}>
                     <HamSVG />
                 </button>
@@ -224,49 +255,7 @@ export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, 
 
             {/* Nav */}
             <nav style={{ flex: 1, padding: open ? '10px 8px' : '10px 6px', overflowY: 'auto', overflowX: 'hidden' }}>
-                {/* Report */}
-                <NavItem icon={<ReportSVG />} label="Report" active={isReportActive}
-                    open={open ? reportOpen : undefined}
-                    onClick={() => { if (open) setReportOpen(o => !o); else { setPage('Report'); } }}
-                    sidebarOpen={open} />
-
-                {open && reportOpen && (
-                    <div style={{ marginLeft: 4 }}>
-                        <SubGroup label="Device Statistics" openKey={devStatOpen} onToggle={() => setDevStatOpen(o => !o)}
-                            items={REPORT_DEVICE} activePage={isReportActive ? reportSection : null}
-                            onItemClick={reportTo} sidebarOpen={open} />
-
-                        <SubGroup label="Motion Statistics" openKey={motStatOpen} onToggle={() => setMotStatOpen(o => !o)}
-                            items={REPORT_MOTION} activePage={isReportActive ? reportSection : null}
-                            onItemClick={reportTo} sidebarOpen={open} />
-
-                        <SubGroup label="State Statistics" openKey={stateStatOpen} onToggle={() => setStateStatOpen(o => !o)}
-                            items={['Offline', 'Online']} activePage={isReportActive ? reportSection : null}
-                            onItemClick={reportTo} sidebarOpen={open} />
-
-                        <SubGroup label="Alert Statistics" openKey={alertOpen} onToggle={() => setAlertOpen(o => !o)}
-                            items={REPORT_ALERT} activePage={isReportActive ? reportSection : null}
-                            onItemClick={reportTo} sidebarOpen={open} />
-                    </div>
-                )}
-
-                {/* Device */}
-                <NavItem icon={<DeviceSVG />} label="Device" active={isDeviceActive && !isReportActive}
-                    open={open ? deviceOpen : undefined}
-                    onClick={() => { if (open) setDeviceOpen(o => !o); else navTo('Dashboard'); }}
-                    sidebarOpen={open} />
-
-                {open && deviceOpen && (
-                    <div style={{ marginLeft: 4 }}>
-                        {DEVICE_ITEMS.map(({ label, page: target, icon }) => (
-                            <NavItem key={label} icon={icon} label={label} depth={1} sidebarOpen={open}
-                                active={page === target && !isReportActive}
-                                onClick={() => navTo(target)} />
-                        ))}
-                    </div>
-                )}
-
-                {/* Fleet */}
+                {/* Fleet — the day-to-day operations, so it leads. */}
                 <NavItem icon={<FleetSVG />} label="Fleet" active={isFleetActive}
                     open={open ? fleetOpen : undefined}
                     onClick={() => { if (open) setFleetOpen(o => !o); else { navTo('Fleet'); } }}
@@ -278,6 +267,45 @@ export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, 
                             <NavItem key={key} icon={icon} label={label} depth={1} sidebarOpen={open}
                                 active={isFleetActive && fleetPage === key}
                                 onClick={() => { navTo('Fleet'); setFleetPage(key); }} />
+                        ))}
+                    </div>
+                )}
+
+                {/* Settings — device and platform configuration */}
+                <NavItem icon={<SettingsSVG />} label="Settings" active={isSettingsActive && !isReportActive}
+                    open={open ? settingsOpen : undefined}
+                    onClick={() => { if (open) setSettingsOpen(o => !o); else navTo('Dashboard'); }}
+                    sidebarOpen={open} />
+
+                {open && settingsOpen && (
+                    <div style={{ marginLeft: 4 }}>
+                        {visibleSettingsItems.map(({ label, page: target, icon }) => (
+                            <NavItem key={label} icon={icon} label={label} depth={1} sidebarOpen={open}
+                                active={page === target && !isReportActive}
+                                onClick={() => navTo(target)} />
+                        ))}
+                    </div>
+                )}
+
+                {/* Report */}
+                <NavItem icon={<ReportSVG />} label="Report" active={isReportActive}
+                    open={open ? reportOpen : undefined}
+                    onClick={() => { if (open) setReportOpen(o => !o); else { setPage('Report'); } }}
+                    sidebarOpen={open} />
+
+                {/* One entry per statistics module; the reports inside it are tabs on the page
+                    itself, so the nav stays one level deep instead of three. */}
+                {open && reportOpen && (
+                    <div style={{ marginLeft: 4 }}>
+                        {REPORT_GROUPS.map(group => (
+                            <NavItem key={group.label} icon={REPORT_ICONS[group.label]} label={group.label}
+                                depth={1} sidebarOpen={open}
+                                active={activeReportGroup?.label === group.label}
+                                // Re-clicking the module the reader is already in keeps their tab
+                                // rather than throwing them back to the first one.
+                                onClick={() => reportTo(
+                                    activeReportGroup?.label === group.label ? reportSection : group.sections[0]
+                                )} />
                         ))}
                     </div>
                 )}

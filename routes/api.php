@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AlertRecipientController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\TraccarController;
@@ -21,10 +24,34 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user',    [AuthController::class, 'me']);
 
+    // Tenancy administration. A company is one Traccar group + one Traccar user + however many
+    // app logins share it, so creating one provisions Traccar as well — platform admins only.
+    Route::middleware('platform.admin')->group(function () {
+        Route::get('/companies',                   [CompanyController::class, 'index']);
+        Route::post('/companies',                  [CompanyController::class, 'store']);
+        Route::put('/companies/{company}',         [CompanyController::class, 'update']);
+        Route::delete('/companies/{company}',      [CompanyController::class, 'destroy']);
+        Route::get('/companies/{company}/devices', [CompanyController::class, 'devices']);
+        Route::post('/companies/{company}/repair', [CompanyController::class, 'repair']);
+    });
+
+    // The logins inside a company are also manageable by that company's own client_admin, so
+    // these sit outside the middleware above and re-check the caller per request instead.
+    Route::get('/companies/{company}/users',           [CompanyUserController::class, 'index']);
+    Route::post('/companies/{company}/users',          [CompanyUserController::class, 'store']);
+    Route::put('/companies/{company}/users/{user}',    [CompanyUserController::class, 'update']);
+    Route::delete('/companies/{company}/users/{user}', [CompanyUserController::class, 'destroy']);
+
     Route::apiResource('devices', DeviceController::class);
     Route::apiResource('drivers', DriverController::class)->except(['show']);
     Route::apiResource('vehicle-maintenances', VehicleMaintenanceController::class)->except(['show']);
     Route::apiResource('vehicles', VehicleController::class)->except(['show']);
+
+    // Who gets emailed for each alert category. `channels` reports whether either half of the
+    // pipeline can actually deliver, and is declared before the resource so "channels" is not
+    // swallowed as an {alert_recipient} id.
+    Route::get('/alert-recipients/channels', [AlertRecipientController::class, 'channels']);
+    Route::apiResource('alert-recipients', AlertRecipientController::class)->except(['show']);
 
     // Work-zone rules. Local rather than Traccar-side because each device link carries an
     // alert direction that Traccar's geofence permissions cannot express.
@@ -70,7 +97,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/calendars',        [TraccarController::class, 'storeCalendar']);
         Route::put('/calendars/{id}',    [TraccarController::class, 'updateCalendar']);
         Route::delete('/calendars/{id}', [TraccarController::class, 'destroyCalendar']);
+        // Raw device text commands over Traccar's SMS channel — the iButton and driving-behaviour
+        // panels in Device Management. Declared before /devices/{id} so "sms-command" is not
+        // swallowed as a device id.
+        Route::post('/devices/sms-command', [TraccarController::class, 'sendTextCommand']);
+
         Route::get('/positions', [TraccarController::class, 'latestPositions']);
+        // A single historical fix by position id — where an event was raised. The SOS card reads
+        // its coordinates from here, since the websocket event carries only the id.
+        Route::get('/positions/{id}', [TraccarController::class, 'positionById'])->whereNumber('id');
         Route::get('/ws-token',  [TraccarController::class, 'wsToken']);
         Route::get('/reports/events',  [TraccarController::class, 'alertEvents']);
         Route::get('/reports/battery',          [TraccarController::class, 'internalBatteryReport']);

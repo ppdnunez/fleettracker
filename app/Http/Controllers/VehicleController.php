@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 
-// FleetTrack's own vehicle registry (Fleet -> Vehicle). A row binds a vehicle profile to a
+// Turprotrack's own vehicle registry (Fleet -> Vehicle). A row binds a vehicle profile to a
 // Traccar device by IMEI; configuration lives on VehicleSetting under the same key.
 class VehicleController extends Controller
 {

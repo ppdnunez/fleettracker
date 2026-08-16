@@ -75,6 +75,48 @@ class TraccarController extends Controller
         return response()->json($response->json(), $response->status());
     }
 
+    /**
+     * Sends a raw device text command, over Traccar's data connection or its SMS channel.
+     *
+     * Behind the iButton Configuration and Driving Behaviour Alerts panels.
+     *
+     * Three channels:
+     *   auto (default) — the data connection, retried over SMS only if Traccar rejects it outright
+     *   gprs           — data connection only; 200 when delivered live, 202 when queued for a
+     *                    device that is offline, to be delivered on reconnect
+     *   sms            — the device's stored phone number; needs that number and an SMS gateway
+     *                    on the Traccar server, and is the way to reach a device that has stopped
+     *                    connecting at all
+     *
+     * The command string is the device's own text protocol (e.g. "IBUTTON_SW,ON#") and is passed
+     * through untouched — the trailing '#' is part of the grammar, not a typo. Only devices the
+     * caller's Traccar identity can see are reachable, so the tenant boundary holds here too.
+     */
+    public function sendTextCommand(Request $request)
+    {
+        $data = $request->validate([
+            'imei'    => 'required|string|max:100',
+            // Space is allowed because a few device commands take a space-separated argument; the
+            // rest of the set is deliberately tight, since this string is handed to a device.
+            'command' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9,._:+\-# ]+$/'],
+            'channel' => 'nullable|in:auto,gprs,sms',
+        ], [
+            'command.regex' => 'That command contains characters the device protocol does not use.',
+        ]);
+
+        $channel = $data['channel'] ?? 'auto';
+
+        if ($channel === 'auto') {
+            return response()->json(
+                $this->sendTraccarCommandWithSmsFallback($data['imei'], $data['command'])
+            );
+        }
+
+        return response()->json(
+            $this->sendTraccarCommand($data['imei'], $data['command'], viaSms: $channel === 'sms')
+        );
+    }
+
     public function notifications()
     {
         $response = Http::withBasicAuth(...$this->traccarAuth())
@@ -694,9 +736,36 @@ class TraccarController extends Controller
         return response()->json($response->json(), $response->status());
     }
 
+    /**
+     * One position by its own Traccar id — the fix an event was raised at.
+     *
+     * The websocket pushes an event carrying a positionId but no coordinates, so anything that
+     * wants to say *where* something happened (the SOS card) has to read them back. Distinct from
+     * position(), which answers with a device's latest fix rather than a specific historical one.
+     *
+     * Asked for as the caller's own Traccar identity, so a position belonging to another tenant's
+     * device is refused by Traccar itself rather than filtered here.
+     */
+    public function positionById(int $id)
+    {
+        $response = Http::withBasicAuth(...$this->traccarAuth())
+            ->timeout(15)
+            ->get("{$this->traccarBaseUrl()}/positions", ['id' => $id]);
+
+        if (!$response->successful()) {
+            return response()->json(['message' => 'Position not available.'], $response->status());
+        }
+
+        $position = $response->json()[0] ?? null;
+
+        return $position
+            ? response()->json($position)
+            : response()->json(['message' => 'Position not found.'], 404);
+    }
+
     // Mints a short-lived Traccar bearer token for the browser to open Traccar's own websocket
     // (ws://.../api/socket?token=...) directly. This endpoint itself sits behind auth:sanctum
-    // like every other /api/traccar/* route, so only an authenticated FleetTrack user can reach
+    // like every other /api/traccar/* route, so only an authenticated Turprotrack user can reach
     // it; the Traccar admin password is never sent to or seen by the browser, only this scoped,
     // time-limited, revocable token (Traccar defaults it to ~7 days, irrelevant here since the
     // frontend re-mints a fresh one on every (re)connect).

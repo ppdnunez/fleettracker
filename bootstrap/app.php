@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'img/uploads/face/upload',
             'img/uploads/face/dowloadCallback',
         ]);
+
+        $middleware->alias([
+            'platform.admin' => \App\Http\Middleware\EnsurePlatformAdmin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

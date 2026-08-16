@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -9,9 +10,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Safety-sticker expiry deliberately does NOT live here: it is a property of the vehicle, not
  * the person, and lives on vehicle_settings (safety_sticker_expiry / sticker_notify_days_before
  * / sticker_notified_at). This model tracks only the driver's own credentials.
+ *
+ * Owned by the company that created it — see BelongsToClient.
  */
 class Driver extends Model
 {
+    use BelongsToClient;
+
     protected $fillable = [
         'badge_no',
         'name',

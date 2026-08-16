@@ -36,7 +36,7 @@ function App() {
     if (loading) {
         return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
-                <p style={{ color: '#94a3b8', fontSize: 14 }}>Loading FleetTrack…</p>
+                <p style={{ color: '#94a3b8', fontSize: 14 }}>Loading Turprotrack…</p>
             </div>
         );
     }

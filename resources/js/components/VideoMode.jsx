@@ -18,7 +18,7 @@ function GridIcon({ cols, rows, active, onClick }) {
         for (let c = 0; c < cols; c++)
             cells.push(<rect key={`${r}-${c}`} x={c * (cw + gap)} y={r * (ch + gap)} width={cw} height={ch} fill={active ? '#3b82f6' : '#94a3b8'} rx={0.5} />);
     return (
-        <button onClick={onClick} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', border: active ? '1.5px solid #3b82f6' : '1.5px solid #e2e8f0', borderRadius: 6, background: active ? '#eff6ff' : '#fff', cursor: 'pointer', padding: 0 }}>
+        <button onClick={onClick} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', border: active ? '1.5px solid #3b82f6' : '1.5px solid #1e2c46', borderRadius: 6, background: active ? '#152a4a' : '#111c33', cursor: 'pointer', padding: 0 }}>
             <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`}>{cells}</svg>
         </button>
     );
@@ -87,7 +87,7 @@ const CornerSVG = () => (
 
 const iconBtn = (active) => ({
     background: 'none', border: 'none', cursor: 'pointer',
-    color: active ? '#3b82f6' : '#94a3b8',
+    color: active ? '#3b82f6' : '#5e7094',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: 4, borderRadius: 4, transition: 'color 0.15s',
 });
@@ -99,9 +99,9 @@ function VideoPanel({ index, onExpand }) {
     const [editing,   setEditing]   = useState(false);
 
     return (
-        <div style={{ position: 'relative', background: 'linear-gradient(135deg,#bfdbfe 0%,#dbeafe 45%,#eff6ff 100%)', display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', overflow: 'hidden', minHeight: 0 }}>
+        <div style={{ position: 'relative', background: 'linear-gradient(135deg,#24507f 0%,#1c3a63 45%,#152a4a 100%)', display: 'flex', flexDirection: 'column', border: '1px solid #1e2c46', overflow: 'hidden', minHeight: 0 }}>
             {/* Top-right corner icon */}
-            <button onClick={onExpand} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.9)', borderRadius: 4, padding: 3, cursor: 'pointer', color: '#64748b', display: 'flex', lineHeight: 0 }}>
+            <button onClick={onExpand} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.9)', borderRadius: 4, padding: 3, cursor: 'pointer', color: '#9daec9', display: 'flex', lineHeight: 0 }}>
                 <CornerSVG />
             </button>
 
@@ -111,7 +111,7 @@ function VideoPanel({ index, onExpand }) {
             </div>
 
             {/* Toolbar */}
-            <div style={{ display: 'flex', alignItems: 'center', padding: '5px 8px', background: '#fff', borderTop: '1px solid #e2e8f0', gap: 2, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '5px 8px', background: '#111c33', borderTop: '1px solid #1e2c46', gap: 2, flexShrink: 0 }}>
                 <button onClick={() => setPlaying(p => !p)} style={iconBtn(playing)}><PlaySVG /></button>
                 <button style={iconBtn(false)}><RecordSVG /></button>
                 <button onClick={() => setMuted(m => !m)} style={iconBtn(muted)}><MuteSVG on={muted} /></button>
@@ -141,9 +141,9 @@ export default function VideoMode({ selectedDevice }) {
     const count = cols * rows;
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#f8fafc' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#16233c' }}>
             {/* Grid selector bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px 16px', borderBottom: '1px solid #e2e8f0', background: '#fff', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px 16px', borderBottom: '1px solid #1e2c46', background: '#111c33', flexShrink: 0 }}>
                 {GRID_LAYOUTS.map((g, i) => (
                     <GridIcon key={i} cols={g.cols} rows={g.rows} active={i === gridIdx} onClick={() => { setGridIdx(i); setExpanded(null); }} />
                 ))}

@@ -8,13 +8,30 @@
         margin: 0;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
         -webkit-font-smoothing: antialiased;
+        background: #080d18;
+        /* Inherited by anything that never set a colour of its own — which, on light panels, was
+           relying on the browser's black. */
+        color: #eaeff9;
     }
+
+    /* Form controls are styled inline all over the app, but almost none of them set a text colour
+       — they relied on the browser's black-on-white default. Now that their backgrounds are dark
+       that default would be unreadable, so the whole class of them is corrected here rather than
+       in three hundred inline styles. Anything that does set its own colour still wins, because
+       inline styles beat a stylesheet. */
+    input, select, textarea {
+        color: #eaeff9;
+        color-scheme: dark;
+    }
+    /* The native dropdown list is painted by the OS, not by the select's own background. */
+    option { background: #16233c; color: #eaeff9; }
+    input::placeholder, textarea::placeholder { color: #5e7094; }
 }
 
 @layer utilities {
     .scrollbar-thin::-webkit-scrollbar { width: 4px; }
     .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-    .scrollbar-thin::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #24344f; border-radius: 4px; }
 }
 
 /* Permanent geofence name labels drawn at each zone's centre. Leaflet's default tooltip chrome
@@ -35,6 +52,62 @@
         0 0 4px rgba(255, 255, 255, 0.9);
 }
 .leaflet-tooltip.geofence-label::before { display: none; }
+
+/* The always-on name label above each vehicle marker. Leaflet's default tooltip is a white box
+   with a pointer arrow, which at fleet density turns the map into a wall of paper; this is a
+   compact dark chip instead, and it never intercepts clicks meant for the marker under it. */
+.leaflet-tooltip.device-label {
+    background: rgba(12, 19, 34, 0.92);
+    border: 1px solid #1e2c46;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    color: #eaeff9;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 7px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+.leaflet-tooltip.device-label::before { display: none; }
+
+/* Tones the base map down so it sits behind the markers rather than competing with them — OSM's
+   default tiles are bright enough to wash out a dark interface. Applied to the tiles alone, so
+   markers, geofence shapes, popups and controls keep their full contrast on top.
+
+   Only the default (OpenStreetMap) layer carries this class; satellite and traffic imagery is
+   already dark and is left as the provider drew it. */
+.map-dim .leaflet-tile {
+    filter: brightness(0.62) saturate(0.8) contrast(1.06);
+}
+
+/* Leaflet paints its popups and attribution white from its own stylesheet. Left alone they are the
+   only white boxes remaining on screen, so they are brought into the app's palette here — inline
+   styles cannot reach markup Leaflet creates itself. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: #111c33;
+    color: #eaeff9;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.5);
+}
+.leaflet-popup-content-wrapper { border: 1px solid #1e2c46; }
+.leaflet-container a.leaflet-popup-close-button { color: #5e7094; }
+.leaflet-container a.leaflet-popup-close-button:hover { color: #eaeff9; }
+/* Distance bar. Leaflet draws it as a white-bordered box with black text on the map. */
+.leaflet-control-scale-line {
+    background: rgba(12, 19, 34, 0.82);
+    border: 1px solid #24344f;
+    border-top: none;
+    color: #cfdcf0;
+    font-size: 11px;
+    font-weight: 600;
+    text-shadow: none;
+}
+
+.leaflet-control-attribution {
+    background: rgba(12, 19, 34, 0.82) !important;
+    color: #5e7094;
+}
+.leaflet-control-attribution a { color: #7fc4ff; }
 
 /* ══════════════════════════════════════════════════════════════════ */
 /*  Fleet cockpit dashboard                                           */
@@ -247,13 +320,64 @@
 }
 .mine-device-item:hover { background: var(--mine-inset); }
 .mine-device-item.is-selected { border-left-color: var(--mine-blue); background: #16233c; }
-.mine-device-name {
-    display: block;
+/* Name on the left, status icons pinned right. The icon column never shrinks and the name
+   truncates instead, so a long device name pushes the icons off the row rather than through
+   them — which is exactly the collision this layout exists to prevent. */
+.mine-device-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 3px;
+}
+.mine-device-icons { flex: none; display: inline-flex; align-items: center; }
+.mine-device-name {
+    flex: 1;
+    min-width: 0;
+    display: block;
     overflow: hidden;
     color: var(--mine-text);
     font-size: 13px;
     font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* Status line: state pill left, signal right, each on its own side of the row. */
+.mine-device-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.mine-device-signal {
+    flex: none;
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+}
+.mine-device-signal b {
+    width: 3px;
+    border-radius: 1px;
+    background: var(--mine-border);
+    display: block;
+}
+.mine-device-signal b.on { background: var(--mine-blue); }
+.mine-device-signal span {
+    margin-left: 3px;
+    color: var(--mine-muted);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+}
+/* Alarm wording gets its own line: it is the one thing here that can be long, and it must not
+   squeeze the state or the signal off the row above. */
+.mine-device-alarm {
+    display: block;
+    margin-top: 4px;
+    color: #fca5a5;
+    font-size: 10.5px;
+    font-weight: 700;
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }

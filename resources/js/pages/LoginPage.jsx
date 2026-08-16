@@ -31,7 +31,7 @@ export default function LoginPage({ onLogin }) {
             <div style={{ background: '#fff', borderRadius: 16, padding: '44px 40px', width: 380, boxShadow: '0 24px 64px rgba(0,0,0,0.4)', position: 'relative', zIndex: 1 }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
                     <div style={{ width: 52, height: 52, borderRadius: 14, background: 'linear-gradient(135deg,#1e40af,#3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 12px' }}>📡</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>FleetTrack</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>Turprotrack</div>
                     <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>GPS Fleet Management System</div>
                 </div>
 

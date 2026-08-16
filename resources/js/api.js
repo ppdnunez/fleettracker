@@ -15,6 +15,19 @@ export const api = {
     logout:  ()                => axios.post('/api/logout'),
     me:      ()                => axios.get('/api/user'),
 
+    // Companies (tenants) and the logins inside them. Company endpoints are platform-admin only;
+    // the user endpoints also accept a company's own client_admin, scoped to that company.
+    getCompanies:       ()             => axios.get('/api/companies'),
+    createCompany:      (data)         => axios.post('/api/companies', data),
+    updateCompany:      (id, data)     => axios.put(`/api/companies/${id}`, data),
+    deleteCompany:      (id)           => axios.delete(`/api/companies/${id}`),
+    getCompanyDevices:  (id)           => axios.get(`/api/companies/${id}/devices`),
+    repairCompany:      (id, password) => axios.post(`/api/companies/${id}/repair`, { traccar_password: password }),
+    getCompanyUsers:    (id)           => axios.get(`/api/companies/${id}/users`),
+    createCompanyUser:  (id, data)     => axios.post(`/api/companies/${id}/users`, data),
+    updateCompanyUser:  (id, uid, data)=> axios.put(`/api/companies/${id}/users/${uid}`, data),
+    deleteCompanyUser:  (id, uid)      => axios.delete(`/api/companies/${id}/users/${uid}`),
+
     getDevices:   ()          => axios.get('/api/devices'),
     createDevice: (data)      => axios.post('/api/devices', data),
     updateDevice: (id, data)  => axios.put(`/api/devices/${id}`, data),
@@ -61,6 +74,14 @@ export const api = {
     deleteFace:          (driverId, imei)=> axios.delete('/api/face', { data: { driver_id: driverId, imei } }),
     getFaceImportLogs:   (params)        => axios.get('/api/face/import-logs', { params }),
 
+    // Who receives each alert email. getAlertChannels() reports whether the pipeline can actually
+    // deliver — this app's mailer, and Traccar (which raises the geofence/fuel/alarm events).
+    getAlertRecipients:   ()         => axios.get('/api/alert-recipients'),
+    createAlertRecipient: (data)     => axios.post('/api/alert-recipients', data),
+    updateAlertRecipient: (id, data) => axios.put(`/api/alert-recipients/${id}`, data),
+    deleteAlertRecipient: (id)       => axios.delete(`/api/alert-recipients/${id}`),
+    getAlertChannels:     ()         => axios.get('/api/alert-recipients/channels'),
+
     getVehicleMaintenances:   ()         => axios.get('/api/vehicle-maintenances'),
     createVehicleMaintenance: (data)     => axios.post('/api/vehicle-maintenances', data),
     updateVehicleMaintenance: (id, data) => axios.put(`/api/vehicle-maintenances/${id}`, data),
@@ -72,7 +93,13 @@ export const api = {
     getTraccarGroups:     ()             => axios.get('/api/traccar/groups'),
     getTraccarCalendars:  ()             => axios.get('/api/traccar/calendars'),
     getLatestPositions:   ()             => axios.get('/api/traccar/positions'),
+    // The fix a specific event was raised at, by position id (websocket events carry the id only).
+    getPositionById:      (id)           => axios.get(`/api/traccar/positions/${id}`),
     getWsToken:           ()             => axios.get('/api/traccar/ws-token'),
+    // Raw device text command (iButton + driving-behaviour panels). `channel` is 'auto' (data
+    // connection, retried over SMS only if Traccar rejects it), 'gprs', or 'sms'.
+    sendDeviceCommand: (imei, command, channel = 'auto') =>
+        axios.post('/api/traccar/devices/sms-command', { imei, command, channel }),
     getAlertEvents:       (params)       => axios.get('/api/traccar/reports/events', { params }),
     getBatteryReport:         (params)   => axios.get('/api/traccar/reports/battery', { params }),
     getExternalBatteryReport: (params)   => axios.get('/api/traccar/reports/external-battery', { params }),

@@ -14,18 +14,20 @@ export default function TopBar({ onlineCount, total, mapMode, setMapMode, select
     const isVideo = mapMode === 'Video';
 
     return (
-        <header style={{ height: 52, background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0, gap: 12 }}>
+        <header style={{ height: 52, background: '#111c33', borderBottom: '1px solid #1e2c46', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0, gap: 12 }}>
 
-            {/* Mode tabs */}
+            {/* Mode tabs. Video is parked for now — the tab is left in place, commented rather than
+                deleted, because nothing about VideoMode itself is broken; it is simply not being
+                shown. Put 'Video' back in this list to bring it out again. */}
             <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                {[['Map', '🗺', 'Map Mode'], ['Video', '📹', 'Video Mode']].map(([key, icon, label]) => {
+                {[['Map', '🗺', 'Map Mode'] /* , ['Video', '📹', 'Video Mode'] */].map(([key, icon, label]) => {
                     const active = mapMode === key;
                     return (
                         <button key={key} onClick={() => setMapMode(key)} style={{
                             height: '100%', padding: '0 14px', border: 'none',
                             borderBottom: active ? '2.5px solid #3b82f6' : '2.5px solid transparent',
                             background: 'none', cursor: 'pointer',
-                            color: active ? '#3b82f6' : '#64748b',
+                            color: active ? '#3b82f6' : '#9daec9',
                             fontSize: 12, fontWeight: active ? 700 : 500,
                             display: 'flex', alignItems: 'center', gap: 5,
                             transition: 'color 0.15s, border-color 0.15s',
@@ -42,14 +44,14 @@ export default function TopBar({ onlineCount, total, mapMode, setMapMode, select
                 <div style={{ flex: 1, textAlign: 'center', fontSize: 13 }}>
                     {selectedDevice ? (
                         <>
-                            <span style={{ fontWeight: 800, color: '#0f172a' }}>{selectedDevice.name}</span>
-                            <span style={{ color: '#475569' }}>({selectedDevice.tracker})</span>
-                            <span style={{ color: selectedDevice.status === 'ONLINE' ? '#16a34a' : '#94a3b8', marginLeft: 2 }}>
+                            <span style={{ fontWeight: 800, color: '#eaeff9' }}>{selectedDevice.name}</span>
+                            <span style={{ color: '#9daec9' }}>({selectedDevice.tracker})</span>
+                            <span style={{ color: selectedDevice.status === 'ONLINE' ? '#16a34a' : '#5e7094', marginLeft: 2 }}>
                                 [{selectedDevice.status === 'ONLINE' ? 'Online' : 'Offline'}]
                             </span>
                         </>
                     ) : (
-                        <span style={{ color: '#94a3b8', fontSize: 12 }}>No device selected</span>
+                        <span style={{ color: '#5e7094', fontSize: 12 }}>No device selected</span>
                     )}
                 </div>
             )}
@@ -60,21 +62,21 @@ export default function TopBar({ onlineCount, total, mapMode, setMapMode, select
                     <button style={{ padding: '6px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                         Start All
                     </button>
-                    <button style={{ padding: '6px 14px', background: '#fff', color: '#475569', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    <button style={{ padding: '6px 14px', background: '#111c33', color: '#9daec9', border: '1.5px solid #1e2c46', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                         Stop All
                     </button>
-                    <button style={{ padding: '6px 12px', background: '#fff', color: '#475569', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <button style={{ padding: '6px 12px', background: '#111c33', color: '#9daec9', border: '1.5px solid #1e2c46', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
                         <TalkSVG /> Talk
                     </button>
-                    <button style={{ padding: '6px 12px', background: '#fff', color: '#475569', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <button style={{ padding: '6px 12px', background: '#111c33', color: '#9daec9', border: '1.5px solid #1e2c46', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
                         <LocationSVG /> Location
                     </button>
                 </div>
             ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', letterSpacing: 1 }}>DEVICE LIST</span>
-                        <span style={{ background: '#eff6ff', color: '#1e40af', fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20, border: '1px solid #bfdbfe' }}>{onlineCount}/{total}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#5e7094', letterSpacing: 1 }}>DEVICE LIST</span>
+                        <span style={{ background: '#152a4a', color: '#7fc4ff', fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 20, border: '1px solid #24507f' }}>{onlineCount}/{total}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />

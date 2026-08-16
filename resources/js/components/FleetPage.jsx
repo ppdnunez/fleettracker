@@ -4,6 +4,7 @@ import MapCanvas, { MARKER_COLORS } from './MapCanvas.jsx';
 import { VEHICLE_TYPES, FUEL_TYPES, vehicleTypeEmoji } from '../vehicleCatalog.js';
 import ReportPage from './ReportPage.jsx';
 import GeofenceManagementPage from './GeofencePage.jsx';
+import DeviceStatusIcons, { alarmLabel } from './DeviceStatusIcons.jsx';
 
 /* ── icons ───────────────────────────────────────────────────── */
 const SearchSVG = () => (
@@ -11,32 +12,15 @@ const SearchSVG = () => (
         <circle cx="5.5" cy="5.5" r="4"/><line x1="9" y1="9" x2="12" y2="12"/>
     </svg>
 );
-const DownloadSVG = () => (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-        <path d="M6.5 1v7M4 6l2.5 2.5L9 6"/>
-        <path d="M1 10v1.5A1.5 1.5 0 0 0 2.5 13h8A1.5 1.5 0 0 0 12 11.5V10"/>
-    </svg>
-);
-const PersonSVG = () => (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="#5b21b6" strokeWidth="1.5" strokeLinecap="round">
-        <circle cx="7.5" cy="5" r="3.2"/>
-        <path d="M1 14.5 Q1.5 10 7.5 10 Q13.5 10 14 14.5"/>
-    </svg>
-);
-const CollapseArrow = ({ open }) => (
-    <svg width="7" height="11" viewBox="0 0 7 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        {open ? <polyline points="5.5,1 1.5,5.5 5.5,10"/> : <polyline points="1.5,1 5.5,5.5 1.5,10"/>}
-    </svg>
-);
 
 /* ── shared style primitives (match ReportPage) ─────────────── */
-const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#374151', borderBottom: '2px solid #e5e7eb', whiteSpace: 'nowrap', background: '#f9fafb' };
-const TD = { padding: '11px 14px', fontSize: 13, borderBottom: '1px solid #f1f5f9', color: '#374151' };
+const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
+const TD = { padding: '11px 14px', fontSize: 13, borderBottom: '1px solid #1e2c46', color: '#cfdcf0' };
 
 /* ── shared sub-components (match ReportPage style) ─────────── */
 function FilterBar({ children }) {
     return (
-        <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ background: '#16233c', border: '1px solid #1e2c46', borderRadius: 10, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
             {children}
         </div>
     );
@@ -44,8 +28,8 @@ function FilterBar({ children }) {
 function FInput({ label, placeholder, type = 'text', style, value, onChange }) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {label && <label style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{label}</label>}
-            <input type={type} placeholder={placeholder} value={value} onChange={onChange} style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', ...style }} />
+            {label && <label style={{ fontSize: 12, color: '#9daec9', fontWeight: 600 }}>{label}</label>}
+            <input type={type} placeholder={placeholder} value={value} onChange={onChange} style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', ...style }} />
         </div>
     );
 }
@@ -58,7 +42,7 @@ function SearchBtn() {
 }
 function Btn({ children, primary, red, onClick }) {
     return (
-        <button onClick={onClick} style={{ padding: '7px 16px', borderRadius: 6, border: primary ? 'none' : red ? '1px solid #ef4444' : '1px solid #d1d5db', background: primary ? '#3b82f6' : '#fff', color: primary ? '#fff' : red ? '#ef4444' : '#374151', fontSize: 13, cursor: 'pointer', fontWeight: primary ? 600 : 400, whiteSpace: 'nowrap' }}>
+        <button onClick={onClick} style={{ padding: '7px 16px', borderRadius: 6, border: primary ? 'none' : red ? '1px solid #ef4444' : '1px solid #24344f', background: primary ? '#3b82f6' : '#111c33', color: primary ? '#fff' : red ? '#ef4444' : '#cfdcf0', fontSize: 13, cursor: 'pointer', fontWeight: primary ? 600 : 400, whiteSpace: 'nowrap' }}>
             {children}
         </button>
     );
@@ -72,9 +56,9 @@ function ActionRow({ left }) {
 }
 function TabBar({ tabs, active, onChange }) {
     return (
-        <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', marginBottom: 16 }}>
+        <div style={{ display: 'flex', borderBottom: '2px solid #1e2c46', marginBottom: 16 }}>
             {tabs.map(t => (
-                <button key={t} onClick={() => onChange(t)} style={{ padding: '10px 18px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: active === t ? 700 : 500, color: active === t ? '#3b82f6' : '#6b7280', borderBottom: active === t ? '2.5px solid #3b82f6' : '2.5px solid transparent', marginBottom: -2 }}>
+                <button key={t} onClick={() => onChange(t)} style={{ padding: '10px 18px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: active === t ? 700 : 500, color: active === t ? '#3b82f6' : '#9daec9', borderBottom: active === t ? '2.5px solid #3b82f6' : '2.5px solid transparent', marginBottom: -2 }}>
                     {t}
                 </button>
             ))}
@@ -90,17 +74,19 @@ function EmptyTable({ cols, rows }) {
                     {rows && rows.length ? rows.map((r, i) => (
                         <tr key={i}>{r.map((cell, j) => <td key={j} style={TD}>{cell}</td>)}</tr>
                     )) : (
-                        <tr><td colSpan={cols.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={cols.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     )}
                 </tbody>
             </table>
         </div>
     );
 }
-function PageShell({ title, children }) {
+/* `title` is still accepted and still documents which page a block belongs to at the call site,
+   but it is no longer drawn: the app header names the page, and printing it again directly beneath
+   was the same words twice. */
+function PageShell({ children }) {
     return (
-        <div style={{ flex: 1, overflowY: 'auto', background: '#fff', padding: '16px 24px' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#111827' }}>{title}</h2>
+        <div style={{ flex: 1, overflowY: 'auto', background: '#111c33', padding: '16px 24px' }}>
             {children}
         </div>
     );
@@ -132,6 +118,11 @@ function toMapDevice(device, position) {
         lat:      position ? position.latitude  : null,
         lng:      position ? position.longitude : null,
         signal:   position?.attributes?.batteryLevel ?? position?.attributes?.rssi ?? 0,
+        // Same three the map label draws as icons (see DeviceStatusIcons).
+        ignition: position?.attributes?.ignition ?? null,
+        alarm:    position?.attributes?.alarm ?? null,
+        battery:  position?.attributes?.batteryLevel ?? null,
+        charging: position?.attributes?.charge ?? null,
         position: position || null,
     };
 }
@@ -380,11 +371,29 @@ function FleetDashboard({ setFleetPage }) {
                                             className={`mine-device-item${isSelected ? ' is-selected' : ''}`}
                                             onClick={() => setSelected(isSelected ? null : d.id)}
                                         >
-                                            <span className="mine-device-name">{d.name}</span>
-                                            <span className="mine-device-imei">{d.imei}</span>
-                                            <span className="mine-device-state" style={{ color }}>
-                                                <i />{isSelected ? 'Selected' : d.status === 'ONLINE' ? 'Online' : 'Offline'}
+                                            <span className="mine-device-head">
+                                                <span className="mine-device-name">{d.name}</span>
+                                                <span className="mine-device-icons">
+                                                    <DeviceStatusIcons device={d} size={14} />
+                                                </span>
                                             </span>
+                                            <span className="mine-device-imei">{d.imei}</span>
+                                            <span className="mine-device-foot">
+                                                <span className="mine-device-state" style={{ color }}>
+                                                    <i />{isSelected ? 'Selected' : d.status === 'ONLINE' ? 'Online' : 'Offline'}
+                                                </span>
+                                                <span className="mine-device-signal" title={`Signal ${d.signal ?? 0}%`}>
+                                                    {[25, 50, 75, 100].map((threshold, i) => (
+                                                        <b key={threshold}
+                                                            className={d.status === 'ONLINE' && (d.signal ?? 0) >= threshold ? 'on' : undefined}
+                                                            style={{ height: 4 + i * 2.5 }} />
+                                                    ))}
+                                                    <span>{d.signal ?? 0}%</span>
+                                                </span>
+                                            </span>
+                                            {alarmLabel(d.alarm) && (
+                                                <span className="mine-device-alarm">{alarmLabel(d.alarm)}</span>
+                                            )}
                                         </button>
                                     );
                                 })}
@@ -462,8 +471,8 @@ function Badge({ text, color }) {
 }
 
 const driverFieldStyle = { display: 'flex', flexDirection: 'column', gap: 4 };
-const driverInputStyle = { padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box', width: '100%' };
-const driverLabelStyle = { fontSize: 11.5, color: '#6b7280', fontWeight: 600 };
+const driverInputStyle = { padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box', width: '100%' };
+const driverLabelStyle = { fontSize: 11.5, color: '#9daec9', fontWeight: 600 };
 
 function DriverFormModal({ driver, onClose, onSaved }) {
     const isNew = !driver;
@@ -506,18 +515,18 @@ function DriverFormModal({ driver, onClose, onSaved }) {
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <div style={{ background: '#fff', borderRadius: 12, width: 480, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{isNew ? 'New Driver' : 'Edit Driver'}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16 }}>✕</button>
+            <div style={{ background: '#111c33', borderRadius: 12, width: 480, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>{isNew ? 'New Driver' : 'Edit Driver'}</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
                 </div>
 
                 <div style={{ padding: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                    {error && <div style={{ gridColumn: '1 / -1', padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, color: '#991b1b' }}>{error}</div>}
+                    {error && <div style={{ gridColumn: '1 / -1', padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
 
                     <div style={driverFieldStyle}>
                         <label style={driverLabelStyle}>Driver No. *</label>
-                        <input value={form.badge_no} onChange={set('badge_no')} disabled={!isNew} style={{ ...driverInputStyle, background: isNew ? '#fff' : '#f3f4f6' }} />
+                        <input value={form.badge_no} onChange={set('badge_no')} disabled={!isNew} style={{ ...driverInputStyle, background: isNew ? '#111c33' : '#16233c' }} />
                     </div>
                     <div style={driverFieldStyle}>
                         <label style={driverLabelStyle}>Driver Name *</label>
@@ -549,7 +558,7 @@ function DriverFormModal({ driver, onClose, onSaved }) {
                     </div>
                     <div style={driverFieldStyle}>
                         <label style={driverLabelStyle}>Status</label>
-                        <select value={form.status} onChange={set('status')} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer' }}>
+                        <select value={form.status} onChange={set('status')} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer' }}>
                             <option>Active</option>
                             <option>Inactive</option>
                         </select>
@@ -564,8 +573,8 @@ function DriverFormModal({ driver, onClose, onSaved }) {
                     </div>
                 </div>
 
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                     <button onClick={handleSave} disabled={saving} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
                         {saving ? 'Saving…' : 'Save'}
                     </button>
@@ -575,7 +584,7 @@ function DriverFormModal({ driver, onClose, onSaved }) {
     );
 }
 
-// FleetTrack-local driver registry (Approach 2): GET/POST/PUT/DELETE /api/drivers, which keeps a
+// Turprotrack-local driver registry (Approach 2): GET/POST/PUT/DELETE /api/drivers, which keeps a
 // matching Traccar driver in sync server-side (DriverController) so the device<->driver link still
 // works through Traccar elsewhere in the app. License/Safety Sticker status badges are computed
 // from each driver's expiry dates; the same dates drive the "drivers:notify-expirations" scheduled
@@ -633,17 +642,17 @@ function CameraCaptureModal({ driver, onClose, onCaptured }) {
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 120 }}>
-            <div style={{ background: '#fff', borderRadius: 12, width: 560, maxWidth: '92vw', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Face Enrollment — {driver.name}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16 }}>✕</button>
+            <div style={{ background: '#111c33', borderRadius: 12, width: 560, maxWidth: '92vw', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Face Enrollment — {driver.name}</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
                 </div>
                 <div style={{ padding: 20 }}>
-                    {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, color: '#991b1b' }}>{error}</div>}
+                    {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
                     <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', borderRadius: 8, background: '#0f172a', aspectRatio: '4 / 3', objectFit: 'cover' }} />
                 </div>
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', display: 'flex', gap: 8 }}>
-                    <button onClick={onClose} style={{ flex: 1, padding: 10, borderRadius: 7, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', gap: 8 }}>
+                    <button onClick={onClose} style={{ flex: 1, padding: 10, borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                     <button onClick={takePhoto} disabled={busy} style={{ flex: 1, padding: 10, borderRadius: 7, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer' }}>
                         {busy ? 'Saving…' : 'Take Photo'}
                     </button>
@@ -696,9 +705,9 @@ function FaceEnrollmentModal({ driver, devices, faces, onClose, onChanged }) {
     const Action = ({ label, onClick, variant, actionKey }) => {
         const styles = {
             primary: { background: '#3b82f6', color: '#fff', border: 'none' },
-            outline: { background: '#fff', color: '#1d4ed8', border: '1.5px solid #bfdbfe' },
-            plain:   { background: '#fff', color: '#374151', border: '1.5px solid #e2e8f0' },
-            danger:  { background: '#fff', color: '#ef4444', border: '1.5px solid #fecaca' },
+            outline: { background: '#111c33', color: '#7fc4ff', border: '1.5px solid #24507f' },
+            plain:   { background: '#111c33', color: '#cfdcf0', border: '1.5px solid #1e2c46' },
+            danger:  { background: '#111c33', color: '#ef4444', border: '1.5px solid #7f1d1d' },
         }[variant || 'plain'];
         const disabled = !!busy || (!imei && actionKey !== 'capture');
         return (
@@ -714,27 +723,27 @@ function FaceEnrollmentModal({ driver, devices, faces, onClose, onChanged }) {
     return (
         <>
             <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 110 }}>
-                <div style={{ background: '#fff', borderRadius: 12, width: 460, maxWidth: '94vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Face Enrollment — {driver.name}</h2>
-                        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16 }}>✕</button>
+                <div style={{ background: '#111c33', borderRadius: 12, width: 460, maxWidth: '94vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
+                        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Face Enrollment — {driver.name}</h2>
+                        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
                     </div>
 
                     <div style={{ padding: 20 }}>
                         <div style={{ ...driverFieldStyle, marginBottom: 12 }}>
                             <label style={driverLabelStyle}>Vehicle (IMEI)</label>
-                            <select value={imei} onChange={e => setImei(e.target.value)} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer' }}>
+                            <select value={imei} onChange={e => setImei(e.target.value)} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer' }}>
                                 <option value="">Select device…</option>
                                 {devices.map(d => <option key={d.id} value={d.uniqueId}>{d.uniqueId} — {d.name}</option>)}
                             </select>
                         </div>
 
-                        <div style={{ padding: '9px 12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 7, fontSize: 12.5, marginBottom: 12 }}>
-                            Status: <strong style={{ color: FACE_STATUS_COLOR[face?.status] || '#9ca3af' }}>{face?.status || 'not enrolled'}</strong>
+                        <div style={{ padding: '9px 12px', background: '#16233c', border: '1px solid #1e2c46', borderRadius: 7, fontSize: 12.5, marginBottom: 12 }}>
+                            Status: <strong style={{ color: FACE_STATUS_COLOR[face?.status] || '#5e7094' }}>{face?.status || 'not enrolled'}</strong>
                         </div>
 
                         {face?.status === 'enrolled' && (
-                            <div style={{ display: 'flex', gap: 10, padding: '10px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 7, fontSize: 12, color: '#166534', marginBottom: 12 }}>
+                            <div style={{ display: 'flex', gap: 10, padding: '10px 12px', background: '#0f2b24', border: '1px solid #1f6b52', borderRadius: 7, fontSize: 12, color: '#4ade80', marginBottom: 12 }}>
                                 {facePhotoUrl(face) && <img src={facePhotoUrl(face)} alt="" style={{ width: 44, height: 44, borderRadius: 5, objectFit: 'cover', flexShrink: 0 }} />}
                                 <span>
                                     ✓ Already enrolled{face.enrolled_at ? ` on ${new Date(face.enrolled_at).toLocaleString()}` : ''}.
@@ -744,7 +753,7 @@ function FaceEnrollmentModal({ driver, devices, faces, onClose, onChanged }) {
                         )}
 
                         {face?.error && (
-                            <div style={{ padding: '9px 12px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 7, fontSize: 12, color: '#92400e', marginBottom: 12, whiteSpace: 'pre-wrap' }}>
+                            <div style={{ padding: '9px 12px', background: '#33260c', border: '1px solid #7c5e10', borderRadius: 7, fontSize: 12, color: '#fcd34d', marginBottom: 12, whiteSpace: 'pre-wrap' }}>
                                 Device reported: {face.error}
                             </div>
                         )}
@@ -752,9 +761,9 @@ function FaceEnrollmentModal({ driver, devices, faces, onClose, onChanged }) {
                         {message && (
                             <div style={{
                                 padding: '9px 12px', borderRadius: 7, fontSize: 12, marginBottom: 12,
-                                background: message.ok ? '#eff6ff' : '#fef2f2',
-                                border: `1px solid ${message.ok ? '#bfdbfe' : '#fecaca'}`,
-                                color: message.ok ? '#1e40af' : '#991b1b',
+                                background: message.ok ? '#152a4a' : '#3b1418',
+                                border: `1px solid ${message.ok ? '#24507f' : '#7f1d1d'}`,
+                                color: message.ok ? '#7fc4ff' : '#fca5a5',
                             }}>
                                 {message.text}
                                 {message.detail && <div style={{ marginTop: 4, fontFamily: 'ui-monospace,Menlo,Consolas,monospace', fontSize: 11, opacity: 0.8 }}>{message.detail}</div>}
@@ -831,7 +840,7 @@ function FacePhotosTab({ drivers, devices, faces, onChanged }) {
 
     return (
         <div>
-            <p style={{ margin: '0 0 14px', fontSize: 12.5, color: '#64748b', lineHeight: 1.6 }}>
+            <p style={{ margin: '0 0 14px', fontSize: 12.5, color: '#9daec9', lineHeight: 1.6 }}>
                 Select up to {MAX_FACE_BATCH} drivers with a photo already on file, choose a target device, and push them
                 as a batch via EVENTSET,FACE,DOWN. Verify the import on-device afterward with Test Recognition / FACE,CHECK.
             </p>
@@ -839,7 +848,7 @@ function FacePhotosTab({ drivers, devices, faces, onChanged }) {
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
                 <div style={driverFieldStyle}>
                     <label style={driverLabelStyle}>Target Device</label>
-                    <select value={imei} onChange={e => setImei(e.target.value)} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer', width: 240 }}>
+                    <select value={imei} onChange={e => setImei(e.target.value)} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer', width: 240 }}>
                         <option value="">Select device…</option>
                         {devices.map(d => <option key={d.id} value={d.uniqueId}>{d.uniqueId} — {d.name}</option>)}
                     </select>
@@ -856,9 +865,9 @@ function FacePhotosTab({ drivers, devices, faces, onChanged }) {
             {message && (
                 <div style={{
                     marginBottom: 14, padding: '9px 12px', borderRadius: 7, fontSize: 12,
-                    background: message.ok ? '#eff6ff' : '#fef2f2',
-                    border: `1px solid ${message.ok ? '#bfdbfe' : '#fecaca'}`,
-                    color: message.ok ? '#1e40af' : '#991b1b',
+                    background: message.ok ? '#152a4a' : '#3b1418',
+                    border: `1px solid ${message.ok ? '#24507f' : '#7f1d1d'}`,
+                    color: message.ok ? '#7fc4ff' : '#fca5a5',
                 }}>
                     {message.text}
                     {message.url && <div style={{ marginTop: 4, fontFamily: 'ui-monospace,Menlo,Consolas,monospace', fontSize: 11, wordBreak: 'break-all' }}>{message.url}</div>}
@@ -866,7 +875,7 @@ function FacePhotosTab({ drivers, devices, faces, onChanged }) {
             )}
 
             {cards.length === 0 ? (
-                <p style={{ padding: 40, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+                <p style={{ padding: 40, textAlign: 'center', color: '#5e7094', fontSize: 13 }}>
                     No driver photos on file yet. Use a driver's <strong>Face</strong> action to capture one.
                 </p>
             ) : (
@@ -875,15 +884,15 @@ function FacePhotosTab({ drivers, devices, faces, onChanged }) {
                         const isPicked = picked.includes(driver.id);
                         return (
                             <button key={driver.id} onClick={() => toggle(driver.id)} style={{
-                                padding: 8, borderRadius: 9, cursor: 'pointer', textAlign: 'center', background: '#fff',
-                                border: `2px solid ${isPicked ? '#3b82f6' : '#e2e8f0'}`,
+                                padding: 8, borderRadius: 9, cursor: 'pointer', textAlign: 'center', background: '#111c33',
+                                border: `2px solid ${isPicked ? '#3b82f6' : '#1e2c46'}`,
                             }}>
                                 <div style={{ position: 'relative' }}>
                                     <input type="checkbox" checked={isPicked} readOnly style={{ position: 'absolute', top: 6, left: 6, accentColor: '#3b82f6' }} />
-                                    <img src={face.photo_url} alt={driver.name} style={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 6, background: '#f1f5f9' }} />
+                                    <img src={face.photo_url} alt={driver.name} style={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 6, background: '#16233c' }} />
                                 </div>
-                                <div style={{ marginTop: 7, fontSize: 12.5, fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{driver.name}</div>
-                                <div style={{ fontSize: 11, color: '#94a3b8' }}>{driver.badge_no}</div>
+                                <div style={{ marginTop: 7, fontSize: 12.5, fontWeight: 700, color: '#eaeff9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{driver.name}</div>
+                                <div style={{ fontSize: 11, color: '#5e7094' }}>{driver.badge_no}</div>
                             </button>
                         );
                     })}
@@ -896,10 +905,10 @@ function FacePhotosTab({ drivers, devices, faces, onChanged }) {
 /* ── KPI tiles ───────────────────────────────────────────────── */
 function DriverKpi({ label, value, note, color }) {
     return (
-        <div style={{ flex: 1, minWidth: 180, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 16px' }}>
-            <div style={{ fontSize: 12.5, color: '#6b7280', marginBottom: 6 }}>{label}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: color || '#111827', lineHeight: 1.1 }}>{value}</div>
-            {note && <div style={{ marginTop: 4, fontSize: 11.5, color: '#94a3b8' }}>{note}</div>}
+        <div style={{ flex: 1, minWidth: 180, background: '#111c33', border: '1px solid #1e2c46', borderRadius: 10, padding: '14px 16px' }}>
+            <div style={{ fontSize: 12.5, color: '#9daec9', marginBottom: 6 }}>{label}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: color || '#eaeff9', lineHeight: 1.1 }}>{value}</div>
+            {note && <div style={{ marginTop: 4, fontSize: 11.5, color: '#5e7094' }}>{note}</div>}
         </div>
     );
 }
@@ -977,7 +986,7 @@ function DriverPage() {
 
     return (
         <PageShell title="Driver">
-            <p style={{ margin: '-8px 0 16px', fontSize: 12.5, color: '#64748b' }}>
+            <p style={{ margin: '-8px 0 16px', fontSize: 12.5, color: '#9daec9' }}>
                 Manage drivers, credentials, and on-device facial authorization.
             </p>
 
@@ -990,7 +999,7 @@ function DriverPage() {
 
             <TabBar tabs={['Driver information', 'Face Photos']} active={tab} onChange={setTab} />
 
-            {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, color: '#991b1b' }}>{error}</div>}
+            {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
 
             {tab === 'Face Photos' ? (
                 <FacePhotosTab drivers={drivers} devices={devices} faces={faces} onChanged={fetchFaces} />
@@ -999,10 +1008,10 @@ function DriverPage() {
                     <FilterBar>
                         <FInput placeholder="Driver No./Driver Name" style={{ width: 200 }} value={search} onChange={e => setSearch(e.target.value)} />
                         <FInput placeholder="Register Place" style={{ width: 160 }} value={place} onChange={e => setPlace(e.target.value)} />
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#374151', cursor: 'pointer', paddingBottom: 1 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#cfdcf0', cursor: 'pointer', paddingBottom: 1 }}>
                             <input type="checkbox" checked={expiredOnly} onChange={e => setExpiredOnly(e.target.checked)} style={{ accentColor: '#3b82f6' }} />License Expired
                         </label>
-                        <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                        <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
                     </FilterBar>
                     <ActionRow left={[<Btn primary onClick={() => setEditing('new')}>Add Driver</Btn>]} />
 
@@ -1011,9 +1020,9 @@ function DriverPage() {
                             <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                                    <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                                 ) : filtered.length === 0 ? (
-                                    <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                                    <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                                 ) : filtered.map((d, i) => {
                                     const lStatus   = licenseStatus(d.license_expiry);
                                     const lReminder = expiryReminder(d.license_expiry, d.notify_days_before);
@@ -1029,7 +1038,7 @@ function DriverPage() {
                                             <td style={TD}>
                                                 {face
                                                     ? <Badge text={face.status} color={FACE_STATUS_COLOR[face.status] || '#9ca3af'} />
-                                                    : <span style={{ color: '#94a3b8', fontSize: 12 }}>not enrolled</span>}
+                                                    : <span style={{ color: '#5e7094', fontSize: 12 }}>not enrolled</span>}
                                             </td>
                                             <td style={TD}>{d.status}</td>
                                             <td style={{ ...TD, whiteSpace: 'nowrap' }}>
@@ -1066,11 +1075,11 @@ function DriverPage() {
 
             {pendingDeleteId && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-                    <div style={{ background: '#fff', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
-                        <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Delete driver?</h3>
-                        <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#64748b' }}>This also removes the driver from Traccar. This cannot be undone.</p>
+                    <div style={{ background: '#111c33', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
+                        <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Delete driver?</h3>
+                        <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#9daec9' }}>This also removes the driver from Traccar. This cannot be undone.</p>
                         <div style={{ display: 'flex', gap: 8 }}>
-                            <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                            <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                             <button onClick={handleDelete} style={{ flex: 1, padding: 9, borderRadius: 7, border: 'none', background: '#ef4444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
                         </div>
                     </div>
@@ -1112,27 +1121,27 @@ function AssignDriversModal({ vehicle, allDrivers, assignedIds, onClose, onSaved
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <div style={{ background: '#fff', borderRadius: 12, width: 380, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9', flexShrink: 0 }}>
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Assign Drivers — {vehicle.name || vehicle.imei}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16 }}>✕</button>
+            <div style={{ background: '#111c33', borderRadius: 12, width: 380, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46', flexShrink: 0 }}>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Assign Drivers — {vehicle.name || vehicle.imei}</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto', padding: '8px 20px' }}>
-                    {error && <div style={{ margin: '8px 0', padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, color: '#991b1b' }}>{error}</div>}
+                    {error && <div style={{ margin: '8px 0', padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
                     {allDrivers.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, padding: '24px 0' }}>No drivers yet — add one under Driver first.</p>
+                        <p style={{ textAlign: 'center', color: '#5e7094', fontSize: 13, padding: '24px 0' }}>No drivers yet — add one under Driver first.</p>
                     ) : allDrivers.map(d => (
-                        <label key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 4px', borderBottom: '1px solid #f8fafc', cursor: 'pointer', fontSize: 13.5, color: '#374151' }}>
+                        <label key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 4px', borderBottom: '1px solid #1e2c46', cursor: 'pointer', fontSize: 13.5, color: '#cfdcf0' }}>
                             <input type="checkbox" checked={selected.has(d.id)} onChange={() => toggle(d.id)} style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
                             <span style={{ fontWeight: 500 }}>{d.name}</span>
-                            <span style={{ color: '#9ca3af', fontSize: 12 }}>{d.badge_no}</span>
+                            <span style={{ color: '#5e7094', fontSize: 12 }}>{d.badge_no}</span>
                         </label>
                     ))}
                 </div>
 
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}>
-                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}>
+                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                     <button onClick={handleSave} disabled={saving} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
                         {saving ? 'Saving…' : 'Save'}
                     </button>
@@ -1244,26 +1253,26 @@ function VehicleFormModal({ vehicle, availableDevices, onClose, onSaved }) {
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <div style={{ background: '#fff', borderRadius: 12, width: 480, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{isNew ? 'Add Vehicle' : 'Edit Vehicle'}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16 }}>✕</button>
+            <div style={{ background: '#111c33', borderRadius: 12, width: 480, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>{isNew ? 'Add Vehicle' : 'Edit Vehicle'}</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
                 </div>
 
                 <div style={{ padding: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                    {error && <div style={{ gridColumn: '1 / -1', padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, color: '#991b1b' }}>{error}</div>}
+                    {error && <div style={{ gridColumn: '1 / -1', padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
 
                     <div style={{ ...driverFieldStyle, gridColumn: '1 / -1' }}>
                         <label style={driverLabelStyle}>IMEI *</label>
                         {isNew ? (
-                            <select value={form.imei} onChange={set('imei')} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer' }}>
+                            <select value={form.imei} onChange={set('imei')} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer' }}>
                                 <option value="">Select an unlinked device…</option>
                                 {availableDevices.map(d => (
                                     <option key={d.uniqueId} value={d.uniqueId}>{d.uniqueId} — {d.name || 'unnamed device'}</option>
                                 ))}
                             </select>
                         ) : (
-                            <input value={form.imei} disabled style={{ ...driverInputStyle, background: '#f3f4f6', fontFamily: 'ui-monospace,Menlo,Consolas,monospace' }} />
+                            <input value={form.imei} disabled style={{ ...driverInputStyle, background: '#16233c', fontFamily: 'ui-monospace,Menlo,Consolas,monospace' }} />
                         )}
                         {isNew && availableDevices.length === 0 && (
                             <p style={{ margin: '4px 0 0', fontSize: 11.5, color: '#f59e0b' }}>Every visible device is already linked to a vehicle.</p>
@@ -1297,7 +1306,7 @@ function VehicleFormModal({ vehicle, availableDevices, onClose, onSaved }) {
                     {!isNew && (
                         <div style={driverFieldStyle}>
                             <label style={driverLabelStyle}>Status</label>
-                            <select value={form.status} onChange={set('status')} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer' }}>
+                            <select value={form.status} onChange={set('status')} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer' }}>
                                 <option>Active</option>
                                 <option>Inactive</option>
                             </select>
@@ -1307,22 +1316,22 @@ function VehicleFormModal({ vehicle, availableDevices, onClose, onSaved }) {
 
                 <div style={{ padding: '4px 20px 20px' }}>
                     {settingsLoading ? (
-                        <p style={{ fontSize: 13, color: '#94a3b8' }}>Loading settings…</p>
+                        <p style={{ fontSize: 13, color: '#5e7094' }}>Loading settings…</p>
                     ) : (
                         <>
-                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 16, marginBottom: 16, cursor: 'pointer', borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+                            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 16, marginBottom: 16, cursor: 'pointer', borderTop: '1px solid #1e2c46', paddingTop: 16 }}>
                                 <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} style={{ accentColor: '#3b82f6', width: 16, height: 16, marginTop: 2 }} />
-                                <span style={{ fontSize: 13, color: '#374151' }}>
+                                <span style={{ fontSize: 13, color: '#cfdcf0' }}>
                                     <strong>Disconnect relay on unregistered driver tap.</strong><br />
-                                    <span style={{ fontSize: 12, color: '#6b7280' }}>Only fires while the vehicle is stationary. An email alert is always sent, whether or not this is enabled.</span>
+                                    <span style={{ fontSize: 12, color: '#9daec9' }}>Only fires while the vehicle is stationary. An email alert is always sent, whether or not this is enabled.</span>
                                 </span>
                             </label>
 
                             <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16, cursor: 'pointer' }}>
                                 <input type="checkbox" checked={faceFailEnabled} onChange={e => setFaceFailEnabled(e.target.checked)} style={{ accentColor: '#3b82f6', width: 16, height: 16, marginTop: 2 }} />
-                                <span style={{ fontSize: 13, color: '#374151' }}>
+                                <span style={{ fontSize: 13, color: '#cfdcf0' }}>
                                     <strong>Disconnect relay on failed face recognition.</strong><br />
-                                    <span style={{ fontSize: 12, color: '#6b7280' }}>Fires whenever the device's face check comes back with no match. Independent of the toggle above — an email alert is always sent, whether or not this is enabled.</span>
+                                    <span style={{ fontSize: 12, color: '#9daec9' }}>Fires whenever the device's face check comes back with no match. Independent of the toggle above — an email alert is always sent, whether or not this is enabled.</span>
                                 </span>
                             </label>
 
@@ -1331,25 +1340,25 @@ function VehicleFormModal({ vehicle, availableDevices, onClose, onSaved }) {
                                 <input type="number" min="1" max="255" value={channel} onChange={e => setChannel(e.target.value)} style={{ ...driverInputStyle, maxWidth: 120 }} />
                             </div>
 
-                            <div style={{ ...driverFieldStyle, marginBottom: 16, borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
+                            <div style={{ ...driverFieldStyle, marginBottom: 16, borderTop: '1px solid #1e2c46', paddingTop: 16 }}>
                                 <label style={driverLabelStyle}>Vehicle Type</label>
-                                <select value={vehicleType} onChange={e => setVehicleType(e.target.value)} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer', maxWidth: 200 }}>
+                                <select value={vehicleType} onChange={e => setVehicleType(e.target.value)} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer', maxWidth: 200 }}>
                                     <option value="">Default (no icon)</option>
                                     {VEHICLE_TYPES.map(t => <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>)}
                                 </select>
-                                <p style={{ margin: '6px 0 0', fontSize: 11.5, color: '#9ca3af' }}>Controls the icon shown on the live map pin and in the device list sidebar.</p>
+                                <p style={{ margin: '6px 0 0', fontSize: 11.5, color: '#5e7094' }}>Controls the icon shown on the live map pin and in the device list sidebar.</p>
                             </div>
 
                             <div style={{ ...driverFieldStyle, marginBottom: 16 }}>
                                 <label style={driverLabelStyle}>Fuel Type</label>
-                                <select value={fuelType} onChange={e => setFuelType(e.target.value)} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer', maxWidth: 200 }}>
+                                <select value={fuelType} onChange={e => setFuelType(e.target.value)} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer', maxWidth: 200 }}>
                                     <option value="">Not set</option>
                                     {FUEL_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                 </select>
-                                <p style={{ margin: '6px 0 0', fontSize: 11.5, color: '#9ca3af' }}>Matches this vehicle to the Fuel Management module's current petrol/diesel price.</p>
+                                <p style={{ margin: '6px 0 0', fontSize: 11.5, color: '#5e7094' }}>Matches this vehicle to the Fuel Management module's current petrol/diesel price.</p>
                             </div>
 
-                            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                            <div style={{ borderTop: '1px solid #1e2c46', paddingTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                                 <div style={driverFieldStyle}>
                                     <label style={driverLabelStyle}>Fuel Rate (L/100km)</label>
                                     <input type="number" min="0" step="0.1" placeholder="e.g. 12.5" value={fuelRate} onChange={e => setFuelRate(e.target.value)} style={driverInputStyle} />
@@ -1358,12 +1367,12 @@ function VehicleFormModal({ vehicle, availableDevices, onClose, onSaved }) {
                                     <label style={driverLabelStyle}>Tank Capacity (L)</label>
                                     <input type="number" min="0" step="0.1" placeholder="e.g. 80" value={tankCapacity} onChange={e => setTankCapacity(e.target.value)} style={driverInputStyle} />
                                 </div>
-                                <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 11.5, color: '#9ca3af' }}>
+                                <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 11.5, color: '#5e7094' }}>
                                     Used by Fuel Management &gt; Consumption's "Fuel Rate" and "Fuel Sensor" methods.
                                 </p>
                             </div>
 
-                            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16, marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                            <div style={{ borderTop: '1px solid #1e2c46', paddingTop: 16, marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                                 <div style={driverFieldStyle}>
                                     <label style={driverLabelStyle}>Safety Sticker Expiry</label>
                                     <input type="date" value={stickerExpiry} onChange={e => setStickerExpiry(e.target.value)} style={driverInputStyle} />
@@ -1374,7 +1383,7 @@ function VehicleFormModal({ vehicle, availableDevices, onClose, onSaved }) {
                                 </div>
                             </div>
 
-                            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 16, marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                            <div style={{ borderTop: '1px solid #1e2c46', paddingTop: 16, marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                                 <div style={driverFieldStyle}>
                                     <label style={driverLabelStyle}>Insurance Expiry</label>
                                     <input type="date" value={insuranceExpiry} onChange={e => setInsuranceExpiry(e.target.value)} style={driverInputStyle} />
@@ -1388,8 +1397,8 @@ function VehicleFormModal({ vehicle, availableDevices, onClose, onSaved }) {
                     )}
                 </div>
 
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                     <button onClick={handleSave} disabled={saving || settingsLoading} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: (saving || settingsLoading) ? 'not-allowed' : 'pointer' }}>
                         {saving ? 'Saving…' : 'Save'}
                     </button>
@@ -1476,27 +1485,27 @@ function VehiclePage() {
         <PageShell title="Vehicle">
             <FilterBar>
                 <FInput placeholder="Vehicle Name or Plate No." style={{ width: 240 }} value={search} onChange={e => setSearch(e.target.value)} />
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#374151', cursor: 'pointer', paddingBottom: 1 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#cfdcf0', cursor: 'pointer', paddingBottom: 1 }}>
                     <input type="checkbox" checked={stickerExpiredOnly} onChange={e => setStickerExpiredOnly(e.target.checked)} style={{ accentColor: '#3b82f6' }} />Safety Sticker Expired
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#374151', cursor: 'pointer', paddingBottom: 1 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#cfdcf0', cursor: 'pointer', paddingBottom: 1 }}>
                     <input type="checkbox" checked={insuranceExpiredOnly} onChange={e => setInsuranceExpiredOnly(e.target.checked)} style={{ accentColor: '#3b82f6' }} />Insurance Expired
                 </label>
-                <button onClick={() => { setSearch(''); setStickerExpiredOnly(false); setInsuranceExpiredOnly(false); }} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
-                <button onClick={load} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Refresh</button>
+                <button onClick={() => { setSearch(''); setStickerExpiredOnly(false); setInsuranceExpiredOnly(false); }} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={load} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Refresh</button>
             </FilterBar>
             <ActionRow left={[<Btn key="add" primary onClick={() => setEditing('new')}>Add Vehicle</Btn>]} />
 
-            {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, color: '#991b1b' }}>{error}</div>}
+            {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
 
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1300 }}>
                     <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>
                                 {vehicles.length === 0 ? 'No vehicles yet — click "Add Vehicle" to link a tracked device.' : 'No vehicles found'}
                             </td></tr>
                         ) : filtered.map((v, i) => {
@@ -1514,7 +1523,7 @@ function VehiclePage() {
                                     <td style={TD}><Badge text={v.status} color={v.status === 'Active' ? '#16a34a' : '#ef4444'} /></td>
                                     <td style={TD}><Badge text={sStatus} color={REMINDER_COLOR[sStatus]} /></td>
                                     <td style={TD}><Badge text={iStatus} color={REMINDER_COLOR[iStatus]} /></td>
-                                    <td style={TD}>{assigned.length === 0 ? <span style={{ color: '#9ca3af' }}>—</span> : assigned.map(d => d.name).join(', ')}</td>
+                                    <td style={TD}>{assigned.length === 0 ? <span style={{ color: '#5e7094' }}>—</span> : assigned.map(d => d.name).join(', ')}</td>
                                     <td style={{ ...TD, whiteSpace: 'nowrap' }}>
                                         <button onClick={() => setEditing(v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', fontSize: 12.5, fontWeight: 600, marginRight: 10 }}>Edit</button>
                                         <button onClick={() => setAssigning(v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', fontSize: 12.5, fontWeight: 600, marginRight: 10 }}>Assign Drivers</button>
@@ -1548,11 +1557,11 @@ function VehiclePage() {
 
             {pendingDeleteId && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-                    <div style={{ background: '#fff', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
-                        <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Delete vehicle?</h3>
-                        <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#64748b' }}>This unlinks the IMEI from this vehicle profile. This cannot be undone.</p>
+                    <div style={{ background: '#111c33', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
+                        <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Delete vehicle?</h3>
+                        <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#9daec9' }}>This unlinks the IMEI from this vehicle profile. This cannot be undone.</p>
                         <div style={{ display: 'flex', gap: 8 }}>
-                            <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                            <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                             <button onClick={handleDelete} style={{ flex: 1, padding: 9, borderRadius: 7, border: 'none', background: '#ef4444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
                         </div>
                     </div>
@@ -1726,7 +1735,7 @@ function LiveLocationTab() {
     const refreshNow = () => { setNextRefreshIn(VEHICLE_TRACK_POLL_SECONDS); load(); };
 
     const legendItem = (color, label) => (
-        <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', fontWeight: 600 }}>
+        <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#9daec9', fontWeight: 600 }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block' }} />
             {label}
         </span>
@@ -1745,9 +1754,9 @@ function LiveLocationTab() {
                 </button>
             </div>
 
-            <div style={{ height: 600, borderRadius: 10, overflow: 'hidden', border: '1px solid #e5e7eb', position: 'relative' }}>
+            <div style={{ height: 600, borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46', position: 'relative' }}>
                 {loading && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 13, zIndex: 500, background: '#fff' }}>Loading…</div>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5e7094', fontSize: 13, zIndex: 500, background: '#111c33' }}>Loading…</div>
                 )}
                 <MapCanvas
                     devices={devices}
@@ -1764,8 +1773,8 @@ function LiveLocationTab() {
 
 function EmbeddedReport({ section, height = 640 }) {
     return (
-        <div style={{ height, display: 'flex', flexDirection: 'column', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
-            <ReportPage reportSection={section} />
+        <div style={{ height, display: 'flex', flexDirection: 'column', border: '1px solid #1e2c46', borderRadius: 10, overflow: 'hidden' }}>
+            <ReportPage reportSection={section} embedded />
         </div>
     );
 }
@@ -1779,9 +1788,6 @@ function VehicleTrackPage() {
 
     return (
         <PageShell title="Vehicle Track">
-            <p style={{ margin: '-6px 0 16px', fontSize: 12.5, color: '#6b7280' }}>
-                Real-time location, route replay, speed, mileage, stop, geofence, work-zone rule and online-rate management for every VL863-tracked vehicle — powered by Traccar.
-            </p>
             <TabBar tabs={VEHICLE_TRACK_TABS} active={tab} onChange={setTab} />
 
             {tab === 'Real-time Location' && <LiveLocationTab />}
@@ -1805,7 +1811,7 @@ function VehicleTrackPage() {
             )}
 
             {tab === 'Work-zone Rules' && (
-                <div style={{ height: 640, display: 'flex', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+                <div style={{ height: 640, display: 'flex', border: '1px solid #1e2c46', borderRadius: 10, overflow: 'hidden' }}>
                     <GeofenceManagementPage onBack={() => {}} />
                 </div>
             )}
@@ -1830,7 +1836,7 @@ function FuelManagementPage() {
 
     return (
         <PageShell title="Fuel Management">
-            <p style={{ margin: '-6px 0 16px', fontSize: 12.5, color: '#6b7280' }}>
+            <p style={{ margin: '-6px 0 16px', fontSize: 12.5, color: '#9daec9' }}>
                 Consumption, refuelling, idle fuel, abnormal loss and ranking — read from Traccar's
                 report endpoints. Sensor-based figures need a device that reports a fuel level;
                 rate-based consumption uses the Fuel Rate set on each vehicle.
@@ -1843,34 +1849,6 @@ function FuelManagementPage() {
             {tab === 'Idle Fuel'     && <EmbeddedReport section="Idle Fuel" />}
             {tab === 'Abnormal Loss' && <EmbeddedReport section="Abnormal Fuel Loss" />}
             {tab === 'Ranking'       && <EmbeddedReport section="Fuel Ranking" height={720} />}
-        </PageShell>
-    );
-}
-
-/* Check in Record */
-function CheckInPage() {
-    const [tab, setTab] = useState('RFID');
-    const today = new Date().toISOString().slice(0,10);
-    const month = new Date(Date.now() - 30*24*3600*1000).toISOString().slice(0,10);
-    return (
-        <PageShell title="Check in Record">
-            <TabBar tabs={['RFID','IBUTTON','KC208','DLT','Dashcam']} active={tab} onChange={setTab} />
-            <FilterBar>
-                <FInput placeholder="Card ID" style={{ width: 120 }} />
-                <FInput placeholder="Device name or IMEI" style={{ width: 220 }} />
-                <FInput placeholder="Driver No." style={{ width: 110 }} />
-                <FInput placeholder="Driver name" style={{ width: 120 }} />
-                <FInput placeholder="Number plate" style={{ width: 120 }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #d1d5db', borderRadius: 6, padding: '7px 10px', fontSize: 13, color: '#374151', background: '#fff' }}>
-                    <span>{month}</span><span style={{ color: '#9ca3af' }}>-</span><span>{today}</span>
-                </div>
-                <SearchBtn />
-            </FilterBar>
-            <EmptyTable cols={['No.','Card ID','IMEI','Device name','Driver Name','Number plate','Driver No.','Photo','Operation Time']} rows={[
-                [1,'RFID-88231','123456789012001','Device 001','Juan Dela Cruz','NCR-1234','D-1001','—','2026-06-18 06:00:02'],
-                [2,'RFID-88232','123456789012002','Device 002','Maria Santos','NCR-5678','D-1002','—','2026-06-18 05:45:18'],
-                [3,'RFID-88234','123456789012007','Device 007','Ana Garcia','NCR-3456','D-1004','—','2026-06-18 05:40:55'],
-            ]} />
         </PageShell>
     );
 }
@@ -1946,18 +1924,18 @@ function MaintenanceFormModal({ record, devices, onClose, onSaved }) {
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <div style={{ background: '#fff', borderRadius: 12, width: 560, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#0f172a' }}>{isNew ? 'New Maintenance Record' : 'Edit Maintenance Record'}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16 }}>✕</button>
+            <div style={{ background: '#111c33', borderRadius: 12, width: 560, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>{isNew ? 'New Maintenance Record' : 'Edit Maintenance Record'}</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
                 </div>
 
                 <div style={{ padding: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                    {error && <div style={{ gridColumn: '1 / -1', padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, color: '#991b1b' }}>{error}</div>}
+                    {error && <div style={{ gridColumn: '1 / -1', padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
 
                     <div style={driverFieldStyle}>
                         <label style={driverLabelStyle}>Vehicle *</label>
-                        <select value={form.imei} onChange={set('imei')} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer' }}>
+                        <select value={form.imei} onChange={set('imei')} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer' }}>
                             <option value="">Select vehicle</option>
                             {devices.map(d => <option key={d.id} value={d.uniqueId}>{d.name} ({d.uniqueId})</option>)}
                         </select>
@@ -1972,7 +1950,7 @@ function MaintenanceFormModal({ record, devices, onClose, onSaved }) {
                     </div>
                     <div style={{ ...driverFieldStyle, gridColumn: '1 / -1', maxWidth: 220 }}>
                         <label style={driverLabelStyle}>Status</label>
-                        <select value={form.status} onChange={set('status')} style={{ ...driverInputStyle, background: '#fff', cursor: 'pointer' }}>
+                        <select value={form.status} onChange={set('status')} style={{ ...driverInputStyle, background: '#111c33', cursor: 'pointer' }}>
                             {SETTABLE_STATUSES.map(s => <option key={s}>{s}</option>)}
                         </select>
                     </div>
@@ -1994,7 +1972,7 @@ function MaintenanceFormModal({ record, devices, onClose, onSaved }) {
                     </div>
 
                     {/* Everything below is filled in once the work has actually been done. */}
-                    <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e2e8f0', paddingTop: 14, marginTop: 4, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, color: '#64748b' }}>
+                    <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #1e2c46', paddingTop: 14, marginTop: 4, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, color: '#9daec9' }}>
                         COMPLETION
                     </div>
                     <div style={driverFieldStyle}>
@@ -2019,8 +1997,8 @@ function MaintenanceFormModal({ record, devices, onClose, onSaved }) {
                     </div>
                 </div>
 
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                     <button onClick={handleSave} disabled={saving} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
                         {saving ? 'Saving…' : 'Save'}
                     </button>
@@ -2095,26 +2073,26 @@ function VehicleMaintenancePage() {
             <FilterBar>
                 <FInput placeholder="Vehicle/Maintenance Type" style={{ width: 220 }} value={search} onChange={e => setSearch(e.target.value)} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>Status</label>
-                    <select value={status} onChange={e => setStatus(e.target.value)} style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer' }}>
+                    <label style={{ fontSize: 12, color: '#9daec9', fontWeight: 600 }}>Status</label>
+                    <select value={status} onChange={e => setStatus(e.target.value)} style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer' }}>
                         <option value="">All statuses</option>
                         {MAINTENANCE_STATUSES.map(s => <option key={s}>{s}</option>)}
                     </select>
                 </div>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </FilterBar>
             <ActionRow left={[<Btn primary onClick={() => setEditing('new')}>Add</Btn>]} />
 
-            {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, color: '#991b1b' }}>{error}</div>}
+            {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
 
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
                     <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : filtered.map((r, i) => (
                             <tr key={r.id}>
                                 <td style={TD}>{i + 1}</td>
@@ -2148,11 +2126,11 @@ function VehicleMaintenancePage() {
 
             {pendingDeleteId && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-                    <div style={{ background: '#fff', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
-                        <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Delete maintenance record?</h3>
-                        <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#64748b' }}>This cannot be undone.</p>
+                    <div style={{ background: '#111c33', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
+                        <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Delete maintenance record?</h3>
+                        <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#9daec9' }}>This cannot be undone.</p>
                         <div style={{ display: 'flex', gap: 8 }}>
-                            <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                            <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                             <button onClick={handleDelete} style={{ flex: 1, padding: 9, borderRadius: 7, border: 'none', background: '#ef4444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
                         </div>
                     </div>
@@ -2163,6 +2141,17 @@ function VehicleMaintenancePage() {
 }
 
 /* ── page map ────────────────────────────────────────────────── */
+/* What the app header calls each Fleet page. Keys match PAGE_MAP; exported so the header names the
+   page the reader is actually on rather than the generic "Fleet". */
+export const FLEET_PAGE_TITLES = {
+    Dashboard:          'Fleet Dashboard',
+    Driver:             'Driver',
+    Vehicle:            'Vehicle',
+    VehicleTrack:       'Vehicle Track',
+    VehicleMaintenance: 'Vehicle Maintenance',
+    FuelManagement:     'Fuel Management',
+};
+
 const PAGE_MAP = {
     Dashboard:          FleetDashboard,
     Driver:             DriverPage,
@@ -2170,55 +2159,18 @@ const PAGE_MAP = {
     VehicleTrack:       VehicleTrackPage,
     VehicleMaintenance: VehicleMaintenancePage,
     FuelManagement:     FuelManagementPage,
-    CheckIn:            CheckInPage,
 };
 
 /* ══════════════════════════════════════════════════════════════ */
 /*  Main export                                                   */
 /* ══════════════════════════════════════════════════════════════ */
 export default function FleetPage({ fleetPage = 'Dashboard', setFleetPage }) {
-    const [accountOpen, setAccountOpen] = useState(true);
     const Content = PAGE_MAP[fleetPage] || FleetDashboard;
-    // The cockpit dashboard and the maintenance table are full-bleed; the rest keep the
-    // account list rail.
-    const showAccountList = !['Dashboard', 'Driver', 'Vehicle', 'VehicleTrack', 'VehicleMaintenance', 'FuelManagement'].includes(fleetPage);
 
     return (
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden', height: '100%' }}>
-            {showAccountList && (
-                <>
-                    {/* Account list panel */}
-                    <div style={{ width: accountOpen ? 200 : 0, minWidth: accountOpen ? 200 : 0, overflow: 'hidden', background: '#fff', borderRight: '1px solid #e5e7eb', transition: 'width 0.22s ease, min-width 0.22s ease', flexShrink: 0 }}>
-                        <div style={{ width: 200, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                            {/* Header */}
-                            <div style={{ padding: '12px 14px 10px', fontWeight: 700, fontSize: 13, color: '#111827', borderBottom: '1px solid #f1f5f9', letterSpacing: 0.2 }}>Account List</div>
-                            {/* Search row */}
-                            <div style={{ padding: '8px 10px', display: 'flex', gap: 6, borderBottom: '1px solid #f1f5f9' }}>
-                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', border: '1px solid #d1d5db', borderRadius: 6, overflow: 'hidden', background: '#f9fafb' }}>
-                                    <input placeholder="Please enter the..." style={{ flex: 1, padding: '5px 8px', border: 'none', fontSize: 12, outline: 'none', minWidth: 0, background: 'transparent', color: '#374151' }} />
-                                    <span style={{ padding: '0 7px', color: '#9ca3af', display: 'flex', alignItems: 'center' }}><SearchSVG /></span>
-                                </div>
-                                <button style={{ padding: '5px 8px', border: '1px solid #d1d5db', borderRadius: 6, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><DownloadSVG /></button>
-                            </div>
-                            {/* Account items */}
-                            <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', borderRadius: 8, background: '#eff6ff', cursor: 'pointer' }}>
-                                    <PersonSVG />
-                                    <span style={{ color: '#374151', fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>NextGen PNG(Stock8/Total8)</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Collapse strip */}
-                    <button onClick={() => setAccountOpen(o => !o)} style={{ width: 13, background: '#e5e7eb', border: 'none', borderRight: '1px solid #d1d5db', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', flexShrink: 0, transition: 'background 0.15s' }}>
-                        <CollapseArrow open={accountOpen} />
-                    </button>
-                </>
-            )}
-
             {/* Content — the cockpit paints its own dark ground, so don't force white under it. */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: fleetPage === 'Dashboard' ? '#060a14' : '#fff' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: fleetPage === 'Dashboard' ? '#060a14' : '#111c33' }}>
                 <Content setFleetPage={setFleetPage} />
             </div>
         </div>

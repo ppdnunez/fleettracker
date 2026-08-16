@@ -1,4 +1,4 @@
-const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 7, fontSize: 13, outline: 'none' };
+const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #24344f', borderRadius: 7, fontSize: 13, outline: 'none' };
 
 export default function AttributesEditor({ rows, onChange }) {
     const updateRow = (idx, field, value) => {
@@ -20,7 +20,7 @@ export default function AttributesEditor({ rows, onChange }) {
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '0 6px' }}>✕</button>
                 </div>
             ))}
-            <button onClick={addRow} style={{ width: '100%', padding: 9, borderRadius: 7, border: '1.5px solid #3b82f6', background: '#fff', color: '#3b82f6', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={addRow} style={{ width: '100%', padding: 9, borderRadius: 7, border: '1.5px solid #3b82f6', background: '#111c33', color: '#3b82f6', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 + Add
             </button>
         </div>

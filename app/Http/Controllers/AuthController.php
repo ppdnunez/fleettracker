@@ -52,6 +52,9 @@ class AuthController extends Controller
 
         return array_merge($user->only(['id', 'name', 'email', 'role']), [
             'is_admin' => $user->isPlatformAdmin(),
+            // Lets the UI show the company's own user administration without having to infer it
+            // from role and client together, and mirrors what CompanyUserController enforces.
+            'is_company_admin' => $user->isCompanyAdmin(),
             'client'   => $user->client ? [
                 'id'     => $user->client->id,
                 'name'   => $user->client->name,

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\UsesTraccarApi;
+use App\Models\Vehicle;
 use App\Models\VehicleMaintenance;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 // Fleet -> Vehicle Maintenance. Traccar's own /api/maintenance only models a repeating
@@ -74,7 +74,9 @@ class VehicleMaintenanceController extends Controller
                 $deviceNameByImei[$device['uniqueId']] = $device['name'] ?? null;
             }
         }
-        $plateByImei = DB::table('vehicles')->pluck('plate_number', 'imei')->toArray();
+        // Vehicle, not DB::table('vehicles') — the query builder skips Eloquent, and with it the
+        // BelongsToClient scope that keeps one company's plates out of another's table.
+        $plateByImei = Vehicle::pluck('plate_number', 'imei')->toArray();
 
         $records = VehicleMaintenance::orderByRaw('due_date IS NULL')
             ->orderBy('due_date')

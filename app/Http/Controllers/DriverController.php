@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
-// FleetTrack's own driver registry (Fleet -> Driver), distinct from the bare Traccar-only driver
+// Turprotrack's own driver registry (Fleet -> Driver), distinct from the bare Traccar-only driver
 // CRUD at /api/traccar/drivers (DriverPage.jsx / TraccarController). This is "Approach 2": the
 // local `drivers` row is the source of truth for fleet-management fields Traccar doesn't have
 // (license, RFID card, register place, expiry dates), and a matching Traccar driver (name +

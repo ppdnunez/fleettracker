@@ -1,9 +1,10 @@
 /* ── ReportPage.jsx ─────────────────────────────────────────── */
 import { useState, useEffect, Fragment } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, Circle, Polygon, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, Circle, Polygon, Popup, ScaleControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../api.js';
+import { groupForSection } from './reportSections.js';
 
 // Fix default marker icon paths broken by bundlers (same fix as MapCanvas.jsx; idempotent).
 delete L.Icon.Default.prototype._getIconUrl;
@@ -14,8 +15,8 @@ L.Icon.Default.mergeOptions({
 });
 
 /* ── shared sub-components ──────────────────────────────────── */
-const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#374151', borderBottom: '2px solid #e5e7eb', whiteSpace: 'nowrap', background: '#f9fafb' };
-const TD = { padding: '11px 14px', fontSize: 13, borderBottom: '1px solid #f1f5f9', color: '#374151' };
+const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
+const TD = { padding: '11px 14px', fontSize: 13, borderBottom: '1px solid #1e2c46', color: '#cfdcf0' };
 
 const humanize = (raw) => raw ? raw.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase()) : '';
 const fmtTime = (iso) => iso ? new Date(iso).toLocaleString() : '—';
@@ -24,9 +25,9 @@ const toLocalInput = (d) => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-function Notice({ color = '#fef3c7', icon = '⚠', text }) {
+function Notice({ color = '#33260c', icon = '⚠', text }) {
     return (
-        <div style={{ background: color, border: `1px solid ${color === '#fef3c7' ? '#f59e0b' : '#3b82f6'}`, borderRadius: 8, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151' }}>
+        <div style={{ background: color, border: `1px solid ${color === '#33260c' ? '#f59e0b' : '#3b82f6'}`, borderRadius: 8, padding: '10px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#cfdcf0' }}>
             <span>{icon}</span><span>{text}</span>
         </div>
     );
@@ -42,7 +43,7 @@ function EmptyTable({ cols, rows }) {
                 {rows && rows.length ? rows.map((r, i) => (
                     <tr key={i}>{r.map((cell, j) => <td key={j} style={TD}>{cell}</td>)}</tr>
                 )) : (
-                    <tr><td colSpan={cols.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                    <tr><td colSpan={cols.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                 )}
             </tbody>
         </table>
@@ -53,15 +54,15 @@ function SelInput({ label, type = 'select', options = [], placeholder }) {
     const [v, setV] = useState('');
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{label}</label>
+            <label style={{ fontSize: 12, color: '#9daec9', fontWeight: 600 }}>{label}</label>
             {type === 'select' ? (
-                <select value={v} onChange={e => setV(e.target.value)} style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', minWidth: 150 }}>
+                <select value={v} onChange={e => setV(e.target.value)} style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', minWidth: 150 }}>
                     <option value="">{placeholder || 'Please select'}</option>
                     {options.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
             ) : (
                 <input type={type} value={v} onChange={e => setV(e.target.value)} placeholder={placeholder}
-                    style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none' }} />
+                    style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none' }} />
             )}
         </div>
     );
@@ -69,17 +70,17 @@ function SelInput({ label, type = 'select', options = [], placeholder }) {
 
 function FilterBar({ children, onSearch }) {
     return (
-        <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 18px', marginBottom: 18, display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ background: '#16233c', border: '1px solid #1e2c46', borderRadius: 10, padding: '14px 18px', marginBottom: 18, display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
             {children}
             <button onClick={onSearch} style={{ padding: '7px 22px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-            <button style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+            <button style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
         </div>
     );
 }
 
 function ChartPlaceholder({ label }) {
     return (
-        <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 10, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 14, marginBottom: 18 }}>
+        <div style={{ background: '#16233c', border: '1px dashed #24344f', borderRadius: 10, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5e7094', fontSize: 14, marginBottom: 18 }}>
             📈 {label} chart — no data
         </div>
     );
@@ -161,39 +162,39 @@ function InternalBattery() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <select value={status} onChange={e => setStatus(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer' }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer' }}>
                     <option value="">All statuses</option>
                     <option>Normal</option><option>Low</option><option>Critical</option>
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : filtered.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : filtered.map((r, i) => (
                         <tr key={i}>
                             <td style={TD}>{i + 1}</td>
                             <td style={TD}>{r.deviceName ?? '—'}</td>
                             <td style={TD}>{r.imei ?? '—'}</td>
                             <td style={TD}>{r.level ?? '—'}</td>
-                            <td style={{ ...TD, color: BATTERY_STATUS_COLOR[r.status] || '#374151', fontWeight: 600 }}>{r.status ?? '—'}</td>
+                            <td style={{ ...TD, color: BATTERY_STATUS_COLOR[r.status] || '#cfdcf0', fontWeight: 600 }}>{r.status ?? '—'}</td>
                             <td style={TD}>{fmtTime(r.startTime)}</td>
                             <td style={TD}>{formatMinutesDuration(r.durationMinutes)}</td>
                         </tr>
@@ -254,39 +255,39 @@ function ExternalBattery() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <select value={status} onChange={e => setStatus(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer' }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer' }}>
                     <option value="">All statuses</option>
                     <option>Normal</option><option>Low</option>
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : filtered.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : filtered.map((r, i) => (
                         <tr key={i}>
                             <td style={TD}>{i + 1}</td>
                             <td style={TD}>{r.deviceName ?? '—'}</td>
                             <td style={TD}>{r.imei ?? '—'}</td>
                             <td style={TD}>{r.voltage ?? '—'}</td>
-                            <td style={{ ...TD, color: BATTERY_STATUS_COLOR[r.status] || '#374151', fontWeight: 600 }}>{r.status ?? '—'}</td>
+                            <td style={{ ...TD, color: BATTERY_STATUS_COLOR[r.status] || '#cfdcf0', fontWeight: 600 }}>{r.status ?? '—'}</td>
                             <td style={TD}>{fmtTime(r.recordTime)}</td>
                         </tr>
                     ))}
@@ -357,32 +358,32 @@ function FuelConsumption() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <select value={method} onChange={e => setMethod(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 180 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 180 }}>
                     {FUEL_METHODS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <Notice text={FUEL_METHOD_NOTICE[method]} />
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data for {FUEL_METHOD_LABELS[method]}</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data for {FUEL_METHOD_LABELS[method]}</td></tr>
                     ) : rows.map((r, i) => (
                         <tr key={r.deviceId}>
                             <td style={TD}>{i + 1}</td>
@@ -444,22 +445,22 @@ function CurrentFuelValue() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : rows.map((r, i) => (
                         <tr key={r.deviceId}>
                             <td style={TD}>{i + 1}</td>
@@ -486,7 +487,7 @@ function FuelCurveChart({ rows }) {
     const pts = ordered.filter(r => r.percent != null);
     if (pts.length < 2) {
         return (
-            <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 10, height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 13, marginBottom: 14 }}>
+            <div style={{ background: '#16233c', border: '1px dashed #24344f', borderRadius: 10, height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5e7094', fontSize: 13, marginBottom: 14 }}>
                 ⛽ Fuel Curve — not enough data
             </div>
         );
@@ -502,7 +503,7 @@ function FuelCurveChart({ rows }) {
     });
 
     return (
-        <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: 14, marginBottom: 14 }}>
+        <div style={{ background: '#16233c', border: '1px solid #1e2c46', borderRadius: 10, padding: 14, marginBottom: 14 }}>
             <div style={{ marginBottom: 6, fontSize: 12, color: '#16a34a', fontWeight: 600 }}>● Fuel level (%)</div>
             <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
                 <path d={d} fill="none" stroke="#16a34a" strokeWidth="2" />
@@ -559,28 +560,28 @@ function FuelCurve() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <FuelCurveChart rows={rows} />
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : [...rows].reverse().map((r, i) => (
                         <tr key={i}>
                             <td style={TD}>{i + 1}</td>
@@ -645,28 +646,28 @@ function FuelEventReport({ apiFn, eventLabel, noticeText }) {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             {noticeText && <Notice text={noticeText} />}
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : rows.map((r, i) => (
                         <tr key={i}>
                             <td style={TD}>{i + 1}</td>
@@ -744,27 +745,27 @@ function IdleFuel() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : rows.map((r, i) => (
                         <tr key={i}>
                             <td style={TD}>{i + 1}</td>
@@ -839,42 +840,42 @@ function FuelRanking() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={by} onChange={e => { setBy(e.target.value); search({ by: e.target.value }); }}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer' }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer' }}>
                     <option value="vehicle">By Vehicle</option>
                     <option value="driver">By Driver</option>
                     <option value="route">By Route</option>
                 </select>
                 {by === 'vehicle' && (
                     <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                        style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                        style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                         <option value="">All devices</option>
                         {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                 )}
                 {by === 'vehicle' && (
                     <select value={method} onChange={e => setMethod(e.target.value)}
-                        style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer' }}>
+                        style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer' }}>
                         {FUEL_METHODS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
                     </select>
                 )}
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <Notice text="Ranked best (lowest L/100km) to worst. Tonne-km uses each device's attributes.cargoTonnes custom attribute, defaulting to 1 tonne when unset." />
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : rows.map((r, i) => (
                         <tr key={i}>
                             <td style={TD}>{i + 1}</td>
@@ -925,7 +926,7 @@ function TempHumidityChart({ rows }) {
     const ordered = [...rows].reverse(); // table is newest-first; chart reads chronologically
     if (ordered.length < 2) {
         return (
-            <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 10, height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 13, marginBottom: 14 }}>
+            <div style={{ background: '#16233c', border: '1px dashed #24344f', borderRadius: 10, height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5e7094', fontSize: 13, marginBottom: 14 }}>
                 📈 Temperature & Humidity (dual axis) — not enough data
             </div>
         );
@@ -949,7 +950,7 @@ function TempHumidityChart({ rows }) {
     };
 
     return (
-        <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 10, padding: 14, marginBottom: 14 }}>
+        <div style={{ background: '#16233c', border: '1px solid #1e2c46', borderRadius: 10, padding: 14, marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 16, marginBottom: 6, fontSize: 12 }}>
                 <span style={{ color: '#ef4444', fontWeight: 600 }}>● Temperature (°C)</span>
                 <span style={{ color: '#3b82f6', fontWeight: 600 }}>● Humidity (%)</span>
@@ -1009,28 +1010,28 @@ function TemperatureHumidity() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <TempHumidityChart rows={rows} />
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : rows.map((r, i) => (
                         <tr key={i}>
                             <td style={TD}>{i + 1}</td>
@@ -1047,19 +1048,59 @@ function TemperatureHumidity() {
     );
 }
 
+/**
+ * The alerts the Driving Behavior Alerts panel configures on the device, and how each one comes
+ * back from Traccar.
+ *
+ * Traccar reports these two different ways, which is why every entry lists its own keys: a speed
+ * violation arrives as its own event type (`deviceOverspeed`), while the rest arrive as
+ * `type: "alarm"` with the specific kind in `attributes.alarm`. Several are listed with more than
+ * one key because the vendor wording and Traccar's own constant differ — a rollover is
+ * `fallDown` in Traccar terms but some firmware reports `rollover` literally.
+ *
+ * `color` is what the marker is drawn in on the replay map. Speeding is red, the one everybody
+ * looks for first.
+ */
 const DRIVER_BEHAVIOR_TYPES = [
-    ['hardAcceleration', 'Hard Acceleration'],
-    ['hardBraking', 'Hard Braking'],
-    ['hardCornering', 'Hard Cornering'],
-    ['deviceOverspeed', 'Overspeed'],
+    ['overspeed',        'Overspeed',                  ['deviceOverspeed', 'overspeed'],       '#ef4444'],
+    ['hardAcceleration', 'Harsh Acceleration',         ['hardAcceleration'],                   '#f59e0b'],
+    ['hardBraking',      'Harsh Braking',              ['hardBraking'],                        '#8b5cf6'],
+    ['hardCornering',    'Harsh Cornering',            ['hardCornering'],                      '#0ea5e9'],
+    ['accident',         'Collision',                  ['accident', 'collision'],              '#be123c'],
+    ['rollover',         'Rollover',                   ['fallDown', 'rollover'],               '#c2410c'],
+    ['fatigueDriving',   'Fatigue Driving (Overtime)', ['fatigueDriving', 'overtime', 'tired'],'#0f766e'],
 ];
-const DRIVER_BEHAVIOR_ALARMS = ['hardAcceleration', 'hardBraking', 'hardCornering'];
+
+/** Every Traccar key that belongs to a driving-behaviour alert, flattened for quick lookup. */
+const DRIVER_BEHAVIOR_KEYS = new Set(DRIVER_BEHAVIOR_TYPES.flatMap(([, , keys]) => keys));
+
+/** The row's own key — the event type for overspeed, the alarm sub-type for everything else. */
+function driverBehaviorKey(r) {
+    return r.type === 'alarm' ? r.data : r.type;
+}
 
 function isDriverBehaviorRow(r) {
-    return (r.type === 'alarm' && DRIVER_BEHAVIOR_ALARMS.includes(r.data)) || r.type === 'deviceOverspeed';
+    return DRIVER_BEHAVIOR_KEYS.has(driverBehaviorKey(r));
 }
+
+/** The entry a row belongs to, or null when it is not a driving-behaviour row at all. */
+function driverBehaviorEntry(r) {
+    const key = driverBehaviorKey(r);
+    return DRIVER_BEHAVIOR_TYPES.find(([, , keys]) => keys.includes(key)) || null;
+}
+
 function driverBehaviorLabel(r) {
-    return r.type === 'deviceOverspeed' ? 'Overspeed' : alarmDataLabel(r.data);
+    return driverBehaviorEntry(r)?.[1] ?? alarmDataLabel(r.data);
+}
+function driverBehaviorColor(r) {
+    return driverBehaviorEntry(r)?.[3] ?? '#ef4444';
+}
+
+/** Row-vs-dropdown match. An empty selection means "all types", used by both the report and Replay. */
+function matchesDriverBehaviorType(r, value) {
+    if (!value) return true;
+    const entry = DRIVER_BEHAVIOR_TYPES.find(([v]) => v === value);
+    return entry ? entry[2].includes(driverBehaviorKey(r)) : true;
 }
 
 // Reuses Traccar's GET /api/reports/events (same data as Alert Details) filtered to the driving-
@@ -1106,42 +1147,39 @@ function DriverBehavior() {
         setRows([]); setError('');
     };
 
-    const filtered = eventType
-        ? rows.filter(r => (r.type === 'deviceOverspeed' ? r.type : r.data) === eventType)
-        : rows;
+    const filtered = rows.filter(r => matchesDriverBehaviorType(r, eventType));
     const COLS = ['No.','Device name','Driver','Event Type','Value','Location','Time'];
 
     return (
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <select value={eventType} onChange={e => setEventType(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer' }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer' }}>
                     <option value="">All event types</option>
                     {DRIVER_BEHAVIOR_TYPES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
-            <Notice text="Driver behavior events are Traccar alarm sub-types (hard acceleration / braking / cornering) plus speed-limit-exceeded events; Driver is read from the device's reported driverUniqueId, when available." />
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : filtered.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : filtered.map((r, i) => (
                         <tr key={r.id}>
                             <td style={TD}>{i + 1}</td>
@@ -1207,27 +1245,27 @@ function PositioningBattery() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : rows.map((r, i) => (
                         <tr key={i}>
                             <td style={TD}>{i + 1}</td>
@@ -1291,30 +1329,30 @@ function TravelStatisticsOBD() {
 
     return (
         <>
-            <Notice color="#dbeafe" icon="ℹ" text="Built from Traccar's motion-detected trips, grouped per device per day — works for any device, not strictly OBD-only." />
+            <Notice color="#1c3a63" icon="ℹ" text="Built from Traccar's motion-detected trips, grouped per device per day — works for any device, not strictly OBD-only." />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : rows.map((r, i) => (
                         <tr key={`${r.deviceId}-${r.date}`}>
                             <td style={TD}>{i + 1}</td>
@@ -1435,34 +1473,33 @@ function TrackDetails() {
 
     return (
         <>
-            <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 18px', marginBottom: 18, display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ background: '#16233c', border: '1px solid #1e2c46', borderRadius: 10, padding: '14px 18px', marginBottom: 18, display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>Device</label>
+                    <label style={{ fontSize: 12, color: '#9daec9', fontWeight: 600 }}>Device</label>
                     <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                        style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', minWidth: 180 }}>
+                        style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', minWidth: 180 }}>
                         <option value="">Select device</option>
                         {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>From</label>
+                    <label style={{ fontSize: 12, color: '#9daec9', fontWeight: 600 }}>From</label>
                     <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                        style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none' }} />
+                        style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>To</label>
+                    <label style={{ fontSize: 12, color: '#9daec9', fontWeight: 600 }}>To</label>
                     <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                        style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none' }} />
+                        style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none' }} />
                 </div>
                 <button onClick={search} disabled={loading} style={{ padding: '7px 22px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
                     {loading ? 'Loading…' : 'Search'}
                 </button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
                 <button onClick={() => exportTrackDetailsCsv(rows)} disabled={!rows.length}
-                    style={{ padding: '7px 14px', border: '1px solid #d1d5db', borderRadius: 6, background: '#fff', color: rows.length ? '#374151' : '#cbd5e1', fontSize: 13, cursor: rows.length ? 'pointer' : 'not-allowed' }}>Export</button>
+                    style={{ padding: '7px 14px', border: '1px solid #24344f', borderRadius: 6, background: '#111c33', color: rows.length ? '#cfdcf0' : '#24344f', fontSize: 13, cursor: rows.length ? 'pointer' : 'not-allowed' }}>Export</button>
             </div>
 
-            <Notice color="#dbeafe" icon="ℹ" text="Track precision depends on GPS signal quality and reporting interval settings." />
             {error && <Notice text={error} />}
 
             <div style={{ overflowX: 'auto' }}>
@@ -1472,9 +1509,9 @@ function TrackDetails() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : rows.map((r, i) => (
                             <tr key={i}>
                                 <td style={TD}>{i + 1}</td>
@@ -1515,16 +1552,24 @@ function replayIcon(course) {
     const rot = course || 0;
     const svg = `
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" style="transform: rotate(${rot}deg)">
-            <circle cx="14" cy="14" r="12" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2"/>
+            <circle cx="14" cy="14" r="12" fill="#3b82f6" stroke="#7fc4ff" stroke-width="2"/>
             <path d="M14 6 L19 18 L14 15 L9 18 Z" fill="#fff"/>
         </svg>`;
     return L.divIcon({ html: svg, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
 }
 
-const behaviorIcon = L.divIcon({
-    html: '<div style="width:14px;height:14px;border-radius:50%;background:#ef4444;border:2px solid #fff;box-shadow:0 0 0 1px #ef4444;"></div>',
-    className: '', iconSize: [14, 14], iconAnchor: [7, 7],
-});
+/**
+ * Marker for one driving-behaviour event, coloured by type (see DRIVER_BEHAVIOR_TYPES) so a
+ * speeding spot reads as red at a glance without opening the popup. Cached per colour because
+ * Leaflet re-renders the marker whenever the icon identity changes.
+ */
+const behaviorIconCache = {};
+function behaviorIconFor(color) {
+    return behaviorIconCache[color] ??= L.divIcon({
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 0 1px ${color};"></div>`,
+        className: '', iconSize: [14, 14], iconAnchor: [7, 7],
+    });
+}
 
 // Minimal subset of Traccar's WKT geofence area parsing (same formats as GeofencePage.jsx) needed
 // to render saved geofences as static overlays here.
@@ -1655,9 +1700,7 @@ function Replay() {
         }
     }
 
-    const filteredBehavior = alertType
-        ? behaviorEvents.filter(r => (r.type === 'deviceOverspeed' ? r.type : r.data) === alertType)
-        : behaviorEvents;
+    const filteredBehavior = behaviorEvents.filter(r => matchesDriverBehaviorType(r, alertType));
 
     const center = points.length ? [points[0].latitude, points[0].longitude] : REPLAY_DEFAULT_CENTER;
 
@@ -1665,29 +1708,30 @@ function Replay() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 180 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 180 }}>
                     <option value="">Select device</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <button onClick={search} disabled={loading} style={{ padding: '7px 22px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
                     {loading ? 'Loading…' : 'Search'}
                 </button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
 
             {error && <Notice text={error} />}
 
-            <div style={{ position: 'relative', height: 560, borderRadius: 10, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-                <MapContainer center={center} zoom={14} style={{ width: '100%', height: '100%' }} scrollWheelZoom>
+            <div style={{ position: 'relative', height: 560, borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46' }}>
+                <MapContainer className="map-dim" center={center} zoom={14} style={{ width: '100%', height: '100%' }} scrollWheelZoom>
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
+                    <ScaleControl position="bottomleft" imperial={false} />
                     <FitToTrack points={points} />
 
                     {showTrack && points.length > 1 && (
@@ -1695,13 +1739,21 @@ function Replay() {
                     )}
 
                     {showByFix && points.map((p, i) => (
-                        <CircleMarker key={i} center={[p.latitude, p.longitude]} radius={3} pathOptions={{ color: '#1d4ed8', fillOpacity: 0.8 }} />
+                        <CircleMarker key={i} center={[p.latitude, p.longitude]} radius={3} pathOptions={{ color: '#7fc4ff', fillOpacity: 0.8 }} />
                     ))}
 
+                    {/* Where each driving-behaviour alert was recorded, coloured by type — speeding
+                        red. An event whose position Traccar never resolved has no coordinates to
+                        place, so it is skipped rather than dropped at 0,0. */}
                     {showBehavior && filteredBehavior.map(r => (
                         r.latitude != null && (
-                            <Marker key={r.id} position={[r.latitude, r.longitude]} icon={behaviorIcon}>
-                                <Popup>{driverBehaviorLabel(r)}<br />{fmtTime(r.eventTime)}</Popup>
+                            <Marker key={r.id} position={[r.latitude, r.longitude]} icon={behaviorIconFor(driverBehaviorColor(r))}>
+                                <Popup>
+                                    <strong>{driverBehaviorLabel(r)}</strong><br />
+                                    {fmtTime(r.eventTime)}
+                                    {r.speed != null && <><br />{Math.round(r.speed)} km/h</>}
+                                    {r.address && <><br />{r.address}</>}
+                                </Popup>
                             </Marker>
                         )
                     ))}
@@ -1725,12 +1777,12 @@ function Replay() {
                     {current && <Marker position={[current.latitude, current.longitude]} icon={replayIcon(current.course)} />}
                 </MapContainer>
 
-                <div style={{ position: 'absolute', top: 12, left: 12, width: 300, background: '#fff', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.15)', padding: 14, fontSize: 13, zIndex: 1000 }}>
+                <div style={{ position: 'absolute', top: 12, left: 12, width: 300, background: '#111c33', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.15)', padding: 14, fontSize: 13, zIndex: 1000 }}>
                     {points.length === 0 ? (
-                        <div style={{ color: '#94a3b8', textAlign: 'center', padding: 8 }}>Select a device and search to load a track.</div>
+                        <div style={{ color: '#5e7094', textAlign: 'center', padding: 8 }}>Select a device and search to load a track.</div>
                     ) : (
                         <>
-                            <div style={{ textAlign: 'right', marginBottom: 6, color: '#374151', fontWeight: 600 }}>
+                            <div style={{ textAlign: 'right', marginBottom: 6, color: '#cfdcf0', fontWeight: 600 }}>
                                 Speed: {current?.speedKmh ?? 0} km/h
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1741,43 +1793,52 @@ function Replay() {
                                     onChange={e => { setPlaying(false); setIndex(Number(e.target.value)); }}
                                     style={{ flex: 1 }} />
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, color: '#6b7280', fontSize: 12 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, color: '#9daec9', fontSize: 12 }}>
                                 <button onClick={replay} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: 4, padding: 0, fontSize: 12 }}>↻ Replay</button>
                                 <select value={rateMs} onChange={e => setRateMs(Number(e.target.value))}
-                                    style={{ border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, padding: '2px 6px' }}>
+                                    style={{ border: '1px solid #24344f', borderRadius: 6, fontSize: 12, padding: '2px 6px' }}>
                                     {PLAYBACK_RATES.map(r => <option key={r.label} value={r.ms}>{r.label}</option>)}
                                 </select>
                             </div>
-                            <div style={{ textAlign: 'center', marginTop: 4, color: '#374151', fontSize: 12 }}>{fmtTime(current?.fixTime)}</div>
+                            <div style={{ textAlign: 'center', marginTop: 4, color: '#cfdcf0', fontSize: 12 }}>{fmtTime(current?.fixTime)}</div>
 
                             <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <label style={{ color: '#6b7280', fontSize: 12, whiteSpace: 'nowrap' }}>Parking time</label>
+                                <label style={{ color: '#9daec9', fontSize: 12, whiteSpace: 'nowrap' }}>Parking time</label>
                                 <select value={parkingTime} onChange={e => setParkingTime(Number(e.target.value))}
-                                    style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, padding: '4px 6px' }}>
+                                    style={{ flex: 1, border: '1px solid #24344f', borderRadius: 6, fontSize: 12, padding: '4px 6px' }}>
                                     {PARKING_TIME_OPTIONS.map(m => <option key={m} value={m}>{m}Minute{m === 1 ? '' : 's'}</option>)}
                                 </select>
                             </div>
 
+                            {/* The alerts configured in Device Management → Driving Behavior Alerts.
+                                Selecting one narrows the markers; the dot shows its map colour. */}
                             <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <label style={{ color: '#6b7280', fontSize: 12, whiteSpace: 'nowrap' }}>Alert Type</label>
+                                <label style={{ color: '#9daec9', fontSize: 12, whiteSpace: 'nowrap' }}>Alert Type</label>
                                 <select value={alertType} onChange={e => setAlertType(e.target.value)}
-                                    style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, padding: '4px 6px' }}>
-                                    <option value="">Select Alert Type</option>
+                                    style={{ flex: 1, border: '1px solid #24344f', borderRadius: 6, fontSize: 12, padding: '4px 6px' }}>
+                                    <option value="">All alert types</option>
                                     {DRIVER_BEHAVIOR_TYPES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
                                 </select>
+                                {alertType && (
+                                    <span style={{
+                                        width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+                                        background: DRIVER_BEHAVIOR_TYPES.find(([v]) => v === alertType)?.[3],
+                                        border: '2px solid #fff', boxShadow: '0 0 0 1px #24344f',
+                                    }} />
+                                )}
                             </div>
 
                             <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: 'pointer' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#cfdcf0', cursor: 'pointer' }}>
                                     <input type="checkbox" checked={showTrack} onChange={e => setShowTrack(e.target.checked)} /> Display track
                                 </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: 'pointer' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#cfdcf0', cursor: 'pointer' }}>
                                     <input type="checkbox" checked={showByFix} onChange={e => setShowByFix(e.target.checked)} /> Display by fix
                                 </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: 'pointer' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#cfdcf0', cursor: 'pointer' }}>
                                     <input type="checkbox" checked={showBehavior} onChange={e => setShowBehavior(e.target.checked)} /> Driving behavior
                                 </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: 'pointer' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#cfdcf0', cursor: 'pointer' }}>
                                     <input type="checkbox" checked={showGeofence} onChange={e => setShowGeofence(e.target.checked)} /> Geofence
                                 </label>
                             </div>
@@ -1842,19 +1903,19 @@ function Mileage() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
-            <p style={{ fontSize: 13, color: '#374151', margin: '0 0 10px' }}>
+            <p style={{ fontSize: 13, color: '#cfdcf0', margin: '0 0 10px' }}>
                 <strong>Total:</strong> Total Mileage {totalMileage.toFixed(2)} km
             </p>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
@@ -1864,11 +1925,11 @@ function Mileage() {
                             <th key={c} style={TH}>
                                 {c === 'Device Name' ? (
                                     <button onClick={() => setSortAsc(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0, font: 'inherit', color: 'inherit' }}>
-                                        {c}<span style={{ fontSize: 11, color: '#94a3b8' }}>{sortAsc ? '▲' : '▼'}</span>
+                                        {c}<span style={{ fontSize: 11, color: '#5e7094' }}>{sortAsc ? '▲' : '▼'}</span>
                                     </button>
                                 ) : c === 'Start time' ? (
                                     <span title="Time of the first GPS position used to calculate mileage within the selected range" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                        {c}<span style={{ fontSize: 11, color: '#94a3b8', cursor: 'help' }}>ⓘ</span>
+                                        {c}<span style={{ fontSize: 11, color: '#5e7094', cursor: 'help' }}>ⓘ</span>
                                     </span>
                                 ) : c}
                             </th>
@@ -1877,11 +1938,11 @@ function Mileage() {
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                     ) : error ? (
                         <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                     ) : sorted.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                     ) : sorted.map((r, i) => (
                         <tr key={r.deviceId}>
                             <td style={TD}>{i + 1}</td>
@@ -1966,29 +2027,29 @@ function Trips() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
-            <Notice color="#dbeafe" icon="ℹ" text="A trip is movement detected between two stop/ignition-off events. Fuel figures use the device's configured average consumption rate." />
+            <Notice color="#1c3a63" icon="ℹ" text="A trip is movement detected between two stop/ignition-off events. Fuel figures use the device's configured average consumption rate." />
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1300 }}>
                     <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : rows.map((r, i) => (
                             <tr key={i}>
                                 <td style={TD}>{fmtTime(r.startTime)}</td>
@@ -2066,21 +2127,20 @@ function Overspeed() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <input type="number" value={speedLimit} onChange={e => setSpeedLimit(e.target.value)} placeholder="Speed limit (km/h)"
-                    style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', width: 150 }} />
+                    style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', width: 150 }} />
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
-            <Notice color="#dbeafe" icon="ℹ" text="Defaults to each device's configured speed limit (Attributes → speedLimit, km/h; 80 if unset), or the override above." />
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1500 }}>
                     <thead>
@@ -2089,7 +2149,7 @@ function Overspeed() {
                                 <th key={c} style={TH}>
                                     {c === 'Device Name' ? (
                                         <button onClick={() => setSortAsc(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0, font: 'inherit', color: 'inherit' }}>
-                                            {c}<span style={{ fontSize: 11, color: '#94a3b8' }}>{sortAsc ? '▲' : '▼'}</span>
+                                            {c}<span style={{ fontSize: 11, color: '#5e7094' }}>{sortAsc ? '▲' : '▼'}</span>
                                         </button>
                                     ) : c}
                                 </th>
@@ -2098,11 +2158,11 @@ function Overspeed() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : sorted.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : sorted.map((r, i) => (
                             <tr key={i}>
                                 <td style={TD}>{i + 1}</td>
@@ -2189,19 +2249,19 @@ function Parking() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <input type="number" value={minDuration} onChange={e => setMinDuration(e.target.value)} placeholder="Min. duration (min)"
-                    style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', width: 150 }} />
+                    style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', width: 150 }} />
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
@@ -2211,7 +2271,7 @@ function Parking() {
                                 <th key={c} style={TH}>
                                     {c === 'Device Name' ? (
                                         <button onClick={() => setSortAsc(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0, font: 'inherit', color: 'inherit' }}>
-                                            {c}<span style={{ fontSize: 11, color: '#94a3b8' }}>{sortAsc ? '▲' : '▼'}</span>
+                                            {c}<span style={{ fontSize: 11, color: '#5e7094' }}>{sortAsc ? '▲' : '▼'}</span>
                                         </button>
                                     ) : c}
                                 </th>
@@ -2220,11 +2280,11 @@ function Parking() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : filtered.map((r, i) => (
                             <tr key={i}>
                                 <td style={TD}>{i + 1}</td>
@@ -2304,19 +2364,19 @@ function Idling() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <input type="number" value={minDuration} onChange={e => setMinDuration(e.target.value)} placeholder="Min. idle (min)"
-                    style={{ padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', width: 140 }} />
+                    style={{ padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', width: 140 }} />
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1200 }}>
@@ -2326,7 +2386,7 @@ function Idling() {
                                 <th key={c} style={TH}>
                                     {c === 'Device Name' ? (
                                         <button onClick={() => setSortAsc(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0, font: 'inherit', color: 'inherit' }}>
-                                            {c}<span style={{ fontSize: 11, color: '#94a3b8' }}>{sortAsc ? '▲' : '▼'}</span>
+                                            {c}<span style={{ fontSize: 11, color: '#5e7094' }}>{sortAsc ? '▲' : '▼'}</span>
                                         </button>
                                     ) : c}
                                 </th>
@@ -2335,11 +2395,11 @@ function Idling() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : filtered.map((r, i) => (
                             <tr key={i}>
                                 <td style={TD}>{i + 1}</td>
@@ -2419,17 +2479,17 @@ function Ignition() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
@@ -2439,7 +2499,7 @@ function Ignition() {
                                 <th key={c} style={TH}>
                                     {c === 'Device Name' ? (
                                         <button onClick={() => setSortAsc(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0, font: 'inherit', color: 'inherit' }}>
-                                            {c}<span style={{ fontSize: 11, color: '#94a3b8' }}>{sortAsc ? '▲' : '▼'}</span>
+                                            {c}<span style={{ fontSize: 11, color: '#5e7094' }}>{sortAsc ? '▲' : '▼'}</span>
                                         </button>
                                     ) : c}
                                 </th>
@@ -2448,11 +2508,11 @@ function Ignition() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : sorted.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : sorted.map((r, i) => (
                             <tr key={i}>
                                 <td style={TD}>{i + 1}</td>
@@ -2532,22 +2592,22 @@ function GeoFence() {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <select value={geofenceId} onChange={e => setGeofenceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All geofences</option>
                     {geofences.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
@@ -2557,7 +2617,7 @@ function GeoFence() {
                                 <th key={c} style={TH}>
                                     {c === 'Device Name' ? (
                                         <button onClick={() => setSortAsc(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0, font: 'inherit', color: 'inherit' }}>
-                                            {c}<span style={{ fontSize: 11, color: '#94a3b8' }}>{sortAsc ? '▲' : '▼'}</span>
+                                            {c}<span style={{ fontSize: 11, color: '#5e7094' }}>{sortAsc ? '▲' : '▼'}</span>
                                         </button>
                                     ) : c}
                                 </th>
@@ -2566,11 +2626,11 @@ function GeoFence() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : sorted.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : sorted.map((r, i) => (
                             <tr key={i}>
                                 <td style={TD}>{i + 1}</td>
@@ -2660,12 +2720,12 @@ function DeviceStatusPage({ online }) {
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 200 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 200 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <button onClick={search} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
@@ -2675,7 +2735,7 @@ function DeviceStatusPage({ online }) {
                                 <th key={c} style={TH}>
                                     {c === 'Device Name' ? (
                                         <button onClick={() => setSortAsc(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0, font: 'inherit', color: 'inherit' }}>
-                                            {c}<span style={{ fontSize: 11, color: '#94a3b8' }}>{sortAsc ? '▲' : '▼'}</span>
+                                            {c}<span style={{ fontSize: 11, color: '#5e7094' }}>{sortAsc ? '▲' : '▼'}</span>
                                         </button>
                                     ) : c}
                                 </th>
@@ -2684,11 +2744,11 @@ function DeviceStatusPage({ online }) {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : sorted.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : sorted.map((r, i) => (
                             <tr key={r.deviceId}>
                                 <td style={TD}>{i + 1}</td>
@@ -2822,32 +2882,32 @@ function AlertDetails() {
         <div>
             {/* Filter row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 13, color: '#374151', whiteSpace: 'nowrap' }}>Alert Time :</span>
+                <span style={{ fontSize: 13, color: '#cfdcf0', whiteSpace: 'nowrap' }}>Alert Time :</span>
                 <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
-                <span style={{ color: '#9ca3af' }}>-</span>
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
                 <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, color: '#374151', outline: 'none' }} />
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
                 <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer', minWidth: 170 }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
                     <option value="">All devices</option>
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
                 <select value={type} onChange={e => setType(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none', background: '#fff', cursor: 'pointer' }}>
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer' }}>
                     <option value="">All alert types</option>
                     {ALERT_TYPE_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
                 </select>
                 <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="5.5" cy="5.5" r="4"/><line x1="9" y1="9" x2="12" y2="12"/></svg>Search
                 </button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
             {/* Action row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                     <button onClick={() => exportAlertsCsv(rows)} disabled={!rows.length}
-                        style={{ padding: '6px 14px', border: '1px solid #d1d5db', borderRadius: 6, background: '#fff', color: rows.length ? '#374151' : '#cbd5e1', fontSize: 13, cursor: rows.length ? 'pointer' : 'not-allowed' }}>Export</button>
+                        style={{ padding: '6px 14px', border: '1px solid #24344f', borderRadius: 6, background: '#111c33', color: rows.length ? '#cfdcf0' : '#24344f', fontSize: 13, cursor: rows.length ? 'pointer' : 'not-allowed' }}>Export</button>
                 </div>
             </div>
             <div style={{ overflowX: 'auto' }}>
@@ -2859,11 +2919,11 @@ function AlertDetails() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#94a3b8' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
                         ) : rows.map((r, i) => (
                             <tr key={r.id}>
                                 <td style={TD}>{i + 1}</td>
@@ -2922,21 +2982,69 @@ const PAGES = {
 /* ══════════════════════════════════════════════════════════════ */
 /*  ROOT EXPORT                                                   */
 /* ══════════════════════════════════════════════════════════════ */
-export default function ReportPage({ reportSection }) {
+export default function ReportPage({ reportSection, setReportSection, embedded = false }) {
+    // The heading names the module and the tabs name the reports inside it. A report kept out of
+    // every module (the fuel drill-downs, the State Statistics mock) has no group, so it falls back
+    // to titling itself and shows no tab strip — still reachable, just not navigable to.
+    const group = groupForSection(reportSection);
+
     const Content = PAGES[reportSection] || (() => (
-        <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8', fontSize: 14 }}>Select a report from the sidebar.</div>
+        <div style={{ textAlign: 'center', padding: 60, color: '#5e7094', fontSize: 14 }}>Select a report from the sidebar.</div>
     ));
 
-    return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#fff' }}>
-            {/* Header */}
-            <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
-                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>{reportSection || 'Report'}</h2>
+    // Embedded in another page (Fleet > Vehicle Track > Online Rate, and the rest of the Fleet
+    // tabs), where the host has already named the report in its own tab strip. Repeating the
+    // module heading and tabs here would offer the same Online/Offline choice twice, one inside
+    // the other.
+    if (embedded) {
+        return (
+            <div style={{ flex: 1, overflowY: 'auto', background: '#111c33', padding: '20px 24px' }}>
+                <Content key={reportSection} />
             </div>
+        );
+    }
 
-            {/* Content */}
+    return (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#111c33' }}>
+            {/* The app header already names the report, so the module needs no heading of its own —
+                only its tabs. A report outside every module has neither. */}
+            {group && (
+                <div style={{ padding: '4px 20px 0', flexShrink: 0 }}>
+                    <div role="tablist" style={{
+                        display: 'flex', gap: 4,
+                        borderBottom: '1px solid #1e2c46',
+                        // Device Statistics carries eight reports, which will not fit on a narrow
+                        // window: the strip scrolls rather than wrapping into a second row that
+                        // would shift the content below it.
+                        overflowX: 'auto', overflowY: 'hidden',
+                    }}>
+                        {group.sections.map(section => {
+                            const active = section === reportSection;
+                            return (
+                                <button key={section} role="tab" aria-selected={active}
+                                    onClick={() => setReportSection?.(section)}
+                                    style={{
+                                        padding: '9px 14px', border: 'none', background: 'none', cursor: 'pointer',
+                                        whiteSpace: 'nowrap', fontSize: 13.5,
+                                        fontWeight: active ? 700 : 500,
+                                        color: active ? '#4da8ff' : '#9daec9',
+                                        // Sits on top of the strip's own hairline, so the active tab
+                                        // reads as joined to the panel below it.
+                                        borderBottom: `2px solid ${active ? '#4da8ff' : 'transparent'}`,
+                                        marginBottom: -1,
+                                    }}>
+                                    {section}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Content — keyed on the report so switching tabs starts the next one clean, rather
+                than inheriting filters from a sibling that happens to share a component. */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-                <Content />
+                <Content key={reportSection} />
             </div>
         </div>
     );

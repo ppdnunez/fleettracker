@@ -69,4 +69,21 @@ class User extends Authenticatable
         return $this->client_id === null
             && in_array($this->role, ['super_admin', 'admin'], true);
     }
+
+    /**
+     * Roles a login inside a company may hold. 'admin' and 'super_admin' are absent on purpose:
+     * they are platform roles, and letting a company assign one would be an escalation route out
+     * of its own tenancy the moment the client_id were ever cleared.
+     */
+    public const TENANT_ROLES = ['client_admin', 'operator', 'viewer'];
+
+    /**
+     * A company's own administrator: manages the logins of its company and nothing else. Sees
+     * exactly the devices every other member of that company sees, because access to Traccar is
+     * decided by client_id, not by role.
+     */
+    public function isCompanyAdmin(): bool
+    {
+        return $this->client_id !== null && $this->role === 'client_admin';
+    }
 }

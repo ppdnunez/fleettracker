@@ -2,18 +2,23 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClientThroughDriver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * FleetTrack's record of what each device has been asked to enrol for a driver.
+ * Turprotrack's record of what each device has been asked to enrol for a driver.
  *
  * The face database itself lives on the JC171 device — there is no server-side copy of the
  * biometric template. This table tracks the command we sent, the photo we hold (either captured
  * in-browser or uploaded back by the device), and how far the enrolment got.
+ *
+ * Visible to whoever can see the driver it belongs to — see BelongsToClientThroughDriver.
  */
 class DriverFace extends Model
 {
+    use BelongsToClientThroughDriver;
+
     protected $fillable = [
         'driver_id',
         'imei',

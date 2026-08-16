@@ -2,14 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClient;
 use Illuminate\Database\Eloquent\Model;
 
 // Maps the existing `vehicle_maintenances` table (created by the production migration
 // 2026_07_13_000000_create_vehicle_maintenances_table, which is not part of this repo's
 // migration set). A vehicle is identified by its IMEI, which is also the Traccar device
 // uniqueId, so records survive Traccar device re-imports.
+//
+// Owned by the company that created it — see BelongsToClient.
 class VehicleMaintenance extends Model
 {
+    use BelongsToClient;
+
     public const DEFAULT_NOTIFY_DAYS = 14;
     public const DEFAULT_NOTIFY_KM   = 500;
 

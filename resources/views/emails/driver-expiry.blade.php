@@ -6,7 +6,7 @@
         <h2 style="margin: 0 0 4px; font-size: 17px; color: {{ $daysUntil < 0 ? '#b91c1c' : '#b45309' }};">
             {{ $documentType }} {{ $daysUntil < 0 ? 'has expired' : 'is expiring soon' }}
         </h2>
-        <p style="margin: 0 0 20px; font-size: 13px; color: #6b7280;">FleetTrack driver document reminder</p>
+        <p style="margin: 0 0 20px; font-size: 13px; color: #6b7280;">Turprotrack driver document reminder</p>
 
         <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
             <tr>
@@ -34,7 +34,7 @@
         </table>
 
         <p style="margin: 24px 0 0; font-size: 12px; color: #9ca3af;">
-            Update this driver's record in FleetTrack (Fleet &rarr; Driver) once the renewal is done.
+            Update this driver's record in Turprotrack (Fleet &rarr; Driver) once the renewal is done.
         </p>
     </div>
 </body>
