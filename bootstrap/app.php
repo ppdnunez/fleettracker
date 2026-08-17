@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'img/uploads/face/upload',
             'img/uploads/face/dowloadCallback',
+            'img/uploads/face/uploadPic',
+            // Some firmware posts the image to the configured base with no suffix at all — that
+            // is what the troubleshooting log shows the JC171 doing.
+            'img/uploads',
         ]);
 
         $middleware->alias([

@@ -6,6 +6,8 @@ import ReportPage from './ReportPage.jsx';
 import GeofenceManagementPage from './GeofencePage.jsx';
 import DeviceStatusIcons, { alarmLabel } from './DeviceStatusIcons.jsx';
 import useTraccarSocket from '../useTraccarSocket.js';
+import { FuelLevelReport, FuelEventsReport, FuelTheftWatch } from './FuelReports.jsx';
+import FuelThresholdsPage from './FuelThresholdsPage.jsx';
 
 /* ── icons ───────────────────────────────────────────────────── */
 const SearchSVG = () => (
@@ -1064,7 +1066,7 @@ function DriverPage() {
                         </label>
                         <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
                     </FilterBar>
-                    <ActionRow left={[<Btn primary onClick={() => setEditing('new')}>Add Driver</Btn>]} />
+                    <ActionRow left={[<Btn key="add" primary onClick={() => setEditing('new')}>Add Driver</Btn>]} />
 
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
@@ -1878,19 +1880,36 @@ function VehicleTrackPage() {
 // Every tab here reads Traccar: /reports/route for position history and /positions for the
 // latest reading. Fuel Curve is deliberately absent — it plots the raw fuel-sensor trace, which
 // is only meaningful on a device that reports a `fuel` attribute.
-const FUEL_MANAGEMENT_TABS = ['Consumption', 'Current Fuel', 'Refuelling', 'Idle Fuel', 'Abnormal Loss', 'Ranking'];
+/* Live sensor tracking first, then the historical reports.
+   The split matters: 'Level', 'Events', 'Theft Watch' and 'Thresholds' come from the fuel *probe*
+   (position attributes plus Traccar's own drop/increase events), while the tabs after them are
+   Traccar's report endpoints and mostly work off a configured consumption rate. Reading the level
+   off a sensor and inferring litres from a rate are different claims, so they are not mixed. */
+const FUEL_MANAGEMENT_TABS = [
+    'Level', 'Events', 'Theft Watch', 'Thresholds',
+    'Consumption', 'Current Fuel', 'Refuelling', 'Idle Fuel', 'Abnormal Loss', 'Ranking',
+];
 
 function FuelManagementPage() {
     const [tab, setTab] = useState(FUEL_MANAGEMENT_TABS[0]);
 
     return (
         <PageShell title="Fuel Management">
-            <p style={{ margin: '-6px 0 16px', fontSize: 12.5, color: '#9daec9' }}>
-                Consumption, refuelling, idle fuel, abnormal loss and ranking — read from Traccar's
-                report endpoints. Sensor-based figures need a device that reports a fuel level;
-                rate-based consumption uses the Fuel Rate set on each vehicle.
-            </p>
             <TabBar tabs={FUEL_MANAGEMENT_TABS} active={tab} onChange={setTab} />
+
+            {/* Probe-based tracking. These read fuel attributes off positions, so they show a
+                reading with the time it was actually taken rather than assuming the latest packet
+                carried one — sensor modules do not ride on every fix. */}
+            {tab === 'Level'       && <FuelLevelReport />}
+            {tab === 'Events'      && <FuelEventsReport />}
+            {tab === 'Theft Watch' && <FuelTheftWatch />}
+            {tab === 'Thresholds'  && (
+                // Framed rather than full-bleed: it is a settings screen borrowed into a report
+                // page, and it paints its own background.
+                <div style={{ border: '1px solid #1e2c46', borderRadius: 10, overflow: 'hidden', display: 'flex', minHeight: 620 }}>
+                    <FuelThresholdsPage />
+                </div>
+            )}
 
             {tab === 'Consumption'   && <EmbeddedReport section="Fuel Consumption" />}
             {tab === 'Current Fuel'  && <EmbeddedReport section="Current fuel Value" />}
@@ -1987,7 +2006,12 @@ function MaintenanceFormModal({ record, devices, onClose, onSaved }) {
             else       await api.updateVehicleMaintenance(record.id, payload);
             onSaved();
         } catch (e) {
-            setError(e.response?.data?.message || 'Failed to save maintenance record.');
+            // Laravel answers a 422 with per-field messages; showing only the summary line hid
+            // which field was actually rejected, which is the one thing the reader needs.
+            const errors = e.response?.data?.errors;
+            setError(errors
+                ? Object.values(errors).flat().join(' ')
+                : (e.response?.data?.message || 'Failed to save maintenance record.'));
         } finally {
             setSaving(false);
         }
@@ -2203,7 +2227,7 @@ function VehicleMaintenancePage() {
                 </div>
                 <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </FilterBar>
-            <ActionRow left={[<Btn primary onClick={() => setEditing('new')}>Add</Btn>]} />
+            <ActionRow left={[<Btn key="add" primary onClick={() => setEditing('new')}>Add</Btn>]} />
 
             {error && <div style={{ marginBottom: 12, padding: '8px 12px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 6, fontSize: 12, color: '#fca5a5' }}>{error}</div>}
 

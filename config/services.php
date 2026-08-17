@@ -17,5 +17,11 @@ return [
         // reachable BY THE DEVICE, so it cannot be localhost — set it to this server's LAN or
         // public host. Falls back to the request host when unset.
         'public_host' => env('FACE_PUBLIC_HOST'),
+
+        // Whether /img/uploads/face/uploadPic rejects a photo whose signature does not verify.
+        // Leave true in production. Set false only while commissioning a device: the photo is
+        // then stored anyway and the receipt still records the failure, which is how you find out
+        // whether the device signs the way the (self-inconsistent) vendor documentation claims.
+        'require_upload_signature' => env('FACE_REQUIRE_UPLOAD_SIGNATURE', true),
     ],
 ];

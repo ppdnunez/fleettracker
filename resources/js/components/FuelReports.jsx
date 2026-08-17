@@ -39,6 +39,24 @@ function TankBar({ percent }) {
     );
 }
 
+/**
+ * A tank figure in both units: litres, which is what Traccar's events are measured in, and the
+ * share of the tank, which is what tells you whether 28 litres is a rounding error or a theft.
+ * The percentage needs a tank capacity, so it is simply absent on devices that have none set
+ * rather than shown as a guess.
+ */
+function Litres({ value, percent, note }) {
+    if (value == null && percent == null) return <td style={TD}>—</td>;
+
+    return (
+        <td style={{ ...TD, whiteSpace: 'nowrap' }}>
+            <div style={{ fontWeight: 600, color: '#eaeff9' }}>{value == null ? '—' : `${value.toFixed(1)} L`}</div>
+            {percent != null && <div style={{ fontSize: 11, color: '#9daec9' }}>{percent.toFixed(1)}%</div>}
+            {note && <div style={{ fontSize: 10.5, color: '#5e7094' }}>{note}</div>}
+        </td>
+    );
+}
+
 function DeviceFilter({ devices, deviceId, setDeviceId }) {
     return (
         <select value={deviceId} onChange={e => setDeviceId(e.target.value)} style={{ ...input, cursor: 'pointer', minWidth: 180 }}>
@@ -141,16 +159,21 @@ export function FuelLevelReport() {
                         {d.probes.length > 0 && (
                             <div style={{ flex: 1, minWidth: 300 }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead><tr>{['Probe', 'Reading', 'Range', 'Level', 'Battery', 'Error'].map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
+                                    <thead><tr>{['Probe', 'Reading', 'Range', 'Level'].map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                                     <tbody>
                                         {d.probes.map(p => (
                                             <tr key={p.index}>
-                                                <td style={TD}>{p.name || p.mac || p.sensorId || `#${p.index}`}</td>
+                                                <td style={TD}>
+                                                    {p.name || p.mac || p.sensorId || `#${p.index}`}
+                                                    {/* Battery and error had their own columns, but a wired probe
+                                                        reports neither, so both stood empty on every row. They only
+                                                        appear now when the probe actually sends them. */}
+                                                    {p.battery != null && <span style={{ marginLeft: 8, fontSize: 11, color: '#9daec9' }}>batt {p.battery}%</span>}
+                                                    {p.error && <div style={{ fontSize: 11, color: '#fca5a5' }}>{p.error}</div>}
+                                                </td>
                                                 <td style={TD}>{p.value}</td>
                                                 <td style={TD}>{p.range ?? '—'}</td>
                                                 <td style={{ ...TD, fontWeight: 700 }}>{p.percent != null ? `${p.percent}%` : '—'}</td>
-                                                <td style={TD}>{p.battery ?? '—'}</td>
-                                                <td style={{ ...TD, color: p.error ? '#fca5a5' : '#5e7094' }}>{p.error || '—'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -249,10 +272,19 @@ export function FuelEventsReport() {
                                         color:      r.source === 'threshold' ? '#7fc4ff' : '#4ade80',
                                     }}>{r.source === 'threshold' ? 'Traccar threshold' : 'Sensor'}</span>
                                 </td>
-                                <td style={TD}>{r.before ?? '—'}</td>
-                                <td style={TD}>{r.after ?? '—'}</td>
+                                <Litres value={r.before} percent={r.beforePercent} />
+                                {/* A probe alarm describes no change, so its own column shows the
+                                    level the tank was at when it fired instead of an empty dash. */}
+                                {r.after == null && r.atEvent != null
+                                    ? <Litres value={r.atEvent} percent={r.atEventPercent} note="at alarm" />
+                                    : <Litres value={r.after} percent={r.afterPercent} />}
                                 <td style={{ ...TD, fontWeight: 700, color: r.change == null ? '#5e7094' : r.change < 0 ? '#fca5a5' : '#4ade80' }}>
-                                    {r.change == null ? '—' : `${r.change > 0 ? '+' : ''}${r.change}`}
+                                    {r.change == null ? '—' : `${r.change > 0 ? '+' : ''}${r.change.toFixed(1)} L`}
+                                    {r.changePercent != null && (
+                                        <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>
+                                            {r.changePercent > 0 ? '+' : ''}{r.changePercent.toFixed(1)}% of tank
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}

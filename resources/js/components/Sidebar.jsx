@@ -135,6 +135,15 @@ const LogoutSVG = () => (
     </svg>
 );
 
+/* Picture frame with a play mark: the gallery holds both stills and clips. */
+const MediaSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+        <rect x="1.3" y="2.6" width="12.4" height="9.8" rx="1.6"/>
+        <path d="M1.3 10.1l3.3-3 2.5 2.2 2.4-2.6 4.2 3.8"/>
+        <circle cx="5.2" cy="5.9" r="1.05"/>
+    </svg>
+);
+
 const AlertSVG = () => (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M8 2.2 14.4 13H1.6L8 2.2Z"/>
@@ -217,6 +226,8 @@ const SETTINGS_ITEMS = [
     { label: 'Geofence',            page: 'Geofence',            icon: <PinSVG /> },
     { label: 'Alert Recipients',    page: 'Alert Recipients',    icon: <MailSVG /> },
     { label: 'Fuel Thresholds',     page: 'Fuel Thresholds',     icon: <FuelSVG />, adminOnly: true },
+    { label: 'Media Gallery',       page: 'Media Gallery',       icon: <MediaSVG /> },
+    { label: 'Face Logs',           page: 'Face Logs',           icon: <PersonSVG /> },
     { label: 'Saved Commands',      page: 'Saved Commands',      icon: <ReportSVG />, hidden: true },
     { label: 'Notification',        page: 'Notification',        icon: <ReportSVG />, hidden: true },
     { label: 'Calendars',           page: 'Calendars',           icon: <CheckInSVG />,hidden: true },

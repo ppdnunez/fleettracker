@@ -41,7 +41,8 @@ class TraccarController extends Controller
         $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
             ->post("{$this->traccarBaseUrl()}/devices", $data);
-        return response()->json($response->json(), $response->status());
+
+        return $this->traccarResult($response, 'register the device');
     }
 
     public function updateDevice(Request $request, int $id)
@@ -72,7 +73,41 @@ class TraccarController extends Controller
         $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Content-Type' => 'application/json'])
             ->put("{$this->traccarBaseUrl()}/devices/{$id}", $merged);
-        return response()->json($response->json(), $response->status());
+
+        return $this->traccarResult($response, 'save the device');
+    }
+
+    /**
+     * Passes a Traccar response through, turning its failures into something readable.
+     *
+     * Traccar answers an error with plain text — usually a Java exception line — so `->json()` on
+     * it is null. Returning that gave the browser a bare 400 with no body, which is why a refused
+     * registration could only ever say "Failed to register device." The first line carries the
+     * actual reason ("SecurityException: Write access denied", "Duplicate entry"), and the rest is
+     * Jetty internals, so that line becomes the message.
+     *
+     * The two causes worth recognising are named outright, because neither is guessable from
+     * Traccar's own wording.
+     */
+    private function traccarResult(\Illuminate\Http\Client\Response $response, string $action)
+    {
+        if ($response->successful()) {
+            return response()->json($response->json(), $response->status());
+        }
+
+        $reason = trim(strtok($response->body(), "\n") ?: '');
+
+        $message = match (true) {
+            str_contains($reason, 'Write access denied') =>
+                "Traccar refused to {$action}: this company's Traccar user is not allowed to add devices. "
+                . 'Its deviceLimit is 0, which in Traccar means "none" rather than "unlimited". '
+                . 'A platform administrator can fix it from Companies & Users → Repair.',
+            str_contains($reason, 'Duplicate entry') || str_contains($reason, 'uc_uniqueid') =>
+                'That IMEI is already registered on this Traccar server.',
+            default => "Traccar refused to {$action} (HTTP {$response->status()}). " . $reason,
+        };
+
+        return response()->json(['message' => $message], $response->status());
     }
 
     /**

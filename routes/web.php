@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FaceImportController;
+use App\Http\Controllers\FaceUploadController;
 use Illuminate\Support\Facades\Route;
 
 // Device-facing face-library webhooks. Public (the device cannot hold a session) and guarded by
@@ -9,6 +10,14 @@ use Illuminate\Support\Facades\Route;
 // is the vendor's literal misspelling, not a typo here.
 Route::post('/img/uploads/face/upload', [FaceImportController::class, 'upload']);
 Route::post('/img/uploads/face/dowloadCallback', [FaceImportController::class, 'downloadCallback']);
+
+// The image/video ingest, which is a different protocol from the two above: it signs
+// filename + timestamp + secret rather than imei + instructionId + secret + timestamp.
+// Some firmware posts to the configured base with no suffix at all, so that is accepted too and
+// routed to the same handler — the alternative is a silent 404 on every photo the device sends.
+Route::post('/img/uploads/face/uploadPic', [FaceUploadController::class, 'uploadPic']);
+Route::post('/img/uploads', [FaceUploadController::class, 'uploadPic']);
+Route::post('/img/uploads/', [FaceUploadController::class, 'uploadPic']);
 
 Route::get('/{any?}', function () {
     return view('app');

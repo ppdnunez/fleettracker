@@ -8,11 +8,13 @@ use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FuelController;
+use App\Http\Controllers\MediaLibraryController;
 use App\Http\Controllers\SensorController;
 use App\Http\Controllers\TraccarController;
 use App\Http\Controllers\VehicleMaintenanceController;
 use App\Http\Controllers\DriverFaceController;
 use App\Http\Controllers\FaceImportController;
+use App\Http\Controllers\FaceUploadController;
 use App\Http\Controllers\GeofenceController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleDriverController;
@@ -84,7 +86,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/upload-url',   [DriverFaceController::class, 'setUploadUrl']);
         Route::delete('/',           [DriverFaceController::class, 'destroy']);
         Route::get('/import-logs',   [FaceImportController::class, 'index']);
+        // What devices have pushed back to us, and this endpoint's own raw request lines.
+        Route::get('/upload-logs',   [FaceUploadController::class, 'index']);
+        Route::get('/raw-log',       [FaceUploadController::class, 'rawLog']);
     });
+
+    // Everything in public/img/uploads — face templates plus the stills and clips devices push back.
+    Route::get('/media', [MediaLibraryController::class, 'index']);
 
     // Fuel level, refuel/theft events, and the thresholds behind Traccar's own drop/increase
     // events. Thresholds are attributes resolved device -> group -> server, so writing one is a
@@ -95,7 +103,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/events',     [FuelController::class, 'events']);
         Route::get('/theft-scan', [FuelController::class, 'theftScan']);
         Route::get('/settings',   [FuelController::class, 'settings']);
-        Route::put('/settings',   [FuelController::class, 'updateSettings'])->middleware('platform.admin');
+        // Not platform-admin-only: a company's own administrator may set thresholds for its own
+        // group and devices, which is the level the guidance actually recommends. Only the
+        // server-wide default is reserved. The check is per-scope, inside updateSettings().
+        Route::put('/settings',   [FuelController::class, 'updateSettings']);
     });
 
     // Temperature / humidity and tyre (TPMS) readings. Traccar has no sensor endpoint — these are

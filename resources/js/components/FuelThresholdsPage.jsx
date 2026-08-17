@@ -27,7 +27,7 @@ const GUIDE = [
     ['Heavy truck / bus', '400–600 L', '40 L', '30 L'],
 ];
 
-function ThresholdRow({ label, sublabel, values, effective, onSave, saving }) {
+function ThresholdRow({ label, sublabel, values, effective, onSave, saving, canWrite = true }) {
     const [form, setForm] = useState(values);
     const [dirty, setDirty] = useState(false);
 
@@ -40,8 +40,9 @@ function ThresholdRow({ label, sublabel, values, effective, onSave, saving }) {
 
     const cell = (key) => (
         <td style={TD}>
-            <input type="number" min="0" step="1" value={form[key] ?? ''} onChange={set(key)}
-                placeholder={effective?.[key]?.value != null ? String(effective[key].value) : '—'} style={num} />
+            <input type="number" min="0" step="1" value={form[key] ?? ''} onChange={set(key)} disabled={!canWrite}
+                placeholder={effective?.[key]?.value != null ? String(effective[key].value) : '—'}
+                style={{ ...num, opacity: canWrite ? 1 : 0.5, cursor: canWrite ? 'text' : 'not-allowed' }} />
             {/* Where the value comes from when this level sets none — otherwise an empty box reads
                 as "no threshold" when a group or the server is quietly providing one. */}
             {effective && (form[key] === '' || form[key] == null) && effective[key]?.source && (
@@ -50,22 +51,27 @@ function ThresholdRow({ label, sublabel, values, effective, onSave, saving }) {
         </td>
     );
 
+    const enabled = canWrite && dirty && !saving;
+
     return (
         <tr>
-            <td style={TD}>
+            {/* Fixed width and no wrapping: this column holds an explanatory sublabel, and left to
+                itself it collapses to one word per line as soon as the table is in a narrow panel. */}
+            <td style={{ ...TD, minWidth: 230, maxWidth: 300 }}>
                 <div style={{ fontWeight: 700, color: '#eaeff9' }}>{label}</div>
-                {sublabel && <div style={{ fontSize: 11, color: '#5e7094' }}>{sublabel}</div>}
+                {sublabel && <div style={{ fontSize: 11, color: '#5e7094', lineHeight: 1.45 }}>{sublabel}</div>}
             </td>
             {cell('fuelDropThreshold')}
             {cell('fuelIncreaseThreshold')}
             {cell('fuelCapacity')}
             <td style={{ ...TD, textAlign: 'right' }}>
-                <button onClick={() => onSave(form)} disabled={!dirty || saving}
+                <button onClick={() => onSave(form)} disabled={!enabled}
+                    title={canWrite ? undefined : 'Only a platform administrator can set this level'}
                     style={{
                         padding: '5px 12px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700,
-                        background: dirty && !saving ? '#3b82f6' : '#16233c',
-                        color: dirty && !saving ? '#fff' : '#5e7094',
-                        cursor: dirty && !saving ? 'pointer' : 'not-allowed',
+                        background: enabled ? '#3b82f6' : '#16233c',
+                        color: enabled ? '#fff' : '#5e7094',
+                        cursor: enabled ? 'pointer' : 'not-allowed',
                     }}>
                     {saving ? 'Saving…' : 'Save'}
                 </button>
@@ -137,37 +143,44 @@ export default function FuelThresholdsPage() {
                     Computed attributes run before the fuel handler, so the derived litres feed it correctly.
                 </div>
 
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 22 }}>
-                    <thead>
-                        <tr>
-                            <th style={TH}>Applies to</th>
-                            <th style={TH}>Drop threshold (L)</th>
-                            <th style={TH}>Increase threshold (L)</th>
-                            <th style={TH}>Tank capacity (L)</th>
-                            <th style={{ ...TH, textAlign: 'right' }}></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <ThresholdRow
-                            label="All devices" sublabel="Server default — used where nothing more specific is set"
-                            values={data.server} effective={null} saving={saving === 'server:0'}
-                            onSave={(form) => save('server', undefined, form, 'the server default')} />
+                {/* The table has five columns and lives inside a panel that is not always wide;
+                    it scrolls rather than compressing the first column into a word ladder. */}
+                <div style={{ overflowX: 'auto', marginBottom: 22 }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+                        <thead>
+                            <tr>
+                                <th style={TH}>Applies to</th>
+                                <th style={TH}>Drop threshold (L)</th>
+                                <th style={TH}>Increase threshold (L)</th>
+                                <th style={TH}>Tank capacity (L)</th>
+                                <th style={{ ...TH, textAlign: 'right' }}></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <ThresholdRow
+                                label="All devices" sublabel="Server default — used where nothing more specific is set"
+                                values={data.server} effective={null} canWrite={data.can?.server !== false}
+                                saving={saving === 'server:0'}
+                                onSave={(form) => save('server', undefined, form, 'the server default')} />
 
-                        {data.groups.map(g => (
-                            <ThresholdRow key={`g${g.id}`}
-                                label={g.name} sublabel="Company group — the right level for most fleets"
-                                values={g.attributes} effective={null} saving={saving === `group:${g.id}`}
-                                onSave={(form) => save('group', g.id, form, g.name)} />
-                        ))}
+                            {data.groups.map(g => (
+                                <ThresholdRow key={`g${g.id}`}
+                                    label={g.name} sublabel="Company group — the right level for most fleets"
+                                    values={g.attributes} effective={null} canWrite={data.can?.group !== false}
+                                    saving={saving === `group:${g.id}`}
+                                    onSave={(form) => save('group', g.id, form, g.name)} />
+                            ))}
 
-                        {data.devices.map(d => (
-                            <ThresholdRow key={`d${d.id}`}
-                                label={d.name} sublabel={`Device · ${d.groupName ?? 'no group'}`}
-                                values={d.own} effective={d.effective} saving={saving === `device:${d.id}`}
-                                onSave={(form) => save('device', d.id, form, d.name)} />
-                        ))}
-                    </tbody>
-                </table>
+                            {data.devices.map(d => (
+                                <ThresholdRow key={`d${d.id}`}
+                                    label={d.name} sublabel={`Device · ${d.groupName ?? 'no group'}`}
+                                    values={d.own} effective={d.effective} canWrite={data.can?.device !== false}
+                                    saving={saving === `device:${d.id}`}
+                                    onSave={(form) => save('device', d.id, form, d.name)} />
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
                 <h3 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#eaeff9' }}>Suggested starting points</h3>
                 <table style={{ borderCollapse: 'collapse', marginBottom: 10 }}>

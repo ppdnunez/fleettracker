@@ -2466,9 +2466,14 @@ function GeoFence() {
     const [loading, setLoading]     = useState(false);
     const [error, setError]         = useState('');
 
+    // The zone list as well as the fences: an empty report has three quite different causes, and
+    // only the zones' link state tells them apart. See emptyMessage below.
+    const [zones, setZones] = useState(null);
+
     useEffect(() => {
         api.getTraccarDevices().then(res => setDevices(res.data)).catch(() => {});
         api.getGeofences().then(res => setGeofences(res.data)).catch(() => {});
+        api.getWorkZones().then(res => setZones(res.data ?? [])).catch(() => setZones([]));
     }, []);
 
     const search = async (overrides = {}) => {
@@ -2504,6 +2509,24 @@ function GeoFence() {
         return sortAsc ? cmp : -cmp;
     });
     const COLS = ['No.', 'Device Name', 'IMEI', 'Model', 'Fence Name', 'Enter Time', 'Outer Time', 'Stay Time'];
+
+    /* This report is built from Traccar's geofenceEnter / geofenceExit events, and there are three
+       reasons it can be empty — no zones, zones that nothing is watching, or a quiet period. They
+       need completely different actions, so "No data" is not an answer worth giving. */
+    const emptyMessage = () => {
+        if (zones === null) return 'No data';
+        if (zones.length === 0) {
+            return 'No zones have been drawn yet. Draw one under Settings → Geofence, then link the devices it applies to.';
+        }
+        const watched = zones.filter(z => z.is_watched).length;
+        if (watched === 0) {
+            return `${zones.length} zone${zones.length === 1 ? '' : 's'} exist, but none has a device linked to it. `
+                 + 'A zone is only evaluated against devices linked to it, so no crossings are recorded — '
+                 + 'link devices under Settings → Geofence.';
+        }
+        return 'No crossings in this period. Crossings are only recorded from the moment a device is '
+             + 'linked to a zone — earlier journeys are not filled in retrospectively.';
+    };
 
     return (
         <>
@@ -2547,7 +2570,9 @@ function GeoFence() {
                         ) : error ? (
                             <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
                         ) : sorted.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094', lineHeight: 1.7 }}>
+                                <span style={{ display: 'inline-block', maxWidth: 620 }}>{emptyMessage()}</span>
+                            </td></tr>
                         ) : sorted.map((r, i) => (
                             <tr key={i}>
                                 <td style={TD}>{i + 1}</td>

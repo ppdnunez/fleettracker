@@ -227,6 +227,7 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
     const showStatus = liveConnected !== undefined;
 
     const [geofences, setGeofences]         = useState([]);
+    const [geofencesLoaded, setGeofencesLoaded] = useState(false);
     const [showGeofences, setShowGeofences] = useState(false);
     const [showLabels, setShowLabels]       = useState(true);
     const [layerKey, setLayerKey]           = useState('osm');
@@ -236,7 +237,10 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
     // never ask to see the zones.
     useEffect(() => {
         if (!showGeofences || geofences.length) return;
-        api.getGeofences().then(res => setGeofences(res.data ?? [])).catch(() => setGeofences([]));
+        api.getGeofences()
+            .then(res => setGeofences(res.data ?? []))
+            .catch(() => setGeofences([]))
+            .finally(() => setGeofencesLoaded(true));
     }, [showGeofences]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
@@ -362,6 +366,19 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
 
                 <MapLayerPicker layerKey={layerKey} onChange={setLayerKey} />
             </div>
+
+            {/* A toggle that appears to do nothing is worse than no toggle: this account has no
+                zones the map can draw, which is a different problem from the overlay being off. */}
+            {showGeofences && geofencesLoaded && geofences.length === 0 && (
+                <div style={{
+                    position: 'absolute', top: '50%', right: 56, transform: 'translateY(-50%)',
+                    zIndex: 1000, maxWidth: 230, padding: '8px 12px', borderRadius: 8,
+                    background: 'rgba(12,19,34,0.94)', border: '1px solid #7c5e10',
+                    fontSize: 11.5, lineHeight: 1.55, color: '#fcd34d',
+                }}>
+                    No zones to show for this account. Draw one under Settings → Geofence.
+                </div>
+            )}
         </div>
     );
 }

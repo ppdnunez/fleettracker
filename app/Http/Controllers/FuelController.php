@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\UsesTraccarApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -190,8 +191,18 @@ class FuelController extends Controller
             return response()->json(['message' => 'Failed to load fuel events.'], $response->status());
         }
 
-        $devicesById = collect($this->visibleDevices(null))->keyBy('id');
-        $rows        = [];
+        $devices     = $this->visibleDevices(null);
+        $devicesById = collect($devices)->keyBy('id');
+
+        // Traccar's before/after are litres, which is the only unit its detector works in. A tank
+        // reading means little without its size, so each row also carries the percentage — resolved
+        // the way Traccar resolves any attribute (device, up the group chain, then server), because
+        // a fleet that sets capacity once on its group would otherwise get no percentage at all.
+        $groupsById = collect(Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/groups")->json() ?? [])->keyBy('id');
+        $server     = Http::withBasicAuth(...$this->traccarAuth())->get("{$this->traccarBaseUrl()}/server")->json() ?? [];
+        $capacities = [];
+
+        $rows = [];
 
         foreach ($response->json() ?? [] as $event) {
             $type  = $event['type'] ?? '';
@@ -208,26 +219,107 @@ class FuelController extends Controller
             $before = $event['attributes']['before'] ?? null;
             $after  = $event['attributes']['after'] ?? null;
 
+            $deviceId = $event['deviceId'] ?? null;
+
+            if ($device && !array_key_exists($deviceId, $capacities)) {
+                $capacities[$deviceId] = $this->resolveWithSource($device, $groupsById, $server, 'fuelCapacity')['value'];
+            }
+
+            $capacity = $capacities[$deviceId] ?? null;
+            $percent  = fn ($litres) => ($litres !== null && $capacity)
+                ? round((float) $litres / $capacity * 100, 1)
+                : null;
+
             $rows[] = [
-                'id'         => $event['id'] ?? null,
-                'deviceId'   => $event['deviceId'] ?? null,
-                'deviceName' => $device['name'] ?? null,
-                'imei'       => $device['uniqueId'] ?? null,
-                'occurredAt' => $event['eventTime'] ?? null,
-                'source'     => $isThreshold ? 'threshold' : 'sensor',
-                'kind'       => $isThreshold ? $type : $alarm,
-                'label'      => $isThreshold ? self::FUEL_EVENTS[$type] : self::FUEL_ALARMS[$alarm],
-                'before'     => $before !== null ? (float) $before : null,
-                'after'      => $after !== null ? (float) $after : null,
-                'change'     => ($before !== null && $after !== null) ? round((float) $after - (float) $before, 1) : null,
-                'alarmType'  => $event['attributes']['fuelSensorAlarmType'] ?? null,
-                'positionId' => $event['positionId'] ?? null,
+                'id'            => $event['id'] ?? null,
+                'deviceId'      => $deviceId,
+                'deviceName'    => $device['name'] ?? null,
+                'imei'          => $device['uniqueId'] ?? null,
+                'occurredAt'    => $event['eventTime'] ?? null,
+                'source'        => $isThreshold ? 'threshold' : 'sensor',
+                'kind'          => $isThreshold ? $type : $alarm,
+                'label'         => $isThreshold ? self::FUEL_EVENTS[$type] : self::FUEL_ALARMS[$alarm],
+                'before'        => $before !== null ? (float) $before : null,
+                'after'         => $after !== null ? (float) $after : null,
+                'change'        => ($before !== null && $after !== null) ? round((float) $after - (float) $before, 1) : null,
+                'beforePercent' => $percent($before),
+                'afterPercent'  => $percent($after),
+                'changePercent' => ($before !== null && $after !== null && $capacity)
+                    ? round(((float) $after - (float) $before) / $capacity * 100, 1)
+                    : null,
+                'fuelCapacity'  => $capacity,
+                'alarmType'     => $event['attributes']['fuelSensorAlarmType'] ?? null,
+                'positionId'    => $event['positionId'] ?? null,
             ];
         }
 
         usort($rows, fn ($a, $b) => strcmp($b['occurredAt'] ?? '', $a['occurredAt'] ?? ''));
 
-        return response()->json($rows);
+        return response()->json($this->fillLevelsFromPositions($rows));
+    }
+
+    /**
+     * Fills in the tank level for events that carry none — the probe's own alarms.
+     *
+     * A fuelLeak or refuel alarm comes from the sensor, not from Traccar's comparison of two
+     * positions, so it has no before/after and its row would read "— — —": an alarm with no idea
+     * how much fuel was in the tank when it fired. The position the event was raised on does carry
+     * that (`fuel` in litres, `fuelLevel` in percent), so it is read from there and marked as the
+     * reading *at* the event rather than a change across it.
+     *
+     * One batched call for every such event — Traccar's /positions takes repeated `id` parameters —
+     * and none at all when every row already has its figures.
+     */
+    private function fillLevelsFromPositions(array $rows): array
+    {
+        $wanted = [];
+
+        foreach ($rows as $i => $row) {
+            if ($row['after'] === null && $row['positionId']) {
+                $wanted[$row['positionId']][] = $i;
+            }
+        }
+
+        if (empty($wanted)) {
+            return $rows;
+        }
+
+        // Bounded so a week of a noisy probe cannot turn one report into a giant query string;
+        // the newest events are the ones an operator is looking at, and rows are already sorted.
+        $ids = array_slice(array_keys($wanted), 0, 200);
+
+        try {
+            $response = Http::withBasicAuth(...$this->traccarAuth())
+                ->withHeaders(['Accept' => 'application/json'])
+                ->get("{$this->traccarBaseUrl()}/positions?" . implode('&', array_map(fn ($id) => 'id=' . (int) $id, $ids)));
+
+            if (!$response->successful()) {
+                return $rows;
+            }
+        } catch (\Throwable) {
+            // The report itself is sound without this; a failure here should not lose the events.
+            return $rows;
+        }
+
+        foreach ($response->json() ?? [] as $position) {
+            foreach ($wanted[$position['id']] ?? [] as $i) {
+                $litres  = $position['attributes']['fuel'] ?? null;
+                $percent = $position['attributes']['fuelLevel'] ?? null;
+                $capacity = $rows[$i]['fuelCapacity'] ?? null;
+
+                if ($litres === null && $percent !== null && $capacity) {
+                    $litres = round((float) $percent / 100 * $capacity, 1);
+                }
+                if ($percent === null && $litres !== null && $capacity) {
+                    $percent = round((float) $litres / $capacity * 100, 1);
+                }
+
+                $rows[$i]['atEvent']        = $litres !== null ? round((float) $litres, 1) : null;
+                $rows[$i]['atEventPercent'] = $percent !== null ? round((float) $percent, 1) : null;
+            }
+        }
+
+        return $rows;
     }
 
     /* ─────────────────────────── theft watch ─────────────────────────── */
@@ -382,7 +474,16 @@ class FuelController extends Controller
             ];
         }, $devices);
 
+        // Told to the UI so it can disable what this caller cannot write, rather than offering a
+        // Save button that answers 403.
+        $user = Auth::user();
+
         return response()->json([
+            'can' => [
+                'server' => !$user || $user->isPlatformAdmin(),
+                'group'  => !$user || $user->isPlatformAdmin() || $user->isCompanyAdmin(),
+                'device' => !$user || $user->isPlatformAdmin() || $user->isCompanyAdmin(),
+            ],
             'server'  => $this->pickKeys($server['attributes'] ?? []),
             'groups'  => array_map(fn ($g) => [
                 'id'         => $g['id'],
@@ -413,6 +514,10 @@ class FuelController extends Controller
             'fuelIncreaseThreshold' => 'present|nullable|numeric|min:0',
             'fuelCapacity'          => 'present|nullable|numeric|min:0',
         ]);
+
+        if ($denial = $this->denyScope($data['scope'], isset($data['id']) ? (int) $data['id'] : null)) {
+            return $denial;
+        }
 
         $path = match ($data['scope']) {
             'server' => '/server',
@@ -464,6 +569,54 @@ class FuelController extends Controller
     }
 
     /* ─────────────────────────── helpers ─────────────────────────── */
+
+    /**
+     * Who may write a threshold at which level, or null when the caller may.
+     *
+     * The server default governs every company on the installation, so it stays with platform
+     * administrators. A company's own administrator may set its group and its devices — that is
+     * the level the guidance recommends anyway, and it is the level they are accountable for.
+     * Everyone else is read-only here: an operator or viewer changing a theft threshold would be
+     * changing what the fleet gets alerted about.
+     *
+     * Group and device are checked against what Traccar actually grants the caller, not against
+     * an id they supplied, so a tenant cannot reach another company's group by guessing its id.
+     */
+    private function denyScope(string $scope, ?int $id): ?\Illuminate\Http\JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$user || $user->isPlatformAdmin()) {
+            return null;
+        }
+
+        if (!$user->isCompanyAdmin()) {
+            return response()->json([
+                'message' => 'Only a company administrator can change fuel thresholds.',
+            ], 403);
+        }
+
+        if ($scope === 'server') {
+            return response()->json([
+                'message' => 'The server-wide default applies to every company, so only a platform '
+                    . 'administrator can set it. Set the threshold on your company group instead.',
+            ], 403);
+        }
+
+        if ($scope === 'group') {
+            return (int) $user->client?->traccar_group_id === $id
+                ? null
+                : response()->json(['message' => 'That group does not belong to your company.'], 403);
+        }
+
+        // Device: Traccar itself decides what this caller can see, so the visible list is the
+        // authority rather than anything stored locally.
+        $visible = array_column($this->visibleDevices(null), 'id');
+
+        return in_array($id, array_map('intval', $visible), true)
+            ? null
+            : response()->json(['message' => 'That device is not visible to this account.'], 403);
+    }
 
     /** @return array|\Illuminate\Http\JsonResponse */
     private function visibleDevices(?int $deviceId)

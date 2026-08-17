@@ -4,17 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Geofence;
 use App\Models\GeofenceDevice;
+use App\Services\TraccarGeofenceSync;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
  * Work-zone rules (Fleet -> Vehicle Track -> Work-zone Rules, and Device -> Geofence).
  *
- * Zones live locally rather than in Traccar because each device link carries an alert direction
- * (enter / exit / both), which Traccar's own geofence permissions have no field for.
+ * Zones are authored here rather than in Traccar because each device link carries an alert
+ * direction (enter / exit / both), which Traccar's own geofence permissions have no field for.
+ *
+ * But authoring is all this app does. Containment is decided by Traccar, which sees every position
+ * and raises geofenceEnter / geofenceExit — the events the Geo Fence report, the alert dispatcher
+ * and the map overlay all read. So every change to a zone or its device list is mirrored across by
+ * TraccarGeofenceSync; without that a zone looks saved and quietly never fires.
+ *
+ * The mirror is best-effort by design: Traccar being briefly unreachable must not stop an operator
+ * drawing a zone, so the local write stands and the response says whether the mirror succeeded.
+ * `php artisan geofences:sync` reconciles anything that was missed.
  */
 class GeofenceController extends Controller
 {
+    public function __construct(private readonly TraccarGeofenceSync $sync)
+    {
+    }
+
     public function index(): JsonResponse
     {
         return response()->json(
@@ -25,6 +39,11 @@ class GeofenceController extends Controller
                     'alert_direction' => $l->alert_direction,
                     'is_inside'       => (bool) $l->is_inside,
                 ])->values(),
+                // Whether Traccar is actually watching this zone. A zone with no mirror, or with a
+                // mirror but no linked device, raises nothing — and that is worth showing rather
+                // than leaving an operator to wonder why a report is empty.
+                'traccar_geofence_id' => $g->traccar_geofence_id,
+                'is_watched'          => $g->traccar_geofence_id !== null && $g->links->isNotEmpty(),
             ]))
         );
     }
@@ -37,7 +56,12 @@ class GeofenceController extends Controller
             'color' => 'nullable|string|max:20',
         ]);
 
-        return response()->json(Geofence::create($data), 201);
+        $geofence = Geofence::create($data);
+
+        return response()->json([
+            ...$geofence->fresh()->toArray(),
+            'traccar' => $this->sync->sync($geofence->load('links')),
+        ], 201);
     }
 
     public function update(Request $request, Geofence $geofence): JsonResponse
@@ -50,11 +74,16 @@ class GeofenceController extends Controller
 
         $geofence->update($data);
 
-        return response()->json($geofence);
+        return response()->json([
+            ...$geofence->fresh()->toArray(),
+            'traccar' => $this->sync->sync($geofence->load('links')),
+        ]);
     }
 
     public function destroy(Geofence $geofence): JsonResponse
     {
+        // Traccar first, while the record still holds the mirror's id.
+        $this->sync->forget($geofence);
         $geofence->delete();
 
         return response()->json(['message' => 'Geofence deleted.']);
@@ -74,14 +103,27 @@ class GeofenceController extends Controller
             ['alert_direction' => $data['alert_direction'] ?? 'both'],
         );
 
-        return response()->json($geofence->links()->pluck('imei')->values());
+        // The link is the half that decides whether anything happens: Traccar evaluates a geofence
+        // only against devices linked to it, so this is the call that turns a drawn shape into
+        // enter/exit events for this device.
+        $traccar = $this->sync->sync($geofence->load('links'));
+
+        return response()->json([
+            'imeis'   => $geofence->links()->pluck('imei')->values(),
+            'traccar' => $traccar,
+        ]);
     }
 
     public function unlinkDevice(Geofence $geofence, string $imei): JsonResponse
     {
         $geofence->links()->where('imei', $imei)->delete();
 
-        return response()->json($geofence->links()->pluck('imei')->values());
+        $traccar = $this->sync->sync($geofence->load('links'));
+
+        return response()->json([
+            'imeis'   => $geofence->links()->pluck('imei')->values(),
+            'traccar' => $traccar,
+        ]);
     }
 
     /** Changes an already-linked device's alert direction without unlinking and relinking it. */

@@ -15,6 +15,8 @@ import GeofencePage     from '../components/GeofencePage.jsx';
 import SimDataManagementPage from '../components/SimDataManagementPage.jsx';
 import AlertRecipientsPage   from '../components/AlertRecipientsPage.jsx';
 import FuelThresholdsPage    from '../components/FuelThresholdsPage.jsx';
+import FaceLogsPage          from '../components/FaceLogsPage.jsx';
+import MediaGalleryPage      from '../components/MediaGalleryPage.jsx';
 import CompanyManagementPage from '../components/CompanyManagementPage.jsx';
 import SosAlertStack     from '../components/SosAlertStack.jsx';
 import NotificationPage from '../components/NotificationPage.jsx';
@@ -332,6 +334,10 @@ export default function Dashboard({ user, onLogout }) {
                     <AlertRecipientsPage />
                 ) : page === 'Fuel Thresholds' ? (
                     <FuelThresholdsPage />
+                ) : page === 'Face Logs' ? (
+                    <FaceLogsPage />
+                ) : page === 'Media Gallery' ? (
+                    <MediaGalleryPage />
                 ) : page === 'Companies' ? (
                     <CompanyManagementPage user={user} />
                 ) : page === 'Geofence' ? (

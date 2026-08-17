@@ -73,6 +73,10 @@ export const api = {
     setFaceUploadUrl:    (imei, url)     => axios.post('/api/face/upload-url', { imei, url }),
     deleteFace:          (driverId, imei)=> axios.delete('/api/face', { data: { driver_id: driverId, imei } }),
     getFaceImportLogs:   (params)        => axios.get('/api/face/import-logs', { params }),
+    getFaceUploadLogs:   (params)        => axios.get('/api/face/upload-logs', { params }),
+    getFaceRawLog:       (params)        => axios.get('/api/face/raw-log',     { params }),
+    // Everything in public/img/uploads — face templates plus device stills and clips.
+    getMediaFiles:       (params)        => axios.get('/api/media', { params }),
 
     // Who receives each alert email. getAlertChannels() reports whether the pipeline can actually
     // deliver — this app's mailer, and Traccar (which raises the geofence/fuel/alarm events).

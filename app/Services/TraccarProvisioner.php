@@ -127,6 +127,11 @@ class TraccarProvisioner
             'email'         => $email,
             'password'      => $password,
             'administrator' => false,
+            // Traccar defaults a new user's deviceLimit to 0, which means "may not add devices" —
+            // not "no limit". Without this the company's own logins can read their devices but
+            // every registration fails with SecurityException: Write access denied, which reaches
+            // the browser as a bare 400. -1 is Traccar's unlimited.
+            'deviceLimit'   => -1,
             'attributes'    => (object) [],
         ]);
 
@@ -135,6 +140,53 @@ class TraccarProvisioner
         }
 
         return (int) $response->json()['id'];
+    }
+
+    /**
+     * Makes sure an existing Traccar user is allowed to add devices.
+     *
+     * A user provisioned before createUser() set deviceLimit has it at 0, which Traccar reads as
+     * "may add none" — reading devices works, registering one fails with SecurityException. This
+     * is the repair for those, and it is a no-op on a user that is already unlimited.
+     *
+     * Traccar takes full-object PUTs, so the user is read back and rewritten whole. `attributes`
+     * has to be cast: it comes back as an empty JSON array, and Traccar refuses to deserialise an
+     * array into its AttributeMap — the same trap as devices and groups.
+     *
+     * @return bool true when a change was made
+     */
+    public function allowDeviceCreation(string $email): bool
+    {
+        $userId = $this->findUserId($email);
+
+        if ($userId === null) {
+            return false;
+        }
+
+        $read = $this->request()->get("{$this->baseUrl()}/users/{$userId}");
+
+        if (!$read->successful()) {
+            $this->fail('read its user', $read);
+        }
+
+        $user = $read->json();
+
+        if ((int) ($user['deviceLimit'] ?? 0) === -1) {
+            return false;
+        }
+
+        $user['deviceLimit'] = -1;
+        $user['attributes']  = (object) ($user['attributes'] ?? []);
+
+        $write = $this->request()
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->put("{$this->baseUrl()}/users/{$userId}", $user);
+
+        if (!$write->successful()) {
+            $this->fail('grant the user permission to add devices', $write);
+        }
+
+        return true;
     }
 
     /** Links a Traccar user to a group, which is what makes that group's devices visible to it. */

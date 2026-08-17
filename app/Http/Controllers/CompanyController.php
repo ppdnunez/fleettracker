@@ -211,9 +211,19 @@ class CompanyController extends Controller
             'traccar_password' => 'required|string|min:6|max:255',
         ]);
 
+        // An existing user is not necessarily a working one: provisioning before deviceLimit was
+        // set leaves it at 0, which lets the company read its devices but not register any. That
+        // is repairable without touching the password, so it is repaired rather than refused —
+        // being told "use Edit to rotate the password" would not have fixed it.
         if ($this->traccar->userExists($company->traccar_email)) {
-            throw ValidationException::withMessages([
-                'traccar_password' => ['That Traccar user already exists. Use Edit to rotate its password instead.'],
+            $fixed = $this->traccar->allowDeviceCreation($company->traccar_email);
+
+            return response()->json([
+                'company' => $company->fresh(),
+                'message' => $fixed
+                    ? 'Its Traccar user already existed and could not add devices; that permission has been granted.'
+                    : 'Its Traccar user already exists and can already add devices. Nothing needed repairing. '
+                        . 'To rotate the password, use Edit.',
             ]);
         }
 

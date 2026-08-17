@@ -201,6 +201,45 @@ function DrawLayer({ geofences, selectedId, editingId, onCreate, onEditSave, onE
     );
 }
 
+/**
+ * Whether Traccar is actually watching this zone.
+ *
+ * A zone is drawn here but evaluated there, and two things have to line up: the zone must have
+ * been mirrored into Traccar, and it must have at least one device Traccar can see linked to it.
+ * Miss either and the zone sits on the map raising nothing — which used to be invisible until
+ * someone opened the Geo Fence report and found it empty.
+ *
+ * "Linked to a device this account cannot see" is called out separately because it looks identical
+ * to a working zone from here: the link exists locally, but the IMEI belongs to another company,
+ * so Traccar has nothing to attach the zone to.
+ */
+function WatchState({ zone, devices }) {
+    const visible = new Set(devices.map(d => d.uniqueId));
+    const linked  = (zone.imeis ?? []).length;
+    const usable  = (zone.imeis ?? []).filter(i => visible.has(i)).length;
+
+    let tone = '#4ade80';
+    let text = `Watched · ${usable} device${usable === 1 ? '' : 's'}`;
+
+    if (!zone.traccar_geofence_id) {
+        tone = '#fcd34d';
+        text = 'Not sent to Traccar — no alerts yet';
+    } else if (linked === 0) {
+        tone = '#fcd34d';
+        text = 'No device linked — raises nothing';
+    } else if (usable === 0) {
+        tone = '#fca5a5';
+        text = `${linked} linked device${linked === 1 ? '' : 's'} not on this account`;
+    }
+
+    return (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: tone, flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: tone === '#4ade80' ? '#5e7094' : tone }}>{text}</span>
+        </span>
+    );
+}
+
 /* Which devices this zone applies to, and on which crossing direction each should alert. */
 function LinkedDevices({ zone, devices, onChanged }) {
     const [busy, setBusy] = useState('');
@@ -298,9 +337,18 @@ export default function GeofencePage({ onBack }) {
         api.getTraccarDevices().then(r => setDevices(r.data || [])).catch(() => {});
     }, []);
 
+    /* The zone saves here even when Traccar refuses the mirror, so a failure is reported rather
+       than thrown away — the zone would otherwise look saved and silently never raise an event. */
+    const reportMirror = (res) => {
+        const traccar = res?.data?.traccar;
+        setError(traccar && traccar.ok === false
+            ? `Saved here, but Traccar did not accept it, so it will not raise alerts yet: ${traccar.message}`
+            : '');
+    };
+
     const handleCreate = async (name, area) => {
         try {
-            await api.createWorkZone({ name, area });
+            reportMirror(await api.createWorkZone({ name, area }));
             await fetchGeofences();
         } catch (e) {
             setError('Failed to create geofence.');
@@ -311,7 +359,7 @@ export default function GeofencePage({ onBack }) {
         const g = geofences.find(g => g.id === id);
         if (!g) return;
         try {
-            await api.updateWorkZone(id, { name: g.name, area });
+            reportMirror(await api.updateWorkZone(id, { name: g.name, area }));
             setEditingId(null);
             await fetchGeofences();
         } catch (e) {
@@ -359,7 +407,10 @@ export default function GeofencePage({ onBack }) {
                     ) : geofences.map(g => (
                         <div key={g.id} onClick={() => setSelectedId(g.id)}
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid #1e2c46', background: selectedId === g.id ? '#152a4a' : 'transparent' }}>
-                            <span style={{ fontSize: 13.5, fontWeight: 500, color: '#eaeff9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                            <span style={{ minWidth: 0, flex: 1 }}>
+                                <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: '#eaeff9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                                <WatchState zone={g} devices={devices} />
+                            </span>
                             <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                                 <button onClick={e => { e.stopPropagation(); setSelectedId(g.id); setEditingId(g.id); }} title="Edit"
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9daec9', padding: 4 }}>✏</button>
