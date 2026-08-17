@@ -83,6 +83,9 @@ export const api = {
     getAlertChannels:     ()         => axios.get('/api/alert-recipients/channels'),
 
     getVehicleMaintenances:   ()         => axios.get('/api/vehicle-maintenances'),
+    // imei => { km, source, fixTime } for every visible device, so the maintenance form can anchor
+    // a due odometer to the reading it will actually be compared against.
+    getMaintenanceOdometers:  ()         => axios.get('/api/vehicle-maintenances/odometers'),
     createVehicleMaintenance: (data)     => axios.post('/api/vehicle-maintenances', data),
     updateVehicleMaintenance: (id, data) => axios.put(`/api/vehicle-maintenances/${id}`, data),
     deleteVehicleMaintenance: (id)       => axios.delete(`/api/vehicle-maintenances/${id}`),
@@ -101,6 +104,21 @@ export const api = {
     sendDeviceCommand: (imei, command, channel = 'auto') =>
         axios.post('/api/traccar/devices/sms-command', { imei, command, channel }),
     getAlertEvents:       (params)       => axios.get('/api/traccar/reports/events', { params }),
+    // Temperature / humidity and tyre (TPMS). Readings are position attributes that arrive on their
+    // own packets, so /current walks history back for the newest real value and returns its age.
+    getSensorReadings:    (params)       => axios.get('/api/sensors/current', { params }),
+    getSensorHistory:     (params)       => axios.get('/api/sensors/history', { params }),
+    getSensorAlarms:      (params)       => axios.get('/api/sensors/alarms',  { params }),
+    // Fuel. Thresholds are Traccar attributes resolved device -> group -> server; updateFuelSettings
+    // is a read-merge-write of the whole object server-side, since Traccar takes no patches.
+    getFuelReadings:      (params)       => axios.get('/api/fuel/current',    { params }),
+    getFuelHistory:       (params)       => axios.get('/api/fuel/history',    { params }),
+    getFuelEvents:        (params)       => axios.get('/api/fuel/events',     { params }),
+    getFuelTheftScan:     (params)       => axios.get('/api/fuel/theft-scan', { params }),
+    getFuelSettings:      ()             => axios.get('/api/fuel/settings'),
+    updateFuelSettings:   (data)         => axios.put('/api/fuel/settings', data),
+    // Dashcam media recorded against alarms — file names only; retrieval is a later module.
+    getVideoEvidenceReport: (params)     => axios.get('/api/traccar/reports/video-evidence', { params }),
     getBatteryReport:         (params)   => axios.get('/api/traccar/reports/battery', { params }),
     getExternalBatteryReport: (params)   => axios.get('/api/traccar/reports/external-battery', { params }),
     getFuelConsumptionReport: (params)   => axios.get('/api/traccar/reports/fuel', { params }),
@@ -110,7 +128,6 @@ export const api = {
     getAbnormalFuelLossReport:(params)   => axios.get('/api/traccar/reports/fuel-abnormal-loss', { params }),
     getIdleFuelReport:        (params)   => axios.get('/api/traccar/reports/fuel-idle', { params }),
     getFuelRankingReport:     (params)   => axios.get('/api/traccar/reports/fuel-ranking', { params }),
-    getTemperatureHumidityReport: (params) => axios.get('/api/traccar/reports/temperature', { params }),
     getPositioningBatteryReport: (params) => axios.get('/api/traccar/reports/positioning', { params }),
     getTravelStatisticsReport: (params) => axios.get('/api/traccar/reports/travel', { params }),
     getMileageReport: (params) => axios.get('/api/traccar/reports/mileage', { params }),

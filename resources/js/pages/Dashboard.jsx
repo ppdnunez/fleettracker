@@ -14,6 +14,7 @@ import FleetPage, { FLEET_PAGE_TITLES } from '../components/FleetPage.jsx';
 import GeofencePage     from '../components/GeofencePage.jsx';
 import SimDataManagementPage from '../components/SimDataManagementPage.jsx';
 import AlertRecipientsPage   from '../components/AlertRecipientsPage.jsx';
+import FuelThresholdsPage    from '../components/FuelThresholdsPage.jsx';
 import CompanyManagementPage from '../components/CompanyManagementPage.jsx';
 import SosAlertStack     from '../components/SosAlertStack.jsx';
 import NotificationPage from '../components/NotificationPage.jsx';
@@ -36,7 +37,6 @@ function normalizeLiveDevice(device, positionsByDeviceId) {
         status:  device.status === 'online' ? 'ONLINE' : 'OFFLINE',
         lat:     pos ? pos.latitude  : null,
         lng:     pos ? pos.longitude : null,
-        signal:  pos?.attributes?.batteryLevel ?? pos?.attributes?.rssi ?? 0,
         // State the map label and the device list show as icons. Undefined rather than a default,
         // so "not reported by this protocol" stays distinguishable from "off" / "no alarm".
         ignition: pos?.attributes?.ignition ?? null,
@@ -66,7 +66,6 @@ function applyLivePositions(devices, positions) {
             ...d,
             lat:    p.latitude,
             lng:    p.longitude,
-            signal: p.attributes?.batteryLevel ?? p.attributes?.rssi ?? d.signal,
             // Read straight off the new fix, including clearing an alarm the previous one carried:
             // an alarm that never went away would be worse than not showing one at all.
             ignition: p.attributes?.ignition ?? null,
@@ -331,6 +330,8 @@ export default function Dashboard({ user, onLogout }) {
                     <SimDataManagementPage />
                 ) : page === 'Alert Recipients' ? (
                     <AlertRecipientsPage />
+                ) : page === 'Fuel Thresholds' ? (
+                    <FuelThresholdsPage />
                 ) : page === 'Companies' ? (
                     <CompanyManagementPage user={user} />
                 ) : page === 'Geofence' ? (

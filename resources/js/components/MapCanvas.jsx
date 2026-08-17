@@ -324,7 +324,7 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
                                 <strong>{d.name}</strong><br />
                                 {d.tracker}<br />
                                 Lat: {d.lat.toFixed(4)} | Lng: {d.lng.toFixed(4)}<br />
-                                Signal: {d.signal ?? 0}%<br />
+                                {d.battery != null && <>Battery: {Math.round(d.battery)}%{d.charging ? ' (charging)' : ''}<br /></>}
                                 {d.ignition != null && <>Ignition: {d.ignition ? 'ON' : 'OFF'}<br /></>}
                                 {alarmLabel(d.alarm) && (
                                     <span style={{ color: '#f87171', fontWeight: 700 }}>⚠ {alarmLabel(d.alarm)}<br /></span>

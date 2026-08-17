@@ -885,6 +885,142 @@ class TraccarController extends Controller
         return response()->json(array_values($rows));
     }
 
+    /**
+     * Video Evidence report: the media a dashcam recorded alongside an alarm.
+     *
+     * Devices that carry a camera (the JC-series ADAS/DSM units) attach `attributes.videoFiles` to
+     * the position they raise an alarm on — a comma-separated list of stills and a clip, all held
+     * on the device or the vendor's media server, not on Traccar. This report is the index of what
+     * exists: which device recorded what, when, and against which alarm. Retrieving the files
+     * themselves is a separate job for a later module, which is why nothing here tries to fetch
+     * them; getting the names on the record first is what makes that module possible.
+     *
+     * Read from /positions rather than /reports/route: the route report returns nothing for these
+     * devices, while /positions?deviceId&from&to returns the full history including the media
+     * attribute. That endpoint takes one device at a time, so a fleet-wide run fans out one request
+     * per device and they are issued as a pool rather than in series.
+     *
+     * Every request is made as the caller's own Traccar identity, so a tenant can only index
+     * evidence for devices Traccar already grants them.
+     */
+    public function videoEvidenceReport(Request $request)
+    {
+        $request->validate([
+            'from'     => 'required|date',
+            'to'       => 'required|date|after:from',
+            'deviceId' => 'nullable|integer',
+        ]);
+
+        $devices = Http::withBasicAuth(...$this->traccarAuth())
+            ->get("{$this->traccarBaseUrl()}/devices")
+            ->json() ?? [];
+
+        if ($request->filled('deviceId')) {
+            $devices = array_values(array_filter($devices, fn ($d) => $d['id'] == $request->deviceId));
+
+            if (empty($devices)) {
+                return response()->json(['message' => 'That device is not visible to this account.'], 404);
+            }
+        }
+
+        if (empty($devices)) {
+            return response()->json([]);
+        }
+
+        $params = [
+            'from' => Carbon::parse($request->from)->utc()->toISOString(),
+            'to'   => Carbon::parse($request->to)->utc()->toISOString(),
+        ];
+
+        $responses = Http::pool(fn ($pool) => array_map(
+            fn ($d) => $pool->as((string) $d['id'])
+                ->withBasicAuth(...$this->traccarAuth())
+                ->withHeaders(['Accept' => 'application/json'])
+                ->get("{$this->traccarBaseUrl()}/positions", $params + ['deviceId' => $d['id']]),
+            $devices
+        ));
+
+        $rows = [];
+
+        foreach ($devices as $device) {
+            $response = $responses[(string) $device['id']] ?? null;
+
+            // One device's history failing is not worth losing the rest of the fleet's evidence.
+            if (!$response || !$response->successful()) {
+                continue;
+            }
+
+            foreach ($response->json() ?? [] as $position) {
+                $files = self::parseVideoFiles($position['attributes']['videoFiles'] ?? null);
+
+                if (empty($files)) {
+                    continue;
+                }
+
+                $rows[] = [
+                    'deviceId'   => $device['id'],
+                    'deviceName' => $device['name'] ?? null,
+                    'imei'       => $device['uniqueId'] ?? null,
+                    'positionId' => $position['id'] ?? null,
+                    'fixTime'    => $position['fixTime'] ?? null,
+                    'alarm'      => $position['attributes']['alarm'] ?? null,
+                    'files'      => $files,
+                    'clipCount'  => count(array_filter($files, fn ($f) => $f['kind'] === 'video')),
+                    'imageCount' => count(array_filter($files, fn ($f) => $f['kind'] === 'image')),
+                    'latitude'   => $position['latitude'] ?? null,
+                    'longitude'  => $position['longitude'] ?? null,
+                    'address'    => $position['address'] ?? null,
+                ];
+            }
+        }
+
+        // Newest first: evidence is nearly always reviewed from the most recent incident backwards.
+        usort($rows, fn ($a, $b) => strcmp($b['fixTime'] ?? '', $a['fixTime'] ?? ''));
+
+        return response()->json($rows);
+    }
+
+    /**
+     * Splits the comma-separated `videoFiles` attribute into named files.
+     *
+     * Only the extension is interpreted. The rest of the name looks structured — the samples read
+     * `0169_1260807152528_863800080017899.mp4`, which is channel, timestamp and IMEI — but that is
+     * an observation about one firmware, not a documented format, so nothing here depends on it.
+     * The name is passed through whole for whatever fetches the file later.
+     *
+     * @return list<array{name: string, extension: string, kind: string}>
+     */
+    private static function parseVideoFiles(?string $raw): array
+    {
+        if ($raw === null || trim($raw) === '') {
+            return [];
+        }
+
+        $files = [];
+
+        foreach (explode(',', $raw) as $name) {
+            $name = trim($name);
+
+            if ($name === '') {
+                continue;
+            }
+
+            $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+
+            $files[] = [
+                'name'      => $name,
+                'extension' => $extension,
+                'kind'      => match ($extension) {
+                    'mp4', 'avi', 'mov', 'mkv', 'h264', 'ts' => 'video',
+                    'jpg', 'jpeg', 'png', 'bmp'              => 'image',
+                    default                                  => 'other',
+                },
+            ];
+        }
+
+        return $files;
+    }
+
     // Internal Battery report: Traccar's GET /reports/route returns raw position history, with
     // attributes.batteryLevel present whenever the protocol reports it. Consecutive readings at the
     // same battery percentage are collapsed into one row spanning first-to-last reading at that

@@ -5,6 +5,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../api.js';
 import { groupForSection } from './reportSections.js';
+import { TemperatureHumidityReport, TyreTpmsReport } from './SensorReports.jsx';
+import { FuelLevelReport, FuelEventsReport, FuelTheftWatch } from './FuelReports.jsx';
 
 // Fix default marker icon paths broken by bundlers (same fix as MapCanvas.jsx; idempotent).
 delete L.Icon.Default.prototype._getIconUrl;
@@ -960,91 +962,6 @@ function TempHumidityChart({ rows }) {
                 <path d={pathFor('humidity', hMin, hMax)} fill="none" stroke="#3b82f6" strokeWidth="2" />
             </svg>
         </div>
-    );
-}
-
-// Built from Traccar's GET /api/reports/route — reads attributes.temp1 (first temperature-probe
-// channel) and attributes.humidity per reading. See TraccarController::temperatureHumidityReport.
-function TemperatureHumidity() {
-    const [devices, setDevices]   = useState([]);
-    const [deviceId, setDeviceId] = useState('');
-    const [from, setFrom]         = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return toLocalInput(d); });
-    const [to, setTo]             = useState(() => toLocalInput(new Date()));
-    const [rows, setRows]         = useState([]);
-    const [loading, setLoading]   = useState(false);
-    const [error, setError]       = useState('');
-
-    useEffect(() => {
-        api.getTraccarDevices().then(res => setDevices(res.data)).catch(() => {});
-    }, []);
-
-    const search = async (overrides = {}) => {
-        const f = overrides.from ?? from, t = overrides.to ?? to;
-        const dId = 'deviceId' in overrides ? overrides.deviceId : deviceId;
-        setLoading(true);
-        setError('');
-        try {
-            const params = { from: new Date(f).toISOString(), to: new Date(t).toISOString() };
-            if (dId) params.deviceId = dId;
-            const res = await api.getTemperatureHumidityReport(params);
-            setRows(res.data);
-        } catch (e) {
-            setError(e.response?.data?.message || 'Failed to load temperature & humidity report.');
-            setRows([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => { search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const reset = () => {
-        const d = new Date(); d.setHours(0,0,0,0);
-        setDeviceId(''); setFrom(toLocalInput(d)); setTo(toLocalInput(new Date()));
-        setRows([]); setError('');
-    };
-
-    const COLS = ['No.','Device name','IMEI','Temperature (°C)','Humidity (%)','Record Time'];
-
-    return (
-        <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-                <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
-                <span style={{ color: '#5e7094' }}>-</span>
-                <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
-                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
-                <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
-                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
-                    <option value="">All devices</option>
-                    {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-                <button onClick={() => search()} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
-            </div>
-            <TempHumidityChart rows={rows} />
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
-                <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
-                <tbody>
-                    {loading ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
-                    ) : error ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
-                    ) : rows.length === 0 ? (
-                        <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data</td></tr>
-                    ) : rows.map((r, i) => (
-                        <tr key={i}>
-                            <td style={TD}>{i + 1}</td>
-                            <td style={TD}>{r.deviceName ?? '—'}</td>
-                            <td style={TD}>{r.imei ?? '—'}</td>
-                            <td style={TD}>{r.temperature ?? '—'}</td>
-                            <td style={TD}>{r.humidity ?? '—'}</td>
-                            <td style={TD}>{fmtTime(r.recordTime)}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </>
     );
 }
 
@@ -2948,6 +2865,159 @@ function AlertDetails() {
 }
 
 /* ══════════════════════════════════════════════════════════════ */
+/*  VIDEO EVIDENCE                                                */
+/* ══════════════════════════════════════════════════════════════ */
+
+/**
+ * The dashcam media a device recorded against an alarm.
+ *
+ * Camera-equipped units attach `attributes.videoFiles` to the position an alarm was raised on — a
+ * comma-separated list of stills plus a clip. The files live on the device or the vendor's media
+ * server; this report is the index of what exists, which is what a later retrieval module needs in
+ * order to go and fetch them. Nothing here downloads anything.
+ *
+ * Every file name can be copied out individually, because a name is the handle for the file until
+ * that module exists.
+ */
+function VideoEvidence() {
+    const [devices, setDevices]   = useState([]);
+    const [deviceId, setDeviceId] = useState('');
+    // Defaults to the last seven days rather than today: evidence is looked up after the fact,
+    // often days later, and a report that opens empty on the day of an incident is no use.
+    const [from, setFrom]         = useState(() => toLocalInput(new Date(Date.now() - 7 * 86400000)));
+    const [to, setTo]             = useState(() => toLocalInput(new Date()));
+    const [rows, setRows]         = useState([]);
+    const [loading, setLoading]   = useState(false);
+    const [error, setError]       = useState('');
+    const [copied, setCopied]     = useState('');
+
+    useEffect(() => {
+        api.getTraccarDevices().then(res => setDevices(res.data)).catch(() => {});
+    }, []);
+
+    const search = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const params = { from: new Date(from).toISOString(), to: new Date(to).toISOString() };
+            if (deviceId) params.deviceId = deviceId;
+            const res = await api.getVideoEvidenceReport(params);
+            setRows(res.data);
+        } catch (e) {
+            setError(e.response?.data?.message || 'Failed to load video evidence.');
+            setRows([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const reset = () => {
+        setDeviceId('');
+        setFrom(toLocalInput(new Date(Date.now() - 7 * 86400000)));
+        setTo(toLocalInput(new Date()));
+        setError('');
+    };
+
+    const copy = async (text, key) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(key);
+            setTimeout(() => setCopied(k => (k === key ? '' : k)), 1500);
+        } catch { /* clipboard blocked — the name is on screen to read off anyway */ }
+    };
+
+    /* One row per file rather than per position: the point of this report is the file names, and
+       a cell holding four of them cannot be sorted, copied or referenced individually. */
+    const fileRows = rows.flatMap((r, ri) =>
+        r.files.map((f, fi) => ({ ...f, key: `${r.positionId}-${ri}-${fi}`, parent: r, first: fi === 0, span: r.files.length }))
+    );
+
+    const totals = {
+        incidents: rows.length,
+        images:    rows.reduce((n, r) => n + r.imageCount, 0),
+        clips:     rows.reduce((n, r) => n + r.clipCount, 0),
+    };
+
+    const COLS = ['No.', 'Device Name', 'IMEI', 'Recorded', 'Alarm', 'Type', 'File name', 'Coordinates', ''];
+
+    const kindPill = (kind) => ({
+        display: 'inline-block', padding: '2px 8px', borderRadius: 11, fontSize: 11, fontWeight: 700,
+        background: kind === 'video' ? '#152a4a' : kind === 'image' ? '#0f2b24' : '#33260c',
+        color:      kind === 'video' ? '#7fc4ff' : kind === 'image' ? '#4ade80' : '#fcd34d',
+    });
+
+    return (
+        <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, color: '#cfdcf0', whiteSpace: 'nowrap' }}>Recorded :</span>
+                <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <span style={{ color: '#5e7094' }}>-</span>
+                <input type="datetime-local" value={to} onChange={e => setTo(e.target.value)}
+                    style={{ padding: '6px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', outline: 'none' }} />
+                <select value={deviceId} onChange={e => setDeviceId(e.target.value)}
+                    style={{ padding: '7px 28px 7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', cursor: 'pointer', minWidth: 170 }}>
+                    <option value="">All devices</option>
+                    {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+                <button onClick={search} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
+                <button onClick={reset} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                    <button onClick={() => copy(fileRows.map(f => f.name).join('\n'), 'all')} disabled={!fileRows.length}
+                        style={{ padding: '6px 14px', border: '1px solid #24344f', borderRadius: 6, background: '#111c33', color: fileRows.length ? '#cfdcf0' : '#24344f', fontSize: 13, cursor: fileRows.length ? 'pointer' : 'not-allowed' }}>
+                        {copied === 'all' ? 'Copied' : 'Copy all names'}
+                    </button>
+                </div>
+            </div>
+
+            {rows.length > 0 && (
+                <div style={{ marginBottom: 10, fontSize: 12.5, color: '#9daec9' }}>
+                    {totals.incidents} recording{totals.incidents === 1 ? '' : 's'} · {totals.images} image{totals.images === 1 ? '' : 's'} · {totals.clips} clip{totals.clips === 1 ? '' : 's'}
+                </div>
+            )}
+
+            <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
+                    <thead><tr>{COLS.map((c, i) => <th key={i} style={TH}>{c}</th>)}</tr></thead>
+                    <tbody>
+                        {loading ? (
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
+                        ) : error ? (
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#ef4444' }}>{error}</td></tr>
+                        ) : fileRows.length === 0 ? (
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>
+                                No recordings in this period. Only camera-equipped devices attach media to an alarm.
+                            </td></tr>
+                        ) : fileRows.map((f, i) => (
+                            // The incident columns are written once per recording and left blank on
+                            // its remaining files, so a set of four reads as one event rather than four.
+                            <tr key={f.key} style={f.first && i > 0 ? { borderTop: '2px solid #1e2c46' } : undefined}>
+                                <td style={TD}>{i + 1}</td>
+                                <td style={TD}>{f.first ? (f.parent.deviceName ?? '—') : ''}</td>
+                                <td style={{ ...TD, fontFamily: 'monospace', fontSize: 12 }}>{f.first ? (f.parent.imei ?? '—') : ''}</td>
+                                <td style={TD}>{f.first ? fmtTime(f.parent.fixTime) : ''}</td>
+                                <td style={TD}>{f.first ? (f.parent.alarm ? alarmDataLabel(f.parent.alarm) : '—') : ''}</td>
+                                <td style={TD}><span style={kindPill(f.kind)}>{f.kind}</span></td>
+                                <td style={{ ...TD, fontFamily: 'monospace', fontSize: 12, color: '#eaeff9' }}>{f.name}</td>
+                                <td style={TD}>{f.first ? fmtCoords(f.parent.latitude, f.parent.longitude) : ''}</td>
+                                <td style={{ ...TD, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                    <button onClick={() => copy(f.name, f.key)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied === f.key ? '#4ade80' : '#7fc4ff', fontSize: 12, fontWeight: 600, padding: 0 }}>
+                                        {copied === f.key ? 'Copied' : 'Copy'}
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+/* ══════════════════════════════════════════════════════════════ */
 /*  PAGE MAP                                                      */
 /* ══════════════════════════════════════════════════════════════ */
 const PAGES = {
@@ -2960,7 +3030,11 @@ const PAGES = {
     'Abnormal Fuel Loss':            AbnormalFuelLoss,
     'Idle Fuel':                     IdleFuel,
     'Fuel Ranking':                  FuelRanking,
-    'Temperature & Humidity':        TemperatureHumidity,
+    'Temperature & Humidity':        TemperatureHumidityReport,
+    'Tyre / TPMS':                   TyreTpmsReport,
+    'Fuel Level':                    FuelLevelReport,
+    'Fuel Events':                   FuelEventsReport,
+    'Theft Watch':                   FuelTheftWatch,
     'Driver Behavior':               DriverBehavior,
     'Positioning & Battery':         PositioningBattery,
     'Travel statistics (OBD)':       TravelStatisticsOBD,
@@ -2977,6 +3051,7 @@ const PAGES = {
     'Offline':                       OfflinePage,
     'Online':                        OnlinePage,
     'Alert Details':                 AlertDetails,
+    'Video Evidence':                VideoEvidence,
 };
 
 /* ══════════════════════════════════════════════════════════════ */

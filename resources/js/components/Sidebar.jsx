@@ -143,12 +143,24 @@ const AlertSVG = () => (
     </svg>
 );
 
+/* Thermometer — the module covers temperature, humidity and tyre pressure, and a probe reads as
+   "measurement" more immediately than a tyre would. */
+const SensorSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M6 8.9V3.1a1.6 1.6 0 0 1 3.2 0v5.8a3 3 0 1 1-3.2 0Z"/>
+        <line x1="7.6" y1="5.4" x2="7.6" y2="9.6"/>
+        <circle cx="7.6" cy="11.2" r="1.3" fill="currentColor" stroke="none"/>
+    </svg>
+);
+
 /* ── nav tree structure ─────────────────────────────────────── */
 /* The reports themselves live in reportSections.js, shared with ReportPage, which renders one tab
    per report. Only the icon is a sidebar concern, so only the icon is chosen here. */
 const REPORT_ICONS = {
     'Device Statistics': <DeviceSVG />,
     'Motion Statistics': <CarSVG />,
+    'Sensor Statistics': <SensorSVG />,
+    'Fuel Statistics':   <FuelSVG />,
     'State Statistics':  <DashSVG />,
     'Alert Statistics':  <AlertSVG />,
 };
@@ -204,6 +216,7 @@ const SETTINGS_ITEMS = [
     { label: 'Device Map & Video',  page: 'Dashboard',           icon: <PinSVG />,    hidden: true },
     { label: 'Geofence',            page: 'Geofence',            icon: <PinSVG /> },
     { label: 'Alert Recipients',    page: 'Alert Recipients',    icon: <MailSVG /> },
+    { label: 'Fuel Thresholds',     page: 'Fuel Thresholds',     icon: <FuelSVG />, adminOnly: true },
     { label: 'Saved Commands',      page: 'Saved Commands',      icon: <ReportSVG />, hidden: true },
     { label: 'Notification',        page: 'Notification',        icon: <ReportSVG />, hidden: true },
     { label: 'Calendars',           page: 'Calendars',           icon: <CheckInSVG />,hidden: true },

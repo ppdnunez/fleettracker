@@ -19,17 +19,6 @@ function SearchIcon() {
     );
 }
 
-function SignalBars({ pct, online }) {
-    return (
-        <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 2, height: 14 }}>
-            {[25, 50, 75, 100].map((t, i) => (
-                <span key={i} style={{ width: 3, height: 4 + i * 2.5, borderRadius: 1, background: online && pct >= t ? '#3b82f6' : '#24344f', display: 'block' }} />
-            ))}
-            <span style={{ fontSize: 10, color: online ? '#3b82f6' : '#5e7094', marginLeft: 2, lineHeight: 1 }}>{pct}%</span>
-        </span>
-    );
-}
-
 export default function DeviceList({ devices, selected, onSelect, search, setSearch, loading, open, onToggle }) {
     return (
         <div style={{ display: 'flex', flexShrink: 0 }}>
@@ -72,11 +61,8 @@ export default function DeviceList({ devices, selected, onSelect, search, setSea
                                         <div style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0, background: selected === d.id ? '#1c3a63' : '#16233c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚙</div>
                                         <span style={{ fontSize: 13, fontWeight: 700, color: '#eaeff9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingLeft: 36 }}>
-                                        <span style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.tracker}</span>
-                                        <span style={{ flexShrink: 0 }}>
-                                            <SignalBars pct={d.signal || 0} online={d.status === 'ONLINE'} />
-                                        </span>
+                                    <div style={{ paddingLeft: 36 }}>
+                                        <span style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{d.tracker}</span>
                                     </div>
                                     <div style={{ paddingLeft: 36, marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                                         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: d.status === 'ONLINE' ? '#22c55e' : '#5e7094' }}>● {d.status}</span>

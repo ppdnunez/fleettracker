@@ -5,6 +5,7 @@ import { VEHICLE_TYPES, FUEL_TYPES, vehicleTypeEmoji } from '../vehicleCatalog.j
 import ReportPage from './ReportPage.jsx';
 import GeofenceManagementPage from './GeofencePage.jsx';
 import DeviceStatusIcons, { alarmLabel } from './DeviceStatusIcons.jsx';
+import useTraccarSocket from '../useTraccarSocket.js';
 
 /* ── icons ───────────────────────────────────────────────────── */
 const SearchSVG = () => (
@@ -106,6 +107,46 @@ const OPERATIONAL_MODULES = [
 
 const DAY_MS = 86400000;
 
+/** Merge a Traccar websocket {"positions":[…]} frame into cockpit devices. */
+function applyCockpitPositions(devices, positions) {
+    const byDeviceId = {};
+    for (const p of positions) byDeviceId[p.deviceId] = p;
+
+    return devices.map(d => {
+        const p = byDeviceId[d.id];
+        if (!p) return d;
+        return {
+            ...d,
+            lat:      p.latitude,
+            lng:      p.longitude,
+            ignition: p.attributes?.ignition ?? null,
+            alarm:    p.attributes?.alarm ?? null,
+            battery:  p.attributes?.batteryLevel ?? null,
+            charging: p.attributes?.charge ?? null,
+            // The detail rail reads raw attributes off this, so it has to travel with the rest.
+            position: p,
+        };
+    });
+}
+
+/** Merge a Traccar websocket {"devices":[…]} frame (online/offline, renames). */
+function applyCockpitDevices(devices, updates) {
+    const byId = {};
+    for (const u of updates) byId[u.id] = u;
+
+    return devices.map(d => {
+        const u = byId[d.id];
+        if (!u) return d;
+        return {
+            ...d,
+            name:    u.name,
+            imei:    u.uniqueId,
+            tracker: u.model || u.uniqueId,
+            status:  u.status === 'online' ? 'ONLINE' : 'OFFLINE',
+        };
+    });
+}
+
 /* A Traccar device plus its latest position, in the shape MapCanvas expects. The raw position
    is kept so the detail rail can read attributes (satellites, rssi, ignition) without refetching. */
 function toMapDevice(device, position) {
@@ -117,7 +158,6 @@ function toMapDevice(device, position) {
         status:   device.status === 'online' ? 'ONLINE' : 'OFFLINE',
         lat:      position ? position.latitude  : null,
         lng:      position ? position.longitude : null,
-        signal:   position?.attributes?.batteryLevel ?? position?.attributes?.rssi ?? 0,
         // Same three the map label draws as icons (see DeviceStatusIcons).
         ignition: position?.attributes?.ignition ?? null,
         alarm:    position?.attributes?.alarm ?? null,
@@ -255,6 +295,21 @@ function FleetDashboard({ setFleetPage }) {
     const [selected,    setSelected]    = useState(null);
     const [search,      setSearch]      = useState('');
     const [loading,     setLoading]     = useState(true);
+    const [connected,   setConnected]   = useState(false);
+
+    /**
+     * Live updates, straight off Traccar's websocket.
+     *
+     * Without this the cockpit was a snapshot taken once on mount — correct at the moment the page
+     * opened and frozen from then on, which is why it appeared to need a manual refresh. Positions
+     * and online/offline now arrive as the devices report them; the KPI tiles below are built from
+     * Traccar's report endpoints and stay on their own load, since a mileage report per position
+     * push would be an enormous amount of work for a number that moves by metres.
+     */
+    useTraccarSocket((frame) => {
+        if (frame.positions) setDevices(ds => applyCockpitPositions(ds, frame.positions));
+        if (frame.devices)   setDevices(ds => applyCockpitDevices(ds, frame.devices));
+    }, setConnected);
 
     useEffect(() => {
         let cancelled = false;
@@ -337,6 +392,12 @@ function FleetDashboard({ setFleetPage }) {
                 <div className="mine-map-bar">
                     <span className="mine-map-bar-title">Live Operations</span>
                     <div className="mine-legend">
+                        {/* Says whether the feed is actually live. A map that has quietly stopped
+                            updating looks identical to a fleet that has stopped moving. */}
+                        <span title={connected ? 'Receiving live updates from Traccar' : 'Reconnecting to Traccar'}>
+                            <i style={{ background: connected ? '#3fc07a' : '#f2a93b', color: connected ? '#3fc07a' : '#f2a93b' }} />
+                            {connected ? 'Live' : 'Reconnecting…'}
+                        </span>
                         <span><i style={{ background: MARKER_COLORS.online.fill,   color: MARKER_COLORS.online.fill }} />Online</span>
                         <span><i style={{ background: MARKER_COLORS.offline.fill,  color: MARKER_COLORS.offline.fill }} />Offline</span>
                         <span><i style={{ background: MARKER_COLORS.selected.fill, color: MARKER_COLORS.selected.fill }} />Selected</span>
@@ -378,18 +439,8 @@ function FleetDashboard({ setFleetPage }) {
                                                 </span>
                                             </span>
                                             <span className="mine-device-imei">{d.imei}</span>
-                                            <span className="mine-device-foot">
-                                                <span className="mine-device-state" style={{ color }}>
-                                                    <i />{isSelected ? 'Selected' : d.status === 'ONLINE' ? 'Online' : 'Offline'}
-                                                </span>
-                                                <span className="mine-device-signal" title={`Signal ${d.signal ?? 0}%`}>
-                                                    {[25, 50, 75, 100].map((threshold, i) => (
-                                                        <b key={threshold}
-                                                            className={d.status === 'ONLINE' && (d.signal ?? 0) >= threshold ? 'on' : undefined}
-                                                            style={{ height: 4 + i * 2.5 }} />
-                                                    ))}
-                                                    <span>{d.signal ?? 0}%</span>
-                                                </span>
+                                            <span className="mine-device-state" style={{ color }}>
+                                                <i />{isSelected ? 'Selected' : d.status === 'ONLINE' ? 'Online' : 'Offline'}
                                             </span>
                                             {alarmLabel(d.alarm) && (
                                                 <span className="mine-device-alarm">{alarmLabel(d.alarm)}</span>
@@ -1592,7 +1643,6 @@ function liveTrackDeviceShape(device, positionsByDeviceId, vehicleTypesByImei = 
         status:      device.status === 'online' ? 'ONLINE' : 'OFFLINE',
         lat:         pos ? pos.latitude  : null,
         lng:         pos ? pos.longitude : null,
-        signal:      pos?.attributes?.batteryLevel ?? pos?.attributes?.rssi ?? 0,
         // Drives the map pin's glyph — configured per vehicle under Fleet > Vehicle.
         vehicleType: vehicleTypesByImei[device.uniqueId] ?? null,
     };
@@ -1610,7 +1660,6 @@ function applyTrackPositions(devices, positions) {
             ...d,
             lat:    p.latitude,
             lng:    p.longitude,
-            signal: p.attributes?.batteryLevel ?? p.attributes?.rssi ?? d.signal,
         };
     });
 }
@@ -1888,7 +1937,29 @@ function MaintenanceFormModal({ record, devices, onClose, onSaved }) {
     const [saving, setSaving] = useState(false);
     const [error, setError]   = useState('');
 
+    /* Live odometer per vehicle, so the due reading can be anchored to the number the schedule
+       will actually be checked against. Fetched once per modal: it is a single Traccar call and
+       the form is short-lived, so there is nothing to keep in sync. */
+    const [odometers, setOdometers]       = useState({});
+    const [serviceEvery, setServiceEvery] = useState('');
+
+    useEffect(() => {
+        api.getMaintenanceOdometers().then(res => setOdometers(res.data ?? {})).catch(() => {});
+    }, []);
+
+    const current = odometers[form.imei] ?? null;
+
     const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
+
+    /* "Service every N km" — the way servicing is actually specified. What gets stored is still an
+       absolute reading, because that is what the vehicle's odometer is compared against; this only
+       does the arithmetic that would otherwise happen in someone's head, and it does it against the
+       reading the comparison will really use. */
+    const applyInterval = () => {
+        const every = Number(serviceEvery);
+        if (!current || !Number.isFinite(every) || every <= 0) return;
+        setForm(f => ({ ...f, due_odometer_km: String(Math.round(current.km + every)) }));
+    };
 
     const handleSave = async () => {
         if (!String(form.imei).trim() || !String(form.maintenance_type).trim()) {
@@ -1958,9 +2029,60 @@ function MaintenanceFormModal({ record, devices, onClose, onSaved }) {
                         <label style={driverLabelStyle}>Due Date</label>
                         <input type="date" value={form.due_date} onChange={set('due_date')} style={driverInputStyle} />
                     </div>
-                    <div style={driverFieldStyle}>
+                    <div style={{ ...driverFieldStyle, gridColumn: '1 / -1' }}>
                         <label style={driverLabelStyle}>Due Odometer (km)</label>
-                        <input type="number" min="0" step="0.01" value={form.due_odometer_km} onChange={set('due_odometer_km')} style={driverInputStyle} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <input type="number" min="0" step="0.01" value={form.due_odometer_km} onChange={set('due_odometer_km')}
+                                style={{ ...driverInputStyle, width: 150 }} />
+
+                            <span style={{ fontSize: 12.5, color: '#5e7094' }}>or service every</span>
+                            <input type="number" min="1" step="1" value={serviceEvery} onChange={e => setServiceEvery(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyInterval(); } }}
+                                placeholder="5000" disabled={!current}
+                                style={{ ...driverInputStyle, width: 100, opacity: current ? 1 : 0.5 }} />
+                            <span style={{ fontSize: 12.5, color: '#5e7094' }}>km</span>
+                            <button type="button" onClick={applyInterval} disabled={!current || !serviceEvery}
+                                style={{
+                                    padding: '7px 14px', borderRadius: 6, border: '1px solid #24344f',
+                                    background: current && serviceEvery ? '#152a4a' : '#111c33',
+                                    color: current && serviceEvery ? '#7fc4ff' : '#24344f',
+                                    fontSize: 12.5, fontWeight: 600,
+                                    cursor: current && serviceEvery ? 'pointer' : 'not-allowed',
+                                }}>
+                                Apply
+                            </button>
+                        </div>
+
+                        {/* What the due figure will be compared against. Without it, an absolute
+                            reading is guesswork — and on a device with no odometer of its own the
+                            number means something different, which is worth saying out loud. */}
+                        <p style={{ margin: '6px 0 0', fontSize: 12, color: '#9daec9', lineHeight: 1.5 }}>
+                            {!form.imei ? (
+                                'Pick a vehicle to see its current reading.'
+                            ) : current ? (
+                                <>
+                                    Current reading: <b style={{ color: '#eaeff9' }}>{current.km.toLocaleString()} km</b>
+                                    {form.due_odometer_km !== '' && Number(form.due_odometer_km) > current.km && (
+                                        <> · due in <b style={{ color: '#eaeff9' }}>{Math.round(Number(form.due_odometer_km) - current.km).toLocaleString()} km</b></>
+                                    )}
+                                    {form.due_odometer_km !== '' && Number(form.due_odometer_km) <= current.km && (
+                                        <span style={{ color: '#fcd34d' }}> · already past this reading — the record will show as Overdue</span>
+                                    )}
+                                    {current.source === 'totalDistance' && (
+                                        <span style={{ display: 'block', color: '#fcd34d' }}>
+                                            This device reports no odometer of its own, so the figure is Traccar's distance
+                                            since the device was registered — not the vehicle's dashboard reading. Set the due
+                                            odometer against this number, not the dashboard.
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                <span style={{ color: '#fcd34d' }}>
+                                    No odometer reported for this vehicle, so an odometer-based schedule will never trigger.
+                                    Use the due date instead.
+                                </span>
+                            )}
+                        </p>
                     </div>
                     <div style={driverFieldStyle}>
                         <label style={driverLabelStyle}>Notify Days Before</label>

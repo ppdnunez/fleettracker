@@ -61,6 +61,58 @@ class VehicleMaintenanceController extends Controller
         return $odometers;
     }
 
+    /**
+     * imei => current odometer in km, for every device this caller can see.
+     *
+     * The maintenance form needs this before a record exists: a due odometer is an absolute
+     * reading, so entering one without knowing where the vehicle is now is guesswork. index()
+     * already carries the figure per record, but only for vehicles that have one.
+     *
+     * `source` says which attribute the number came from, because they are not the same thing.
+     * `odometer` is the vehicle's own reading; `totalDistance` is Traccar's running total since
+     * the device was registered, which on a recently added device can read a few kilometres for a
+     * vehicle with a hundred thousand on the clock. The form shows that distinction rather than
+     * presenting both as "the odometer".
+     */
+    public function odometers()
+    {
+        $devices   = $this->traccarGet('/devices') ?? [];
+        $positions = $this->traccarGet('/positions');
+
+        if ($positions === null) {
+            return response()->json([]);
+        }
+
+        $imeiByDeviceId = [];
+        foreach ($devices as $device) {
+            $imeiByDeviceId[$device['id']] = $device['uniqueId'] ?? null;
+        }
+
+        $rows = [];
+        foreach ($positions as $position) {
+            $imei = $imeiByDeviceId[$position['deviceId']] ?? null;
+            if ($imei === null) {
+                continue;
+            }
+
+            $attributes = $position['attributes'] ?? [];
+            $source     = isset($attributes['odometer']) ? 'odometer'
+                : (isset($attributes['totalDistance']) ? 'totalDistance' : null);
+
+            if ($source === null) {
+                continue;
+            }
+
+            $rows[$imei] = [
+                'km'     => round($attributes[$source] / 1000, 1),
+                'source' => $source,
+                'fixTime'=> $position['fixTime'] ?? null,
+            ];
+        }
+
+        return response()->json($rows);
+    }
+
     public function index()
     {
         $devices   = $this->traccarGet('/devices') ?? [];

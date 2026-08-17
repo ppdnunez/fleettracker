@@ -7,6 +7,8 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\FuelController;
+use App\Http\Controllers\SensorController;
 use App\Http\Controllers\TraccarController;
 use App\Http\Controllers\VehicleMaintenanceController;
 use App\Http\Controllers\DriverFaceController;
@@ -44,6 +46,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('devices', DeviceController::class);
     Route::apiResource('drivers', DriverController::class)->except(['show']);
+    // Declared before the resource so "odometers" is not swallowed as a {vehicle_maintenance} id.
+    Route::get('vehicle-maintenances/odometers', [VehicleMaintenanceController::class, 'odometers']);
     Route::apiResource('vehicle-maintenances', VehicleMaintenanceController::class)->except(['show']);
     Route::apiResource('vehicles', VehicleController::class)->except(['show']);
 
@@ -82,6 +86,26 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/import-logs',   [FaceImportController::class, 'index']);
     });
 
+    // Fuel level, refuel/theft events, and the thresholds behind Traccar's own drop/increase
+    // events. Thresholds are attributes resolved device -> group -> server, so writing one is a
+    // read-merge-write of the whole object (see FuelController::updateSettings).
+    Route::prefix('fuel')->group(function () {
+        Route::get('/current',    [FuelController::class, 'current']);
+        Route::get('/history',    [FuelController::class, 'history']);
+        Route::get('/events',     [FuelController::class, 'events']);
+        Route::get('/theft-scan', [FuelController::class, 'theftScan']);
+        Route::get('/settings',   [FuelController::class, 'settings']);
+        Route::put('/settings',   [FuelController::class, 'updateSettings'])->middleware('platform.admin');
+    });
+
+    // Temperature / humidity and tyre (TPMS) readings. Traccar has no sensor endpoint — these are
+    // position attributes — so the module reads them off positions and events.
+    Route::prefix('sensors')->group(function () {
+        Route::get('/current', [SensorController::class, 'current']);
+        Route::get('/history', [SensorController::class, 'history']);
+        Route::get('/alarms',  [SensorController::class, 'alarms']);
+    });
+
     Route::prefix('traccar')->group(function () {
         Route::get('/devices',   [TraccarController::class, 'devices']);
         Route::post('/devices',  [TraccarController::class, 'storeDevice']);
@@ -108,6 +132,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/positions/{id}', [TraccarController::class, 'positionById'])->whereNumber('id');
         Route::get('/ws-token',  [TraccarController::class, 'wsToken']);
         Route::get('/reports/events',  [TraccarController::class, 'alertEvents']);
+        // Index of dashcam media recorded against alarms — the evidence a later module retrieves.
+        Route::get('/reports/video-evidence', [TraccarController::class, 'videoEvidenceReport']);
         Route::get('/reports/battery',          [TraccarController::class, 'internalBatteryReport']);
         Route::get('/reports/external-battery', [TraccarController::class, 'externalBatteryReport']);
         Route::get('/reports/fuel', [TraccarController::class, 'fuelConsumptionReport']);

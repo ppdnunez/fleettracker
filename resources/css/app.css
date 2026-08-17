@@ -341,34 +341,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-/* Status line: state pill left, signal right, each on its own side of the row. */
-.mine-device-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-.mine-device-signal {
-    flex: none;
-    display: inline-flex;
-    align-items: flex-end;
-    gap: 2px;
-    height: 12px;
-}
-.mine-device-signal b {
-    width: 3px;
-    border-radius: 1px;
-    background: var(--mine-border);
-    display: block;
-}
-.mine-device-signal b.on { background: var(--mine-blue); }
-.mine-device-signal span {
-    margin-left: 3px;
-    color: var(--mine-muted);
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1;
-}
 /* Alarm wording gets its own line: it is the one thing here that can be long, and it must not
    squeeze the state or the signal off the row above. */
 .mine-device-alarm {

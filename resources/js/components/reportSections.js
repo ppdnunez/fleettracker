@@ -14,9 +14,9 @@
 export const REPORT_GROUPS = [
     {
         label: 'Device Statistics',
-        // Hidden, not deleted: 'Current fuel Value', 'Temperature & Humidity' and
-        // 'Positioning & Battery'. Their components and PAGES entries are untouched, so putting a
-        // name back on this list is all it takes to restore the tab.
+        // Hidden, not deleted: 'Current fuel Value' and 'Positioning & Battery'. Their components
+        // and PAGES entries are untouched, so putting a name back on this list is all it takes to
+        // restore the tab. ('Temperature & Humidity' now lives under Sensor Statistics below.)
         sections: [
             'Internal Battery', 'External Battery', 'Fuel Consumption', 'Driver Behavior',
             'Travel statistics (OBD)',
@@ -30,12 +30,24 @@ export const REPORT_GROUPS = [
         ],
     },
     {
+        // Sensor modules, which report on their own packets rather than with every fix — hence a
+        // module of their own rather than columns bolted onto the device reports.
+        label: 'Sensor Statistics',
+        sections: ['Temperature & Humidity', 'Tyre / TPMS'],
+    },
+    {
+        // Fuel is the one sensor family Traccar also raises its own events for, so it gets a module
+        // rather than a tab: readings, those events, and the slow-siphon check Traccar cannot do.
+        label: 'Fuel Statistics',
+        sections: ['Fuel Level', 'Fuel Events', 'Theft Watch'],
+    },
+    {
         label: 'State Statistics',
         sections: ['Offline', 'Online'],
     },
     {
         label: 'Alert Statistics',
-        sections: ['Alert Details'],
+        sections: ['Alert Details', 'Video Evidence'],
     },
 ];
 
