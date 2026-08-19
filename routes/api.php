@@ -9,6 +9,7 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FuelController;
 use App\Http\Controllers\MediaLibraryController;
+use App\Http\Controllers\ObdController;
 use App\Http\Controllers\SensorController;
 use App\Http\Controllers\TraccarController;
 use App\Http\Controllers\VehicleMaintenanceController;
@@ -115,6 +116,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/current', [SensorController::class, 'current']);
         Route::get('/history', [SensorController::class, 'history']);
         Route::get('/alarms',  [SensorController::class, 'alarms']);
+    });
+
+    // Engine data off the OBD-II / CAN bus — also position attributes, and also sent on their own
+    // frames rather than with every fix, so the same walk-history-back treatment applies.
+    Route::prefix('obd')->group(function () {
+        Route::get('/current', [ObdController::class, 'current']);
+        Route::get('/history', [ObdController::class, 'history']);
+        Route::get('/faults',  [ObdController::class, 'faults']);
     });
 
     Route::prefix('traccar')->group(function () {

@@ -1,6 +1,10 @@
+import { Z } from '../zLayers.js';
+
 export default function LogoutModal({ onCancel, onConfirm }) {
     return (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+        // Z.modal, not a literal: this dialog is rendered at the app root, over whatever page is
+        // open — including the map pages, whose Leaflet controls sit at 1000.
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: Z.modal }}>
             <div style={{ background: '#111c33', borderRadius: 16, padding: '32px 36px', width: 320, boxShadow: '0 24px 64px rgba(0,0,0,0.3)', textAlign: 'center' }}>
                 <div style={{ fontSize: 36, marginBottom: 12 }}>👋</div>
                 <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: '#eaeff9' }}>Sign Out?</h2>

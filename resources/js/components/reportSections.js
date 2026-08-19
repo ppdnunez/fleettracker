@@ -19,8 +19,15 @@ export const REPORT_GROUPS = [
         // restore the tab. ('Temperature & Humidity' now lives under Sensor Statistics below.)
         sections: [
             'Internal Battery', 'External Battery', 'Fuel Consumption', 'Driver Behavior',
-            'Travel statistics (OBD)',
         ],
+    },
+    {
+        // Engine data from the vehicle's own bus, which is a different source from everything
+        // above: the tracker reports what the ECU says, not what the tracker measures. 'Travel
+        // statistics (OBD)' moved here from Device Statistics — it was the only OBD-labelled
+        // report and sat under a module about the tracker's own hardware.
+        label: 'OBD Statistics',
+        sections: ['Engine', 'Engine History', 'Fault Codes', 'Travel statistics (OBD)'],
     },
     {
         label: 'Motion Statistics',

@@ -428,8 +428,9 @@ export default function GeofencePage({ onBack }) {
                 />
             </div>
 
-            {/* Map */}
-            <div style={{ flex: 1, position: 'relative' }}>
+            {/* Map. Isolated so Leaflet's own stacking (panes 200 … controls 1000) stays inside
+                this element and cannot outrank dialogs rendered by the page above it. */}
+            <div style={{ flex: 1, position: 'relative', isolation: 'isolate' }}>
                 <MapContainer className="map-dim" center={CENTER} zoom={13} style={{ width: '100%', height: '100%' }} scrollWheelZoom zoomControl={false}>
                     <MapLocationSearch anchor="top-center" />
                     <TileLayer

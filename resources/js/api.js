@@ -110,6 +110,12 @@ export const api = {
     getAlertEvents:       (params)       => axios.get('/api/traccar/reports/events', { params }),
     // Temperature / humidity and tyre (TPMS). Readings are position attributes that arrive on their
     // own packets, so /current walks history back for the newest real value and returns its age.
+    // Engine data off the OBD-II / CAN bus. Same shape as the sensor calls, and for the same
+    // reason: these are position attributes that arrive on their own frames.
+    getObdCurrent:        (params)       => axios.get('/api/obd/current', { params }),
+    getObdHistory:        (params)       => axios.get('/api/obd/history', { params }),
+    getObdFaults:         (params)       => axios.get('/api/obd/faults',  { params }),
+
     getSensorReadings:    (params)       => axios.get('/api/sensors/current', { params }),
     getSensorHistory:     (params)       => axios.get('/api/sensors/history', { params }),
     getSensorAlarms:      (params)       => axios.get('/api/sensors/alarms',  { params }),

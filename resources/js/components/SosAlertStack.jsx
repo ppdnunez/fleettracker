@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Z } from '../zLayers.js';
 
 /**
  * Live SOS alerts, stacked in the top-right corner of the dashboard.
@@ -34,7 +35,9 @@ export default function SosAlertStack({ alerts, onDismiss, onLocate }) {
 
     return (
         <div style={{
-            position: 'fixed', top: 70, right: 18, zIndex: 2000,
+            // Above dialogs, not merely above the page: an SOS that arrives while a confirmation
+            // is open must still be seen. At an equal z-index the dialog would cover it.
+            position: 'fixed', top: 70, right: 18, zIndex: Z.alert,
             display: 'flex', flexDirection: 'column', gap: 10, width: 340, maxWidth: 'calc(100vw - 36px)',
             maxHeight: 'calc(100vh - 90px)', overflowY: 'auto',
         }}>

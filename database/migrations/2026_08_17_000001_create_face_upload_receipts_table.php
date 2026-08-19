@@ -20,9 +20,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // The table already exists on the production database, created outside this repo's
-        // migration set — the same situation as vehicle_maintenances. Creating it is therefore
-        // conditional, and the only thing this migration really adds there is file_size.
+        // The table is created by 2026_08_13_000004_create_driver_and_face_tables, and already
+        // existed on the production database before either migration — so this create is a
+        // fallback that fires on neither. What this migration really contributes is file_size.
         if (!Schema::hasTable('face_upload_receipts')) {
             Schema::create('face_upload_receipts', function (Blueprint $table) {
                 $table->id();

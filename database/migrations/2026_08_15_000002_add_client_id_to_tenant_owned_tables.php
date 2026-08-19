@@ -56,8 +56,13 @@ return new class extends Migration
     public function down(): void
     {
         foreach (self::TABLES as $table) {
-            Schema::table($table, function (Blueprint $blueprint) use ($table) {
-                $blueprint->dropForeign([$table . '_client_id_foreign']);
+            Schema::table($table, function (Blueprint $blueprint) {
+                // An array argument means "the columns the key is on", from which Laravel derives
+                // the constraint name. Passing the constraint name inside an array made it derive
+                // a name from that name — geofences_geofences_client_id_foreign_foreign — and
+                // every rollback failed on a key that does not exist. Only `up` was ever run, so
+                // this stayed hidden until a fresh database was rolled back end to end.
+                $blueprint->dropForeign(['client_id']);
                 $blueprint->dropColumn('client_id');
             });
         }

@@ -7,6 +7,7 @@ import { api } from '../api.js';
 import { groupForSection } from './reportSections.js';
 import { TemperatureHumidityReport, TyreTpmsReport } from './SensorReports.jsx';
 import { FuelLevelReport, FuelEventsReport, FuelTheftWatch } from './FuelReports.jsx';
+import { ObdEngineReport, ObdHistoryReport, ObdFaultsReport } from './ObdReports.jsx';
 
 // Fix default marker icon paths broken by bundlers (same fix as MapCanvas.jsx; idempotent).
 delete L.Icon.Default.prototype._getIconUrl;
@@ -1642,7 +1643,9 @@ function Replay() {
 
             {error && <Notice text={error} />}
 
-            <div style={{ position: 'relative', height: 560, borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46' }}>
+            {/* Isolated: Leaflet's controls sit at z-index 1000, and without a stacking context of
+                their own they outrank dialogs the app draws over the page. */}
+            <div style={{ position: 'relative', height: 560, borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46', isolation: 'isolate' }}>
                 <MapContainer className="map-dim" center={center} zoom={14} style={{ width: '100%', height: '100%' }} scrollWheelZoom>
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -3063,6 +3066,9 @@ const PAGES = {
     'Driver Behavior':               DriverBehavior,
     'Positioning & Battery':         PositioningBattery,
     'Travel statistics (OBD)':       TravelStatisticsOBD,
+    'Engine':                        ObdEngineReport,
+    'Engine History':                ObdHistoryReport,
+    'Fault Codes':                   ObdFaultsReport,
     'Track Details':                 TrackDetails,
     'Replay':                        Replay,
     'Mileage':                       Mileage,

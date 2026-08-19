@@ -162,6 +162,17 @@ const SensorSVG = () => (
     </svg>
 );
 
+/* Engine block with a valve stem — the module is about the vehicle's own engine data, so the
+   engine itself reads more directly than a plug or a gauge would. */
+const EngineSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 6.6h1.6V5h3.2v1.6h2.1l1.9-1.5v5.4l-1.9-1.5H6.8V10H3.6V8.4H2Z"/>
+        <line x1="4.6" y1="3.1" x2="6.6" y2="3.1"/>
+        <line x1="5.6" y1="3.1" x2="5.6" y2="5"/>
+        <line x1="12.8" y1="6.2" x2="12.8" y2="8.8"/>
+    </svg>
+);
+
 /* ── nav tree structure ─────────────────────────────────────── */
 /* The reports themselves live in reportSections.js, shared with ReportPage, which renders one tab
    per report. Only the icon is a sidebar concern, so only the icon is chosen here. */
@@ -169,6 +180,7 @@ const REPORT_ICONS = {
     'Device Statistics': <DeviceSVG />,
     'Motion Statistics': <CarSVG />,
     'Sensor Statistics': <SensorSVG />,
+    'OBD Statistics':    <EngineSVG />,
     'Fuel Statistics':   <FuelSVG />,
     'State Statistics':  <DashSVG />,
     'Alert Statistics':  <AlertSVG />,

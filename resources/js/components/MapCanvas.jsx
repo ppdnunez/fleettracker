@@ -246,7 +246,10 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
     return (
         // The dimming class lives on this wrapper rather than on the MapContainer so it can follow
         // the chosen layer: React owns this element outright, while Leaflet owns its own.
-        <div className={layerKey === 'osm' ? 'map-dim' : undefined} style={{ flex: 1, position: 'relative' }}>
+        // isolation: 'isolate' keeps Leaflet's z-indexes (200 for panes, up to 1000 for controls)
+        // inside this element instead of competing with the page around it — which is what put the
+        // sign-out dialog behind the map. Everything here stacks against its siblings, not the app.
+        <div className={layerKey === 'osm' ? 'map-dim' : undefined} style={{ flex: 1, position: 'relative', isolation: 'isolate' }}>
             {/* Below the search box, which takes the top-left corner. */}
             {showStatus && (
                 <div style={{

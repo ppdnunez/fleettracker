@@ -1805,7 +1805,8 @@ function LiveLocationTab() {
                 </button>
             </div>
 
-            <div style={{ height: 600, borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46', position: 'relative' }}>
+            {/* Isolated so Leaflet's stacking stays local — see zLayers.js. */}
+            <div style={{ height: 600, borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46', position: 'relative', isolation: 'isolate' }}>
                 {loading && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5e7094', fontSize: 13, zIndex: 500, background: '#111c33' }}>Loading…</div>
                 )}
