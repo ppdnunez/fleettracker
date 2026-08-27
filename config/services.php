@@ -3,6 +3,15 @@
 return [
     'traccar' => [
         'url'      => env('TRACCAR_URL', 'http://localhost:8082'),
+
+        // Where the browser opens Traccar's websocket. Left unset it is derived from 'url', which
+        // is right on a plain-http origin but forbidden once the app is served over HTTPS: a page
+        // on https:// may not open a ws:// socket (mixed content), and Traccar itself sits on a
+        // bare IP with no certificate of its own. Deployments therefore terminate TLS at the app's
+        // own vhost and proxy the socket through it - set this to that path, absolute
+        // (wss://app.example/traccar-ws) or origin-relative (/traccar-ws, resolved in the browser
+        // against the page's own scheme and host).
+        'ws_url'   => env('TRACCAR_WS_URL'),
         'email'    => env('TRACCAR_EMAIL', 'admin@traccar.org'),
         'password' => env('TRACCAR_PASSWORD', 'admin'),
     ],

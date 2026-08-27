@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { api } from './api.js';
+import { traccarSocketUrl, InsecureSocketError } from './traccarSocketUrl.js';
 
 /**
  * Subscribes to Traccar's websocket and hands every frame to `onMessage`.
@@ -30,15 +31,27 @@ export default function useTraccarSocket(onMessage, onConnectionChange) {
         let cancelled = false;
         let socket = null;
         let retry = null;
+        let attempt = 0;
+
+        // Backs off after each failed attempt (3s, 6s, 12s, ... capped at 30s). A flat 3s retry
+        // turns a server-side outage into a token-minting storm, since every attempt calls
+        // /ws-token before it can even try the socket.
+        const reconnect = () => {
+            retry = setTimeout(connect, Math.min(3000 * 2 ** attempt++, 30000));
+        };
 
         const connect = async () => {
             try {
                 const { data } = await api.getWsToken();
                 if (cancelled) return;
 
-                socket = new WebSocket(`${data.url}?token=${encodeURIComponent(data.token)}`);
+                socket = new WebSocket(traccarSocketUrl(data));
 
-                socket.onopen = () => { if (!cancelled) statusRef.current?.(true); };
+                socket.onopen = () => {
+                    if (cancelled) return;
+                    attempt = 0;
+                    statusRef.current?.(true);
+                };
 
                 socket.onmessage = (evt) => {
                     let frame;
@@ -49,14 +62,20 @@ export default function useTraccarSocket(onMessage, onConnectionChange) {
                 socket.onclose = () => {
                     if (cancelled) return;
                     statusRef.current?.(false);
-                    retry = setTimeout(connect, 3000);
+                    reconnect();
                 };
 
                 socket.onerror = () => socket.close();
-            } catch {
+            } catch (e) {
                 if (cancelled) return;
                 statusRef.current?.(false);
-                retry = setTimeout(connect, 3000);
+                // A mixed-content refusal is permanent for this page load; anything else (a
+                // failed mint, a dropped server) is worth another try.
+                if (e instanceof InsecureSocketError) {
+                    console.error('Traccar live feed disabled:', e.message);
+                    return;
+                }
+                reconnect();
             }
         };
 

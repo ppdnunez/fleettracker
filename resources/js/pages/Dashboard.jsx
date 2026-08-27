@@ -1,31 +1,52 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { api } from '../api.js';
+import { traccarSocketUrl, InsecureSocketError } from '../traccarSocketUrl.js';
+
+// Eager: the shell, and the live map that the dashboard opens on. Everything
+// here is on screen within the first paint, so deferring it would only add a
+// round trip.
 import Sidebar          from '../components/Sidebar.jsx';
 import DeviceList       from '../components/DeviceList.jsx';
 import MapCanvas        from '../components/MapCanvas.jsx';
-import VideoMode        from '../components/VideoMode.jsx';
 import TopBar           from '../components/TopBar.jsx';
 import AppHeader        from '../components/AppHeader.jsx';
 import LogoutModal      from '../components/LogoutModal.jsx';
-import DeviceManagement from '../components/DeviceManagement.jsx';
-import ReportPage       from '../components/ReportPage.jsx';
+import SosAlertStack    from '../components/SosAlertStack.jsx';
 import { DEFAULT_REPORT_SECTION } from '../components/reportSections.js';
-import FleetPage, { FLEET_PAGE_TITLES } from '../components/FleetPage.jsx';
-import GeofencePage     from '../components/GeofencePage.jsx';
-import SimDataManagementPage from '../components/SimDataManagementPage.jsx';
-import AlertRecipientsPage   from '../components/AlertRecipientsPage.jsx';
-import FuelThresholdsPage    from '../components/FuelThresholdsPage.jsx';
-import FaceLogsPage          from '../components/FaceLogsPage.jsx';
-import MediaGalleryPage      from '../components/MediaGalleryPage.jsx';
-import CompanyManagementPage from '../components/CompanyManagementPage.jsx';
-import SosAlertStack     from '../components/SosAlertStack.jsx';
-import NotificationPage from '../components/NotificationPage.jsx';
-import CalendarPage     from '../components/CalendarPage.jsx';
-import ComputedAttributePage from '../components/ComputedAttributePage.jsx';
-import MaintenancePage  from '../components/MaintenancePage.jsx';
-import SavedCommandPage from '../components/SavedCommandPage.jsx';
-import GroupPage        from '../components/GroupPage.jsx';
-import DriverPage       from '../components/DriverPage.jsx';
+import { FLEET_PAGE_TITLES } from '../components/fleetPages.js';
+
+// Lazy: one chunk per page, fetched the first time the operator opens it.
+// Statically importing these put all of them - Reports and Fleet alone are
+// close to 5,500 lines - into the bundle the browser has to parse before the
+// map can render, which is most of what made the first load slow.
+const VideoMode              = lazy(() => import('../components/VideoMode.jsx'));
+const DeviceManagement       = lazy(() => import('../components/DeviceManagement.jsx'));
+const ReportPage             = lazy(() => import('../components/ReportPage.jsx'));
+const FleetPage              = lazy(() => import('../components/FleetPage.jsx'));
+const GeofencePage           = lazy(() => import('../components/GeofencePage.jsx'));
+const SimDataManagementPage  = lazy(() => import('../components/SimDataManagementPage.jsx'));
+const AlertRecipientsPage    = lazy(() => import('../components/AlertRecipientsPage.jsx'));
+const FuelThresholdsPage     = lazy(() => import('../components/FuelThresholdsPage.jsx'));
+const FaceLogsPage           = lazy(() => import('../components/FaceLogsPage.jsx'));
+const MediaGalleryPage       = lazy(() => import('../components/MediaGalleryPage.jsx'));
+const CompanyManagementPage  = lazy(() => import('../components/CompanyManagementPage.jsx'));
+const NotificationPage       = lazy(() => import('../components/NotificationPage.jsx'));
+const CalendarPage           = lazy(() => import('../components/CalendarPage.jsx'));
+const ComputedAttributePage  = lazy(() => import('../components/ComputedAttributePage.jsx'));
+const MaintenancePage        = lazy(() => import('../components/MaintenancePage.jsx'));
+const SavedCommandPage       = lazy(() => import('../components/SavedCommandPage.jsx'));
+const GroupPage              = lazy(() => import('../components/GroupPage.jsx'));
+const DriverPage             = lazy(() => import('../components/DriverPage.jsx'));
+
+/** Shown while a page chunk is on its way. */
+function PageLoading() {
+    return (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#64748b', fontSize: 14 }}>
+            Loading…
+        </div>
+    );
+}
 
 /* Traccar's device/position shape -> the shape DeviceList/MapCanvas/TopBar already expect,
    plus the raw Traccar fields (groupId, phone, model, ...) EditDeviceModal needs to edit a device. */
@@ -260,7 +281,7 @@ export default function Dashboard({ user, onLogout }) {
                 const { data } = await api.getWsToken();
                 if (cancelled) return;
 
-                const ws = new WebSocket(`${data.url}?token=${encodeURIComponent(data.token)}`);
+                const ws = new WebSocket(traccarSocketUrl(data));
                 wsRef.current = ws;
 
                 ws.onmessage = (evt) => {
@@ -277,7 +298,9 @@ export default function Dashboard({ user, onLogout }) {
                 ws.onerror = () => ws.close();
             } catch (e) {
                 console.error('Failed to open Traccar websocket:', e);
-                if (!cancelled) wsReconnectRef.current = setTimeout(connect, 3000);
+                // Mixed content is permanent for this page load - retrying only re-mints tokens.
+                if (cancelled || e instanceof InsecureSocketError) return;
+                wsReconnectRef.current = setTimeout(connect, 3000);
             }
         };
 
@@ -326,6 +349,7 @@ export default function Dashboard({ user, onLogout }) {
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <AppHeader user={user} title={headerTitle} />
+                <Suspense fallback={<PageLoading />}>
                 {page === 'Device Management' ? (
                     <DeviceManagement devices={liveDevices} loading={liveLoading} onRefresh={fetchLiveDevices} />
                 ) : page === 'Sim Data Management' ? (
@@ -395,6 +419,7 @@ export default function Dashboard({ user, onLogout }) {
                         </div>
                     </>
                 )}
+                </Suspense>
             </div>
 
             {showLogout && <LogoutModal onCancel={() => setShowLogout(false)} onConfirm={onLogout} />}

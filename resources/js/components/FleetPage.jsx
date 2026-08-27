@@ -6,6 +6,7 @@ import ReportPage from './ReportPage.jsx';
 import GeofenceManagementPage from './GeofencePage.jsx';
 import DeviceStatusIcons, { alarmLabel } from './DeviceStatusIcons.jsx';
 import useTraccarSocket from '../useTraccarSocket.js';
+import { traccarSocketUrl, InsecureSocketError } from '../traccarSocketUrl.js';
 import { FuelLevelReport, FuelEventsReport, FuelTheftWatch } from './FuelReports.jsx';
 import FuelThresholdsPage from './FuelThresholdsPage.jsx';
 
@@ -1748,7 +1749,7 @@ function LiveLocationTab() {
                 const { data } = await api.getWsToken();
                 if (cancelled) return;
 
-                const ws = new WebSocket(`${data.url}?token=${encodeURIComponent(data.token)}`);
+                const ws = new WebSocket(traccarSocketUrl(data));
                 wsRef.current = ws;
 
                 ws.onopen = () => !cancelled && setConnected(true);
@@ -1767,6 +1768,11 @@ function LiveLocationTab() {
             } catch (e) {
                 if (cancelled) return;
                 setConnected(false);
+                // Mixed content is permanent for this page load - retrying only re-mints tokens.
+                if (e instanceof InsecureSocketError) {
+                    console.error('Traccar live feed disabled:', e.message);
+                    return;
+                }
                 reconnectRef.current = setTimeout(connect, 3000);
             }
         };
@@ -2290,14 +2296,9 @@ function VehicleMaintenancePage() {
 /* ── page map ────────────────────────────────────────────────── */
 /* What the app header calls each Fleet page. Keys match PAGE_MAP; exported so the header names the
    page the reader is actually on rather than the generic "Fleet". */
-export const FLEET_PAGE_TITLES = {
-    Dashboard:          'Fleet Dashboard',
-    Driver:             'Driver',
-    Vehicle:            'Vehicle',
-    VehicleTrack:       'Vehicle Track',
-    VehicleMaintenance: 'Vehicle Maintenance',
-    FuelManagement:     'Fuel Management',
-};
+// Re-exported so existing importers keep working; the map itself lives in
+// fleetPages.js so the header can read it without loading this file.
+export { FLEET_PAGE_TITLES } from './fleetPages.js';
 
 const PAGE_MAP = {
     Dashboard:          FleetDashboard,

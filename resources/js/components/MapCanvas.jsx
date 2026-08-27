@@ -2,18 +2,23 @@ import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, Polyline, Tooltip, ScaleControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon   from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { vehicleGlyphSvg } from '../vehicleCatalog.js';
 import { areaToShape } from '../geofenceArea.js';
 import { api } from '../api.js';
 import MapLocationSearch from './MapLocationSearch.jsx';
 import DeviceStatusIcons, { alarmLabel } from './DeviceStatusIcons.jsx';
 
-// Fix default marker icon paths broken by bundlers
+// Fix default marker icon paths broken by bundlers. Served from our own build rather
+// than unpkg: a CDN fetch per icon delayed the first markers and made the map depend on
+// a third party being reachable, which it will not always be from a vehicle depot.
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconRetinaUrl: markerIcon2x,
+    iconUrl:       markerIcon,
+    shadowUrl:     markerShadow,
 });
 
 // Port Moresby — where the fleet actually operates. Used until a device position or a selected

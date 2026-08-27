@@ -820,7 +820,14 @@ class TraccarController extends Controller
             return response()->json(['message' => 'Failed to mint websocket token.'], $response->status());
         }
 
-        $wsUrl = preg_replace('#^http#', 'ws', rtrim(config('services.traccar.url'), '/')) . '/api/socket';
+        // Deriving the socket URL from TRACCAR_URL only works while the app is served over plain
+        // http: a page on https:// is not allowed to open a ws:// socket, and Traccar sits on a
+        // bare IP that has no certificate to offer, so it cannot serve wss:// itself. Deployments
+        // proxy the socket through the app's own TLS vhost instead and name it in TRACCAR_WS_URL,
+        // either absolute (wss://host/traccar-ws) or origin-relative (/traccar-ws), the latter
+        // resolved in the browser against the page's own scheme and host.
+        $wsUrl = config('services.traccar.ws_url')
+            ?: preg_replace('#^http#', 'ws', rtrim(config('services.traccar.url'), '/')) . '/api/socket';
 
         return response()->json([
             'token' => trim($response->body()),
@@ -854,13 +861,23 @@ class TraccarController extends Controller
         if ($request->filled('deviceId')) {
             $params['deviceId'] = $request->deviceId;
         }
+        $query = http_build_query($params);
+
         if ($request->filled('type')) {
-            $params['type'] = $request->type;
+            $query .= '&type=' . urlencode($request->type);
+
+            // A crossing of a zone programmed into the tracker arrives as type=alarm with the
+            // direction in attributes.alarm, so asking only for the server-side type shows none of
+            // the device's own reports of the same event. `alarm` narrows within type=alarm rather
+            // than selecting on its own, so the two keys have to travel together.
+            if (in_array($request->type, ['geofenceEnter', 'geofenceExit'], true)) {
+                $query .= '&type=alarm&alarm=' . urlencode($request->type);
+            }
         }
 
         $eventsResponse = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
-            ->get("{$this->traccarBaseUrl()}/reports/events", $params);
+            ->get("{$this->traccarBaseUrl()}/reports/events?{$query}");
 
         if (!$eventsResponse->successful()) {
             return response()->json(['message' => 'Failed to load alert events.'], $eventsResponse->status());
@@ -882,7 +899,19 @@ class TraccarController extends Controller
                 $positionIds
             ));
             foreach ($positionIds as $pid) {
-                $pos = $posResponses[$pid]->json()[0] ?? null;
+                $posResponse = $posResponses[$pid] ?? null;
+
+                // Http::pool hands back the *exception* in place of a response when a request fails
+                // outright, so calling ->json() on it is a fatal "undefined method
+                // ConnectionException::json()" rather than a handled error — it takes the whole
+                // report down the moment Traccar is slow enough for one lookup to time out.
+                // A position that cannot be fetched costs its row only the details read from it,
+                // so the row is kept and the report still renders.
+                if (!$posResponse instanceof \Illuminate\Http\Client\Response || !$posResponse->successful()) {
+                    continue;
+                }
+
+                $pos = $posResponse->json()[0] ?? null;
                 if ($pos) {
                     $positionsById[$pid] = $pos;
                 }
@@ -2251,7 +2280,19 @@ class TraccarController extends Controller
                 $positionIds
             ));
             foreach ($positionIds as $pid) {
-                $pos = $posResponses[$pid]->json()[0] ?? null;
+                $posResponse = $posResponses[$pid] ?? null;
+
+                // Http::pool hands back the *exception* in place of a response when a request fails
+                // outright, so calling ->json() on it is a fatal "undefined method
+                // ConnectionException::json()" rather than a handled error — it takes the whole
+                // report down the moment Traccar is slow enough for one lookup to time out.
+                // A position that cannot be fetched costs its row only the details read from it,
+                // so the row is kept and the report still renders.
+                if (!$posResponse instanceof \Illuminate\Http\Client\Response || !$posResponse->successful()) {
+                    continue;
+                }
+
+                $pos = $posResponse->json()[0] ?? null;
                 if ($pos) {
                     $positionsById[$pid] = $pos;
                 }
@@ -2368,6 +2409,28 @@ class TraccarController extends Controller
         return response()->json(array_values($rows));
     }
 
+    /**
+     * Which way a crossing went — 'enter', 'exit', or null when the event is not a crossing.
+     *
+     * Normalises the two shapes the same crossing can arrive in. Traccar's own evaluation gives
+     * `type: geofenceEnter`; a tracker reporting an on-board zone gives `type: alarm` with the
+     * direction in `attributes.alarm`. Pairing them needs one answer regardless of which it was.
+     */
+    private function geofenceCrossingType(array $event): ?string
+    {
+        $type = $event['type'] ?? null;
+
+        if ($type === 'alarm') {
+            $type = $event['attributes']['alarm'] ?? null;
+        }
+
+        return match ($type) {
+            'geofenceEnter' => 'enter',
+            'geofenceExit'  => 'exit',
+            default         => null,
+        };
+    }
+
     // Geo Fence report: pairs Traccar's geofenceEnter/geofenceExit events (GET /api/reports/events)
     // per device+geofence into enter/exit periods with a stay duration, the same point-in-time-event
     // pairing technique used for the Ignition report. A dangling enter with no matching exit yet is
@@ -2390,7 +2453,16 @@ class TraccarController extends Controller
             $params['deviceId'] = $request->deviceId;
         }
         // Same repeated-plain-key requirement as ignitionReport() — see the comment there.
-        $query = http_build_query($params) . '&type=geofenceEnter&type=geofenceExit';
+        //
+        // Two different things both count as a crossing, and asking for only the first hides half
+        // the picture. Traccar computes geofenceEnter / geofenceExit itself, for zones drawn here
+        // and linked to the device. Trackers with on-board zones (the VL863P's GFENCE settings,
+        // say) report their own crossings instead, and those arrive as type=alarm carrying
+        // attributes.alarm = geofenceEnter / geofenceExit. `alarm` narrows within type=alarm rather
+        // than selecting on its own, so both keys are needed.
+        $query = http_build_query($params)
+            . '&type=geofenceEnter&type=geofenceExit'
+            . '&type=alarm&alarm=geofenceEnter&alarm=geofenceExit';
 
         $response = Http::withBasicAuth(...$this->traccarAuth())
             ->withHeaders(['Accept' => 'application/json'])
@@ -2408,30 +2480,58 @@ class TraccarController extends Controller
 
         $byKey = [];
         foreach ($events as $e) {
-            if ($request->filled('geofenceId') && (int) $e['geofenceId'] !== (int) $request->geofenceId) {
+            $crossing = $this->geofenceCrossingType($e);
+
+            if ($crossing === null) {
                 continue;
             }
-            $byKey[$e['deviceId'] . '|' . $e['geofenceId']][] = $e;
+
+            // Device-reported crossings identify no zone — it lives in the tracker's own settings,
+            // not in Traccar, which sends geofenceId as 0 rather than omitting it. Traccar's own
+            // ids start at 1, so 0 is normalised to null and read as "no zone on this event".
+            // Filtering by a specific fence therefore excludes these rows, correctly: there is no
+            // id to match, and guessing one would attribute a crossing to a zone that never
+            // raised it.
+            $geofenceId = ($e['geofenceId'] ?? 0) ?: null;
+
+            if ($request->filled('geofenceId') && (int) $geofenceId !== (int) $request->geofenceId) {
+                continue;
+            }
+
+            $byKey[($e['deviceId'] ?? 0) . '|' . ($geofenceId ?? 'device')][] = $e + [
+                '_crossing'   => $crossing,
+                '_geofenceId' => $geofenceId,
+            ];
         }
 
         $rows = [];
-        foreach ($byKey as $key => $keyEvents) {
+        foreach ($byKey as $keyEvents) {
             usort($keyEvents, fn ($a, $b) => strcmp($a['eventTime'], $b['eventTime']));
-            [$deviceId, $geofenceId] = array_map('intval', explode('|', $key));
-            $device   = $devicesById->get($deviceId);
-            $geofence = $geofencesById->get($geofenceId);
+            $deviceId   = (int) ($keyEvents[0]['deviceId'] ?? 0);
+            $geofenceId = $keyEvents[0]['_geofenceId'] ?? null;
+            $device     = $devicesById->get($deviceId);
+            $geofence   = $geofenceId !== null ? $geofencesById->get((int) $geofenceId) : null;
+
+            // A zone held in the tracker rather than in Traccar has no name to look up, and
+            // labelling it with a blank would read as a zone whose name failed to resolve. Saying
+            // where the crossing came from is the honest column value: these rows are the device's
+            // own account of itself, not something the server verified against a drawn zone.
+            $fenceName = $geofenceId !== null
+                ? ($geofence['name'] ?? null)
+                : 'On-device zone (reported by tracker)';
 
             $enterEvent = null;
             foreach ($keyEvents as $event) {
-                if ($event['type'] === 'geofenceEnter') {
+                if ($event['_crossing'] === 'enter') {
                     $enterEvent = $event;
-                } elseif ($event['type'] === 'geofenceExit' && $enterEvent) {
+                } elseif ($event['_crossing'] === 'exit' && $enterEvent) {
                     $rows[] = [
                         'deviceId'   => $deviceId,
                         'deviceName' => $device['name'] ?? null,
                         'imei'       => $device['uniqueId'] ?? null,
                         'model'      => $device['model'] ?? null,
-                        'fenceName'  => $geofence['name'] ?? null,
+                        'fenceName'  => $fenceName,
+                        'source'     => $geofenceId !== null ? 'server' : 'device',
                         'enterTime'  => $enterEvent['eventTime'],
                         'exitTime'   => $event['eventTime'],
                         'stayTimeMs' => max(0, (strtotime($event['eventTime']) - strtotime($enterEvent['eventTime'])) * 1000),
@@ -2445,7 +2545,8 @@ class TraccarController extends Controller
                     'deviceName' => $device['name'] ?? null,
                     'imei'       => $device['uniqueId'] ?? null,
                     'model'      => $device['model'] ?? null,
-                    'fenceName'  => $geofence['name'] ?? null,
+                    'fenceName'  => $fenceName,
+                    'source'     => $geofenceId !== null ? 'server' : 'device',
                     'enterTime'  => $enterEvent['eventTime'],
                     'exitTime'   => $to->toISOString(),
                     'stayTimeMs' => max(0, (strtotime($to->toISOString()) - strtotime($enterEvent['eventTime'])) * 1000),

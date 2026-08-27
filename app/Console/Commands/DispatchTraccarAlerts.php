@@ -74,6 +74,13 @@ class DispatchTraccarAlerts extends Command
         'fatigueDriving'   => 'Fatigue driving (overtime)',
         'overtime'         => 'Fatigue driving (overtime)',
         'tired'            => 'Fatigue driving (overtime)',
+        // A tracker holding its own zones reports crossings as alarms rather than as the
+        // geofenceEnter / geofenceExit events Traccar computes for zones drawn here. Without these
+        // two they fall through to the generic "Device alarm", which tells the recipient nothing
+        // about why they were emailed. Named as device-reported because that is what they are —
+        // the vehicle's own account of a zone this server never evaluated.
+        'geofenceEnter'    => 'Geofence entered (reported by device)',
+        'geofenceExit'     => 'Geofence exited (reported by device)',
     ];
 
     public function handle(): int
