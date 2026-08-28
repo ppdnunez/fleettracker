@@ -113,6 +113,21 @@ class DispatchTraccarAlerts extends Command
 
         // Only events newer than the last one handled, and only types anyone can subscribe to.
         $cursor = (int) Cache::get(self::CURSOR_KEY, 0);
+
+        // A cursor ahead of every id Traccar can offer means it was recorded against an events
+        // table that no longer exists — Traccar rebuilt, or this app repointed at a different
+        // server. Ids restart from 1 over there, so an inherited high-water mark discards every
+        // event forever, silently: the run reports "no new alertable events" whether Traccar
+        // raised none or raised hundreds. Start over instead.
+        $newestAvailable = max(array_column($events, 'id') ?: [0]);
+
+        if (!empty($events) && $cursor > $newestAvailable) {
+            $this->warn("Stored cursor ({$cursor}) is ahead of Traccar's newest event ({$newestAvailable}); "
+                . 'assuming a different or rebuilt Traccar and starting from zero.');
+            $cursor = 0;
+            Cache::forever(self::CURSOR_KEY, 0);
+        }
+
         $events = array_values(array_filter(
             $events,
             fn ($e) => ($e['id'] ?? 0) > $cursor && AlertRecipient::categoryForEvent($e) !== null
