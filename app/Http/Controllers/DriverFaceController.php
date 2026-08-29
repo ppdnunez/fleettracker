@@ -266,13 +266,22 @@ class DriverFaceController extends Controller
     /**
      * UPLOADFACE — points the device's captured photos at this server. Run once per device;
      * without it the device uploads to the vendor's default host and our webhooks stay silent.
+     *
+     * The grammar is UPLOADFACE,URL,<addr># — `URL` is a fixed keyword, not the address itself
+     * (Face Photo Upload & Download Integration Guide §1.2, and the device's own decode log reads
+     * `online cmd[2]:UPLOADFACE,URL`). It was previously sent without that keyword, which put the
+     * address in the parameter slot the device reads as the sub-command, so the whole command was
+     * discarded — silently, since a malformed command is simply ignored rather than answered.
+     *
+     * The device must also have had HTTP_PROTOCOL,1# applied at least once, or it will not use
+     * HTTP for the upload at all. That is a separate one-off, sent from the Command module.
      */
     public function setUploadUrl(Request $request): JsonResponse
     {
         $data = $request->validate(['imei' => 'required|string', 'url' => 'nullable|url']);
         $url  = $data['url'] ?: $this->publicHost($request) . '/img/uploads';
 
-        return response()->json($this->sendTraccarCommand($data['imei'], "UPLOADFACE,{$url}#"));
+        return response()->json($this->sendTraccarCommand($data['imei'], "UPLOADFACE,URL,{$url}#"));
     }
 
     /**

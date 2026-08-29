@@ -85,10 +85,12 @@ class DeviceCommandController extends Controller
         $data = $request->validate([
             'imei' => 'required|string|max:100',
             'type' => 'nullable|string|max:64',
-            // Required for `custom`, which is the free-text form. The character set is the device
-            // protocol's own — ASCII, comma separated, '#'-terminated — and is kept tight because
-            // this string is handed to a vehicle.
-            'content'    => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9,._:+\-# ]+$/'],
+            // Required for `custom`, which is the free-text form. Printable ASCII is the whole of
+            // the rule, because it is the whole of what the device can receive: the encoder does
+            // content.getBytes(US_ASCII), so anything outside this range arrives as rubbish. A
+            // narrower set would be this app inventing a restriction the protocol does not have —
+            // UPLOADFACE carries a URL, and slashes are not a smuggling attempt.
+            'content'    => ['nullable', 'string', 'max:255', 'regex:/^[\x20-\x7E]+$/'],
             'parameters' => 'nullable|array',
             'channel'    => 'nullable|in:auto,gprs,sms',
             'is_manual'  => 'nullable|boolean',

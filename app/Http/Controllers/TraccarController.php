@@ -131,9 +131,11 @@ class TraccarController extends Controller
     {
         $data = $request->validate([
             'imei'    => 'required|string|max:100',
-            // Space is allowed because a few device commands take a space-separated argument; the
-            // rest of the set is deliberately tight, since this string is handed to a device.
-            'command' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9,._:+\-# ]+$/'],
+            // Printable ASCII, which is exactly what the device can receive — the protocol encoder
+            // does content.getBytes(US_ASCII), so anything outside this range reaches the vehicle
+            // as rubbish. Nothing narrower is defensible: UPLOADFACE takes a URL, and the face
+            // module has always sent one through this same transport unfiltered.
+            'command' => ['required', 'string', 'max:255', 'regex:/^[\x20-\x7E]+$/'],
             'channel' => 'nullable|in:auto,gprs,sms',
         ], [
             'command.regex' => 'That command contains characters the device protocol does not use.',

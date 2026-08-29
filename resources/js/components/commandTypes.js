@@ -133,6 +133,9 @@ export const TEXT_PRESETS = [
     { command: 'PARAM#',   label: 'Parameters' },
     { command: 'GPRSSET#', label: 'Network settings' },
     { command: 'WHERE#',   label: 'Location now' },
+    // Reports how many faces the JC171 currently holds — the way to tell whether an enrolment or
+    // a batch download actually landed, since neither reports back on its own.
+    { command: 'EVENTSET,FACE,CHECK#', label: 'Face library count' },
 ];
 
 /**
