@@ -1,59 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
+import { typeLabel } from './commandTypes.js';
 
-const TYPE_LABELS = {
-    custom: 'Custom',
-    deviceIdentification: 'Device Identification',
-    positionSingle: 'Position Single',
-    positionPeriodic: 'Position Periodic',
-    positionStop: 'Position Stop',
-    engineStop: 'Engine Stop',
-    engineResume: 'Engine Resume',
-    alarmArm: 'Arm Alarm',
-    alarmDisarm: 'Disarm Alarm',
-    alarmDismiss: 'Dismiss Alarm',
-    setTimezone: 'Set Timezone',
-    requestPhoto: 'Request Photo',
-    powerOff: 'Power Off',
-    rebootDevice: 'Reboot Device',
-    factoryReset: 'Factory Reset',
-    sendSms: 'Send SMS',
-    sendUssd: 'Send USSD',
-    sosNumber: 'SOS Number',
-    silenceTime: 'Silence Time',
-    setPhonebook: 'Set Phonebook',
-    message: 'Message',
-    voiceMessage: 'Voice Message',
-    outputControl: 'Output Control',
-    voiceMonitoring: 'Voice Monitoring',
-    setAgps: 'Set AGPS',
-    setIndicator: 'Set Indicator',
-    configuration: 'Configuration',
-    getVersion: 'Get Version',
-    firmwareUpdate: 'Firmware Update',
-    setConnection: 'Set Connection',
-    setOdometer: 'Set Odometer',
-    getModemStatus: 'Get Modem Status',
-    getDeviceStatus: 'Get Device Status',
-    setSpeedLimit: 'Set Speed Limit',
-    modePowerSaving: 'Power Saving Mode',
-    modeDeepSleep: 'Deep Sleep Mode',
-    videoStart: 'Video Start',
-    videoStop: 'Video Stop',
-    alarmGeofence: 'Set Geofence Alarm',
-    alarmBattery: 'Set Battery Alarm',
-    alarmSos: 'Set SOS Alarm',
-    alarmRemove: 'Set Remove Alarm',
-    alarmClock: 'Set Clock Alarm',
-    alarmSpeed: 'Set Speed Alarm',
-    alarmFall: 'Set Fall Alarm',
-    alarmVibration: 'Set Vibration Alarm',
-};
-function humanize(type) {
-    if (!type) return '';
-    return type.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
-}
-const typeLabel = (type) => TYPE_LABELS[type] || humanize(type);
 
 const fieldLabelStyle = { display: 'block', fontSize: 11.5, color: '#9daec9', fontWeight: 600, marginBottom: 6 };
 const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #24344f', borderRadius: 7, fontSize: 13, outline: 'none' };

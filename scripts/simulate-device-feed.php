@@ -115,6 +115,17 @@ echo "Inside      : {$inLat}, {$inLon}\nOutside     : {$outLat}, {$outLon}\n\n";
 $odometer = 128_400_000;   // metres on the clock at the start
 $frames   = [];
 
+/*
+ * Dashcam evidence. Two things have to agree for a recording to be visible everywhere: the file on
+ * disk (which is what Media Gallery lists, attributed by the IMEI in its name) and the position's
+ * `videoFiles` attribute (which is what the Video Evidence report indexes). A camera device sets
+ * both; so does this, using one set of names for both.
+ */
+$stamp = date('ymdHis');
+
+$sosMedia   = ["0169_1{$stamp}01_{$imei}.jpg", "0169_1{$stamp}01_{$imei}.mp4"];
+$brakeMedia = ["0169_1{$stamp}02_{$imei}.jpg", "0169_1{$stamp}02_{$imei}.mp4"];
+
 $drive = function (int $ago, float $lat, float $lon, float $speed, float $fuel, array $extra = [])
         use (&$frames, &$odometer) {
     $odometer += (int) round($speed * 1000 / 3600 * 60);   // one minute at this speed
@@ -161,10 +172,10 @@ $drive(28, $inLat, $inLon, 44, 60.8);
 
 // --- driver behaviour: one alarm per fix ---
 $drive(27, $inLat + 0.001, $inLon + 0.001, 71, 60.1, ['alarm' => 'hardAcceleration']);
-$drive(26, $inLat + 0.002, $inLon + 0.001, 18, 59.6, ['alarm' => 'hardBraking']);
+$drive(26, $inLat + 0.002, $inLon + 0.001, 18, 59.6, ['alarm' => 'hardBraking', 'videoFiles' => implode(',', $brakeMedia)]);
 $drive(25, $inLat + 0.002, $inLon + 0.002, 39, 59.2, ['alarm' => 'hardCornering']);
 $drive(24, $inLat + 0.003, $inLon + 0.002, 96, 58.5, ['alarm' => 'overspeed']);
-$drive(23, $inLat + 0.003, $inLon + 0.003, 31, 58.0, ['alarm' => 'sos']);
+$drive(23, $inLat + 0.003, $inLon + 0.003, 31, 58.0, ['alarm' => 'sos', 'videoFiles' => implode(',', $sosMedia)]);
 
 // --- refuel: a jump big enough for deviceFuelIncrease, plus the probe's own refuel alarm ---
 $drive(22, $inLat + 0.004, $inLon + 0.003, 0,  92.0, ['alarm' => 'refuel', 'driverUniqueId' => 'DRV-2002']);
@@ -263,7 +274,7 @@ if ($failed && !$sent) {
 /* ── sample media, so the gallery and Video Evidence have rows for this device ── */
 
 if (!isset($options['no-media'])) {
-    writeMedia($root . '/public/img/uploads', $imei);
+    writeMedia($root . '/public/img/uploads', array_merge($sosMedia, $brakeMedia));
 }
 
 echo "\nDone. What to look at:\n";
@@ -377,14 +388,12 @@ function zoneCentre(string $area): array
  * The gallery attributes a file to a device by any bare 15-digit run in its name
  * (MediaLibraryController::imeiFrom), so the IMEI in the filename is what makes these visible.
  */
-function writeMedia(string $directory, string $imei): void
+function writeMedia(string $directory, array $names): void
 {
     if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
         echo "\nCould not write to {$directory} — skipping the sample media.\n";
         return;
     }
-
-    $stamp = date('ymdHis');
 
     // A 1x1 JPEG: small, valid, and unmistakably a placeholder when opened.
     $jpeg = base64_decode(
@@ -396,13 +405,10 @@ function writeMedia(string $directory, string $imei): void
     // Enough of an MP4 container to be recognised as one; it holds no frames to play.
     $mp4 = base64_decode('AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVl');
 
-    $files = [
-        "0169_1{$stamp}_{$imei}.jpg" => $jpeg,
-        "0169_1{$stamp}_{$imei}.mp4" => $mp4,
-    ];
+    foreach ($names as $name) {
+        $isVideo = strtolower(pathinfo($name, PATHINFO_EXTENSION)) === 'mp4';
 
-    foreach ($files as $name => $contents) {
-        file_put_contents($directory . '/' . $name, $contents);
+        file_put_contents($directory . '/' . $name, $isVideo ? $mp4 : $jpeg);
         @chmod($directory . '/' . $name, 0644);
         echo "  wrote  img/uploads/{$name}\n";
     }

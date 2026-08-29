@@ -107,6 +107,12 @@ export const api = {
     // connection, retried over SMS only if Traccar rejects it), 'gprs', or 'sms'.
     sendDeviceCommand: (imei, command, channel = 'auto') =>
         axios.post('/api/traccar/devices/sms-command', { imei, command, channel }),
+    // The Command module. Sending only tells you Traccar accepted the command; the device's own
+    // reply lands later, so getDeviceCommandResult() is polled until the row settles.
+    getDeviceCommands:      (params) => axios.get('/api/device-commands', { params }),
+    sendDeviceCommandV2:    (data)   => axios.post('/api/device-commands', data),
+    getDeviceCommandResult: (id)     => axios.get(`/api/device-commands/${id}`),
+    deleteDeviceCommand:    (id)     => axios.delete(`/api/device-commands/${id}`),
     getAlertEvents:       (params)       => axios.get('/api/traccar/reports/events', { params }),
     // Temperature / humidity and tyre (TPMS). Readings are position attributes that arrive on their
     // own packets, so /current walks history back for the newest real value and returns its age.
@@ -190,7 +196,9 @@ export const api = {
     updateMaintenance: (id, data) => axios.put(`/api/traccar/maintenance/${id}`, data),
     deleteMaintenance: (id)       => axios.delete(`/api/traccar/maintenance/${id}`),
 
-    getCommandTypes:    ()         => axios.get('/api/traccar/commands/types'),
+    // Without a deviceId this is every type Traccar knows (what Saved Commands wants). With one,
+    // Traccar narrows it to what that device's protocol actually implements.
+    getCommandTypes:    (params)   => axios.get('/api/traccar/commands/types', { params }),
     createSavedCommand: (data)     => axios.post('/api/traccar/commands', data),
     updateSavedCommand: (id, data) => axios.put(`/api/traccar/commands/${id}`, data),
     deleteSavedCommand: (id)       => axios.delete(`/api/traccar/commands/${id}`),

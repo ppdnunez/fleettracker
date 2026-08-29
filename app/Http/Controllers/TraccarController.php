@@ -322,10 +322,26 @@ class TraccarController extends Controller
         return response()->json($response->json(), $response->status());
     }
 
-    public function commandTypes()
+    /**
+     * The command types Traccar will accept.
+     *
+     * With no deviceId this is every type Traccar knows, which is what the Saved Commands form
+     * wants — a saved command is not tied to a device. With one, Traccar narrows the list to what
+     * that device's protocol actually implements, which is what the Command module wants: sending
+     * a VL863P something its encoder has no case for fails with "not supported" and nothing else.
+     *
+     * A device that has never reported has no position, so Traccar cannot resolve its protocol and
+     * answers with `custom` alone. That is not an error — free text still reaches it.
+     */
+    public function commandTypes(Request $request)
     {
+        $params = array_filter([
+            'deviceId'    => $request->integer('deviceId') ?: null,
+            'textChannel' => $request->boolean('textChannel') ?: null,
+        ], fn ($value) => $value !== null);
+
         $response = Http::withBasicAuth(...$this->traccarAuth())
-            ->get("{$this->traccarBaseUrl()}/commands/types");
+            ->get("{$this->traccarBaseUrl()}/commands/types", $params);
         return response()->json($response->json(), $response->status());
     }
 

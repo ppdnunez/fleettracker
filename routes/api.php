@@ -5,6 +5,7 @@ use App\Http\Controllers\AlertRecipientController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyUserController;
+use App\Http\Controllers\DeviceCommandController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FuelController;
@@ -94,6 +95,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Everything in public/img/uploads — face templates plus the stills and clips devices push back.
     Route::get('/media', [MediaLibraryController::class, 'index']);
+
+    // The Command module. Local rather than a straight proxy to Traccar because Traccar keeps no
+    // record of a command once it has accepted it, and the device's reply arrives later on an
+    // unrelated path — correlating the two is what these rows are for. See the controller.
+    Route::prefix('device-commands')->group(function () {
+        Route::get('/',  [DeviceCommandController::class, 'index']);
+        Route::post('/', [DeviceCommandController::class, 'send']);
+        // Polled by the page until the row settles: has the device answered this one yet?
+        Route::get('/{deviceCommand}',    [DeviceCommandController::class, 'result']);
+        Route::delete('/{deviceCommand}', [DeviceCommandController::class, 'destroy']);
+    });
 
     // Fuel level, refuel/theft events, and the thresholds behind Traccar's own drop/increase
     // events. Thresholds are attributes resolved device -> group -> server, so writing one is a

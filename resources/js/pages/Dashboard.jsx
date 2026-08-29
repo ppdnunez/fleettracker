@@ -35,6 +35,7 @@ const CalendarPage           = lazy(() => import('../components/CalendarPage.jsx
 const ComputedAttributePage  = lazy(() => import('../components/ComputedAttributePage.jsx'));
 const MaintenancePage        = lazy(() => import('../components/MaintenancePage.jsx'));
 const SavedCommandPage       = lazy(() => import('../components/SavedCommandPage.jsx'));
+const CommandPage            = lazy(() => import('../components/CommandPage.jsx'));
 const GroupPage              = lazy(() => import('../components/GroupPage.jsx'));
 const DriverPage             = lazy(() => import('../components/DriverPage.jsx'));
 
@@ -374,6 +375,8 @@ export default function Dashboard({ user, onLogout }) {
                     <ComputedAttributePage />
                 ) : page === 'Maintenance' ? (
                     <MaintenancePage />
+                ) : page === 'Command' ? (
+                    <CommandPage />
                 ) : page === 'Saved Commands' ? (
                     <SavedCommandPage />
                 ) : page === 'Groups' ? (

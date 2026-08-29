@@ -121,6 +121,14 @@ const MailSVG = () => (
         <polyline points="1.9,4 7.5,8.2 13.1,4"/>
     </svg>
 );
+/* Terminal prompt: the Command module is where a raw device command is typed. */
+const TerminalSVG = () => (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1.4" y="2.2" width="12.2" height="10.6" rx="1.6"/>
+        <polyline points="4.2,6 6.3,7.9 4.2,9.8"/>
+        <line x1="8" y1="9.9" x2="10.8" y2="9.9"/>
+    </svg>
+);
 const ChevSVG = ({ open }) => (
     <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
         style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s ease', flexShrink: 0 }}>
@@ -240,6 +248,9 @@ const SETTINGS_ITEMS = [
     { label: 'Fuel Thresholds',     page: 'Fuel Thresholds',     icon: <FuelSVG />, adminOnly: true },
     { label: 'Media Gallery',       page: 'Media Gallery',       icon: <MediaSVG /> },
     { label: 'Face Logs',           page: 'Face Logs',           icon: <PersonSVG /> },
+    // Send a device a command and read its reply. Distinct from Saved Commands below, which is
+    // Traccar's library of command definitions and sends nothing.
+    { label: 'Command',             page: 'Command',             icon: <TerminalSVG /> },
     { label: 'Saved Commands',      page: 'Saved Commands',      icon: <ReportSVG />, hidden: true },
     { label: 'Notification',        page: 'Notification',        icon: <ReportSVG />, hidden: true },
     { label: 'Calendars',           page: 'Calendars',           icon: <CheckInSVG />,hidden: true },
