@@ -19,6 +19,17 @@ Route::post('/img/uploads/face/uploadPic', [FaceUploadController::class, 'upload
 Route::post('/img/uploads', [FaceUploadController::class, 'uploadPic']);
 Route::post('/img/uploads/', [FaceUploadController::class, 'uploadPic']);
 
+// The image server proper. UPLOADFILE — the command that fetches a stored still or clip off the
+// dashcam by name — does not use the face address at all; the device posts to its *image server*,
+// and the vendor's Image/Video Upload Protocol fixes that path as <host>/upload. Without this
+// route a POST there falls through to the SPA catch-all below, which is GET-only, so the device
+// gets a 405 and nothing is logged: the photo vanishes with no trace at either end.
+//
+// Same handler as uploadPic. The protocols differ only in how they sign, and FaceUploadService
+// already accepts both schemes.
+Route::post('/upload', [FaceUploadController::class, 'uploadPic']);
+Route::post('/img/uploads/upload', [FaceUploadController::class, 'uploadPic']);
+
 Route::get('/{any?}', function () {
     return view('app');
 })->where('any', '.*');
