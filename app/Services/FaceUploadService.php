@@ -14,14 +14,20 @@ use Illuminate\Support\Facades\Log;
  * The device-facing image ingest endpoint: POST /img/uploads/face/uploadPic.
  *
  * This is what the JC171 calls when it pushes a captured face photo (FACE,GET / FACE,SHOT) or a
- * requested still or clip back to us. It follows the vendor's Image/Video Upload protocol, which
- * is *not* the same as the two face-library callbacks in FaceImportService:
+ * requested still or clip back to us. Two signature schemes are in circulation for it:
  *
- *   uploadPic  signs  md5(filename + timestamp + secretKey)      -> base64
- *   upload / dowloadCallback  signs  md5(imei + instructionId + secretKey + timestamp) -> base64
+ *   Image/Video Upload protocol   md5(filename + timestamp + secretKey)              -> base64
+ *   Face library callback         md5(imei + instructionId + secretKey + timestamp)  -> base64
  *
- * Getting those two the same way round is the difference between a working ingest and a wall of
- * "Signature error", so they are deliberately implemented apart rather than shared.
+ * Both are accepted, because the documentation and the hardware disagree. The vendor's
+ * Image/Video Upload PDF specifies the first for this endpoint, but firmware
+ * V8463_VL863P_WDBH_EU_V2.3.0 sends the second — confirmed on 2026-08-29 by reproducing a real
+ * device's `sign` from its own logged parameters. Trusting the PDF alone rejected every photo
+ * that device sent, with "Signature error" and no clue as to why.
+ *
+ * Accepting either costs nothing. The secret is a fixed value published in the vendor's own
+ * documentation, so this signature was never an authentication boundary — it is an integrity
+ * check on a public endpoint, and the receipt records which scheme matched.
  *
  * Files land in public/img/uploads, which is the same directory the face batch zips are built
  * from — a photo the device sends back is immediately usable as a template to push to another
@@ -46,7 +52,14 @@ class FaceUploadService
         // left to stat and throws. The receipt is written after the store, so it has to be held.
         $fileSize = $file?->isValid() ? $file->getSize() : null;
 
-        $result = $this->validateAndStore($fileName, $timestamp, $sign, $file);
+        $result = $this->validateAndStore(
+            $fileName,
+            $timestamp,
+            $sign,
+            $file,
+            $imei,
+            (string) $request->input('instructionId', ''),
+        );
 
         // The convention is "<badge_no>-<name>.<ext>", so an inbound photo can usually be tied
         // back to the driver it belongs to. A file that cannot be is still stored and logged.
@@ -75,8 +88,14 @@ class FaceUploadService
         return $result;
     }
 
-    private function validateAndStore(string $fileName, string $timestamp, string $sign, ?UploadedFile $file): array
-    {
+    private function validateAndStore(
+        string $fileName,
+        string $timestamp,
+        string $sign,
+        ?UploadedFile $file,
+        string $imei = '',
+        string $instructionId = '',
+    ): array {
         if ($file === null) {
             return ['code' => 400, 'message' => 'File content is empty'];
         }
@@ -99,12 +118,28 @@ class FaceUploadService
             return ['code' => 400, 'message' => 'The sign cannot be empty'];
         }
 
-        $secret   = (string) config('services.face.upload_secret_key');
-        $expected = base64_encode(md5($fileName . $timestamp . $secret));
-        $valid    = hash_equals($expected, $sign);
+        $secret = (string) config('services.face.upload_secret_key');
+
+        // Both schemes in circulation for this endpoint — see the class docblock for why neither
+        // can be assumed. Keyed by name so the log says which one a device is speaking.
+        $candidates = [
+            'image-video'    => base64_encode(md5($fileName . $timestamp . $secret)),
+            'face-callback'  => base64_encode(md5($imei . $instructionId . $secret . $timestamp)),
+        ];
+
+        $matched = null;
+
+        foreach ($candidates as $scheme => $expected) {
+            if (hash_equals($expected, $sign)) {
+                $matched = $scheme;
+                break;
+            }
+        }
+
+        $valid = $matched !== null;
 
         if (!$valid) {
-            // Both signatures are logged so a mismatch can be diagnosed rather than guessed at.
+            // Every candidate is logged so a mismatch can be diagnosed rather than guessed at.
             // This matters more than usual here: the vendor's own worked example is internally
             // inconsistent — the MD5 it prints is not the MD5 of the string it prints directly
             // above it — so the algorithm cannot be validated against the documentation, only
@@ -112,8 +147,9 @@ class FaceUploadService
             Log::warning('face/uploadPic — signature mismatch', [
                 'filename'  => $fileName,
                 'timestamp' => $timestamp,
+                'imei'      => $imei,
                 'received'  => $sign,
-                'expected'  => $expected,
+                'expected'  => $candidates,
             ]);
 
             // Commissioning escape hatch. Off by default, so a stranger cannot post files here.
