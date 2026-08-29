@@ -972,10 +972,12 @@ class TraccarController extends Controller
      *
      * Devices that carry a camera (the JC-series ADAS/DSM units) attach `attributes.videoFiles` to
      * the position they raise an alarm on — a comma-separated list of stills and a clip, all held
-     * on the device or the vendor's media server, not on Traccar. This report is the index of what
-     * exists: which device recorded what, when, and against which alarm. Retrieving the files
-     * themselves is a separate job for a later module, which is why nothing here tries to fetch
-     * them; getting the names on the record first is what makes that module possible.
+     * on the device, not on Traccar. This report is the index of what exists: which device
+     * recorded what, when, and against which alarm.
+     *
+     * The file names are the point of it. Each one is the handle the report's Retrieve button
+     * passes to `UPLOADFILE,<name>#`, which is what asks the device to actually send the file up
+     * to the image server. Nothing is fetched here — this endpoint only says what there is.
      *
      * Read from /positions rather than /reports/route: the route report returns nothing for these
      * devices, while /positions?deviceId&from&to returns the full history including the media

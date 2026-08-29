@@ -2900,12 +2900,17 @@ function AlertDetails() {
  * The dashcam media a device recorded against an alarm.
  *
  * Camera-equipped units attach `attributes.videoFiles` to the position an alarm was raised on — a
- * comma-separated list of stills plus a clip. The files live on the device or the vendor's media
- * server; this report is the index of what exists, which is what a later retrieval module needs in
- * order to go and fetch them. Nothing here downloads anything.
+ * comma-separated list of stills plus a clip. The files themselves stay on the device until asked
+ * for, so this report is both the index of what exists and the place you ask.
  *
- * Every file name can be copied out individually, because a name is the handle for the file until
- * that module exists.
+ * Retrieve sends the device `UPLOADFILE,<name>#` and tracks it as a device_commands row, exactly
+ * like a hand-typed command — same one-at-a-time rule, same polling for the device's 0x21 reply.
+ *
+ * What that reply means is worth being precise about, because it is easy to over-read. The device
+ * answers `UPLOADFILE set OK!` — it has *accepted the request*. The file then travels separately,
+ * over HTTP to the configured image server, and arrives in the Media Gallery some seconds later.
+ * So a green result here means "the device agreed to send it", never "the file is here". The
+ * button says as much rather than claiming a download that has not happened.
  */
 function VideoEvidence() {
     const [devices, setDevices]   = useState([]);
@@ -2956,6 +2961,80 @@ function VideoEvidence() {
         } catch { /* clipboard blocked — the name is on screen to read off anyway */ }
     };
 
+    /* Retrieval state per file row: { id, status, message }. Keyed by the same key the table
+       renders with, so a row knows its own request without the report having to be re-fetched. */
+    const [retrieving, setRetrieving] = useState({});
+
+    const retrieve = async (f) => {
+        const key = f.key;
+
+        if (!f.parent.imei) {
+            setRetrieving(s => ({ ...s, [key]: { status: 'failed', message: 'This recording has no IMEI on it.' } }));
+            return;
+        }
+
+        setRetrieving(s => ({ ...s, [key]: { status: 'sending' } }));
+
+        try {
+            const { data } = await api.sendDeviceCommandV2({
+                imei:    f.parent.imei,
+                type:    'custom',
+                content: `UPLOADFILE,${f.name}#`,
+                // Not typed by hand — the Command History column exists to tell these apart.
+                is_manual: false,
+            });
+            setRetrieving(s => ({ ...s, [key]: { id: data.id, status: data.status, message: data.response || data.error } }));
+        } catch (e) {
+            // 409 is the one-command-per-device rule, and its message explains itself; anything
+            // else is Traccar's own refusal, which is worth showing verbatim.
+            setRetrieving(s => ({ ...s, [key]: {
+                status:  'failed',
+                message: e.response?.data?.message || 'Could not send the command.',
+            } }));
+        }
+    };
+
+    /* Poll whatever is still unsettled. Same cadence as the Command page — the device answers in
+       seconds when it answers at all, and asking faster does not make it quicker. */
+    const waiting = Object.entries(retrieving)
+        .filter(([, v]) => v.id && (v.status === 'pending' || v.status === 'queued'))
+        .map(([key, v]) => `${key}|${v.id}`)
+        .join(',');
+
+    useEffect(() => {
+        if (!waiting) return undefined;
+
+        const tick = setInterval(async () => {
+            const settled = await Promise.all(waiting.split(',').map((pair) => {
+                const [key, id] = pair.split('|');
+                return api.getDeviceCommandResult(id).then(r => [key, r.data]).catch(() => null);
+            }));
+
+            setRetrieving(s => {
+                const next = { ...s };
+                for (const entry of settled) {
+                    if (!entry) continue;
+                    const [key, d] = entry;
+                    next[key] = { id: d.id, status: d.status, message: d.response || d.error };
+                }
+                return next;
+            });
+        }, 3000);
+
+        return () => clearInterval(tick);
+    }, [waiting]);
+
+    /* Wording per state. "Requested" rather than "Retrieved" on success: the device has agreed to
+       upload, and the file lands in the Media Gallery separately — see the docblock. */
+    const RETRIEVAL = {
+        sending: { text: 'Sending…',  colour: '#9daec9' },
+        pending: { text: 'Waiting…',  colour: '#7fc4ff' },
+        queued:  { text: 'Queued — device offline', colour: '#fcd34d' },
+        success: { text: 'Requested', colour: '#4ade80' },
+        timeout: { text: 'No reply',  colour: '#fcd34d' },
+        failed:  { text: 'Failed',    colour: '#fca5a5' },
+    };
+
     /* One row per file rather than per position: the point of this report is the file names, and
        a cell holding four of them cannot be sorted, copied or referenced individually. */
     const fileRows = rows.flatMap((r, ri) =>
@@ -2968,7 +3047,7 @@ function VideoEvidence() {
         clips:     rows.reduce((n, r) => n + r.clipCount, 0),
     };
 
-    const COLS = ['No.', 'Device Name', 'IMEI', 'Recorded', 'Alarm', 'Type', 'File name', 'Coordinates', ''];
+    const COLS = ['No.', 'Device Name', 'IMEI', 'Recorded', 'Alarm', 'Type', 'File name', 'Coordinates', 'Retrieval', ''];
 
     const kindPill = (kind) => ({
         display: 'inline-block', padding: '2px 8px', borderRadius: 11, fontSize: 11, fontWeight: 700,
@@ -3031,7 +3110,43 @@ function VideoEvidence() {
                                 <td style={TD}><span style={kindPill(f.kind)}>{f.kind}</span></td>
                                 <td style={{ ...TD, fontFamily: 'monospace', fontSize: 12, color: '#eaeff9' }}>{f.name}</td>
                                 <td style={TD}>{f.first ? fmtCoords(f.parent.latitude, f.parent.longitude) : ''}</td>
+                                <td style={{ ...TD, minWidth: 150 }}>
+                                    {(() => {
+                                        const r = retrieving[f.key];
+                                        if (!r) return <span style={{ color: '#5e7094' }}>—</span>;
+                                        const s = RETRIEVAL[r.status] || { text: r.status, colour: '#9daec9' };
+                                        return (
+                                            <>
+                                                <div style={{ color: s.colour, fontSize: 12, fontWeight: 600 }}>{s.text}</div>
+                                                {/* The device's own words, or the reason it never got there. */}
+                                                {r.message && (
+                                                    <div style={{ color: '#9daec9', fontSize: 11, marginTop: 2, fontFamily: 'monospace', whiteSpace: 'normal' }}>
+                                                        {r.message}
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
+                                </td>
                                 <td style={{ ...TD, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                    {(() => {
+                                        const r    = retrieving[f.key];
+                                        const busy = r && (r.status === 'sending' || r.status === 'pending');
+                                        return (
+                                            <button onClick={() => retrieve(f)} disabled={busy}
+                                                title={`UPLOADFILE,${f.name}#`}
+                                                style={{
+                                                    background: 'none', border: '1px solid #24344f', borderRadius: 6,
+                                                    padding: '4px 10px', marginRight: 8, fontSize: 12, fontWeight: 600,
+                                                    cursor: busy ? 'not-allowed' : 'pointer',
+                                                    color: busy ? '#5e7094' : '#7fc4ff',
+                                                }}>
+                                                {/* Re-sending is legitimate: an upload can fail on the device's side
+                                                    and asking again is the only remedy. */}
+                                                {r && !busy ? 'Retry' : 'Retrieve'}
+                                            </button>
+                                        );
+                                    })()}
                                     <button onClick={() => copy(f.name, f.key)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied === f.key ? '#4ade80' : '#7fc4ff', fontSize: 12, fontWeight: 600, padding: 0 }}>
                                         {copied === f.key ? 'Copied' : 'Copy'}
                                     </button>
