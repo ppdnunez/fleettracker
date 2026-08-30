@@ -97,7 +97,41 @@ class FaceUploadService
         string $instructionId = '',
     ): array {
         if ($file === null) {
+            // "Empty" is usually a lie here. When a POST exceeds post_max_size, PHP throws the
+            // whole body away before any of this runs — no file, no fields — which is
+            // indistinguishable from a device that sent nothing. It is also the likeliest first
+            // failure for video: a face photo is a couple of hundred KB, a dashcam clip is
+            // megabytes, and cPanel's defaults sit between the two. Say which it was.
+            $sent  = (int) request()->server('CONTENT_LENGTH', 0);
+            $limit = self::iniBytes('post_max_size');
+
+            if ($limit > 0 && $sent > $limit) {
+                $message = sprintf(
+                    'Upload too large: %s sent, %s allowed. Raise post_max_size and upload_max_filesize.',
+                    self::humanBytes($sent),
+                    self::humanBytes($limit),
+                );
+
+                Log::warning('face/uploadPic — upload exceeded post_max_size', [
+                    'content_length' => $sent,
+                    'post_max_size'  => $limit,
+                ]);
+
+                return ['code' => 400, 'message' => $message];
+            }
+
             return ['code' => 400, 'message' => 'File content is empty'];
+        }
+
+        // A file that breached upload_max_filesize alone still arrives as an UploadedFile, but an
+        // invalid one — move() would throw further down with nothing explaining why.
+        if (!$file->isValid()) {
+            Log::warning('face/uploadPic — upload error', [
+                'error'   => $file->getError(),
+                'message' => $file->getErrorMessage(),
+            ]);
+
+            return ['code' => 400, 'message' => 'Upload failed: ' . $file->getErrorMessage()];
         }
 
         // Fall back to the multipart file name: some firmware omits the field even though the
@@ -184,6 +218,37 @@ class FaceUploadService
      * a colliding upload gets a suffix instead, because silently replacing a stored photo would
      * destroy the evidence value of the one already there.
      */
+    /** An ini size in bytes. PHP writes these as "64M", which is not a number to anything else. */
+    private static function iniBytes(string $directive): int
+    {
+        $raw = trim((string) ini_get($directive));
+
+        if ($raw === '') {
+            return 0;
+        }
+
+        $value = (int) $raw;
+
+        return match (strtolower(substr($raw, -1))) {
+            'g'     => $value * 1024 * 1024 * 1024,
+            'm'     => $value * 1024 * 1024,
+            'k'     => $value * 1024,
+            default => $value,
+        };
+    }
+
+    private static function humanBytes(int $bytes): string
+    {
+        foreach (['B', 'KB', 'MB', 'GB'] as $unit) {
+            if ($bytes < 1024 || $unit === 'GB') {
+                return round($bytes, 1) . $unit;
+            }
+            $bytes /= 1024;
+        }
+
+        return $bytes . 'B';
+    }
+
     private function store(UploadedFile $file, string $fileName): string
     {
         $dir = public_path(self::UPLOAD_DIR);
