@@ -1,6 +1,61 @@
 import axios from 'axios';
 
+/**
+ * The Traccar device list, fetched once and shared.
+ *
+ * Close to forty places call getTraccarDevices() on mount — every report section, every device
+ * picker, the dashboard — and each one was its own request. Measured on 2026-08-31, a call costs
+ * two network round trips to the Traccar box (344ms each way, 688ms end to end) to return about
+ * two kilobytes that barely changes. Opening three report tabs paid that three times over.
+ *
+ * Two things are shared here. The in-flight promise, so callers that mount together make one
+ * request between them rather than one each; and the resolved answer for DEVICE_CACHE_MS
+ * afterwards, so moving between pages is instant.
+ *
+ * Each caller gets its own copy of the array. Components put this straight into state and some
+ * sort it, which sorts in place — handing every caller the same array would let one page reorder
+ * another's list. Copying a handful of devices costs nothing next to the request it replaces.
+ */
+const DEVICE_CACHE_MS = 30000;
+
+let devicesInFlight = null;
+let devicesCache    = null; // { at: epoch ms, response }
+
+/**
+ * Drops the cached list. Called whenever the answer could have changed: a device registered or
+ * edited, and on any change of token — a different sign-in may be a different tenant, and one
+ * tenant must never be handed the list another one fetched.
+ */
+export function invalidateDevices() {
+    devicesInFlight = null;
+    devicesCache    = null;
+}
+
+function copyOf(res) {
+    return { ...res, data: Array.isArray(res.data) ? [...res.data] : res.data };
+}
+
+function fetchTraccarDevices() {
+    if (devicesCache && Date.now() - devicesCache.at < DEVICE_CACHE_MS) {
+        return Promise.resolve(copyOf(devicesCache.response));
+    }
+
+    if (!devicesInFlight) {
+        devicesInFlight = axios.get('/api/traccar/devices')
+            .then(res => {
+                devicesCache = { at: Date.now(), response: res };
+                return res;
+            })
+            .finally(() => { devicesInFlight = null; });
+    }
+
+    return devicesInFlight.then(copyOf);
+}
+
 export function setAuthToken(token) {
+    // A token change may be a different person, and on a shared machine a different tenant.
+    invalidateDevices();
+
     if (token) {
         localStorage.setItem('fleet_token', token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -94,9 +149,9 @@ export const api = {
     updateVehicleMaintenance: (id, data) => axios.put(`/api/vehicle-maintenances/${id}`, data),
     deleteVehicleMaintenance: (id)       => axios.delete(`/api/vehicle-maintenances/${id}`),
 
-    getTraccarDevices:    ()             => axios.get('/api/traccar/devices'),
-    createTraccarDevice:  (data)         => axios.post('/api/traccar/devices', data),
-    updateTraccarDevice:  (id, data)     => axios.put(`/api/traccar/devices/${id}`, data),
+    getTraccarDevices:    ()             => fetchTraccarDevices(),
+    createTraccarDevice:  (data)         => axios.post('/api/traccar/devices', data).then(res => { invalidateDevices(); return res; }),
+    updateTraccarDevice:  (id, data)     => axios.put(`/api/traccar/devices/${id}`, data).then(res => { invalidateDevices(); return res; }),
     getTraccarGroups:     ()             => axios.get('/api/traccar/groups'),
     getTraccarCalendars:  ()             => axios.get('/api/traccar/calendars'),
     getLatestPositions:   ()             => axios.get('/api/traccar/positions'),

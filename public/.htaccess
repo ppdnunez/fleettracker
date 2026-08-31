@@ -23,3 +23,32 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Compression. Vite's output is highly compressible JavaScript, and production was serving it raw:
+# measured 2026-08-31, the main bundle came back as 417KB with no Content-Encoding header even
+# though the request asked for gzip and br. It gzips to roughly 127KB, so every cold load was
+# pulling about 290KB more than it had to — on a slow mobile link that is most of the wait before
+# the dashboard can even start fetching data.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript text/javascript
+    AddOutputFilterByType DEFLATE application/json application/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
+# Vite fingerprints every built file (AppRoot-5fmdEPk8.js), so the bytes behind a given URL can
+# never change — a new build produces a new name. That makes them safe to cache forever, and they
+# were being served with no Cache-Control at all, so a returning browser revalidated the entire
+# bundle on every visit.
+#
+# Scoped to /build deliberately. The same rule applied by file extension would also cover
+# public/img/uploads, where a device's photo is stored under a name the device chose; pinning
+# those for a year would serve a stale image if one were ever replaced.
+<IfModule mod_headers.c>
+    SetEnvIf Request_URI "^/build/" IMMUTABLE_ASSET=1
+    Header set Cache-Control "public, max-age=31536000, immutable" env=IMMUTABLE_ASSET
+</IfModule>

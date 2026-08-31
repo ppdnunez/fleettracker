@@ -70,6 +70,20 @@ trait UsesTraccarApi
         ];
     }
 
+
+    /**
+     * A cache key scoped to the Traccar identity this request speaks as.
+     *
+     * Keyed on that identity and never on the app user: two operators in one company see the same
+     * devices and should share a cached copy, while two tenants must never share one — the whole
+     * multi-tenant boundary is which Traccar account asked. Hashed because the identity is an
+     * email address, and cache keys end up in the cache table and in error output.
+     */
+    protected function traccarCacheKey(string $name): string
+    {
+        return 'traccar:' . $name . ':' . sha1($this->traccarAuth()[0]);
+    }
+
     /** Traccar's numeric device id for an IMEI (its uniqueId), or null if this caller can't see it. */
     protected function traccarDeviceIdForImei(string $imei): ?int
     {
