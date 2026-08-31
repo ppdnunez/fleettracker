@@ -8,6 +8,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { vehicleGlyphSvg } from '../vehicleCatalog.js';
 import { areaToShape } from '../geofenceArea.js';
 import { api } from '../api.js';
+import KeepSized from './KeepSized.jsx';
 import MapLocationSearch from './MapLocationSearch.jsx';
 import DeviceStatusIcons, { alarmLabel } from './DeviceStatusIcons.jsx';
 
@@ -286,6 +287,7 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
                     <TileLayer key={`${layerKey}-${i}`} url={t.url} subdomains={t.subdomains || 'abc'} attribution={t.attribution} />
                 ))}
 
+                <KeepSized />
                 <MapLocationSearch />
                 <ZoomButtons />
                 {/* Distance bar, metric only — the fleet is measured in metres and kilometres. */}

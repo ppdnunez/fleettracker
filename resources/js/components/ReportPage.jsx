@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, Circle, Polygo
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../api.js';
+import KeepSized from './KeepSized.jsx';
 import { groupForSection } from './reportSections.js';
 import { TemperatureHumidityReport, TyreTpmsReport } from './SensorReports.jsx';
 import { FuelLevelReport, FuelEventsReport, FuelTheftWatch } from './FuelReports.jsx';
@@ -1647,6 +1648,7 @@ function Replay() {
                 their own they outrank dialogs the app draws over the page. */}
             <div style={{ position: 'relative', height: 560, borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46', isolation: 'isolate' }}>
                 <MapContainer className="map-dim" center={center} zoom={14} style={{ width: '100%', height: '100%' }} scrollWheelZoom>
+                    <KeepSized />
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

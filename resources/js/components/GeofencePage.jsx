@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import KeepSized from './KeepSized.jsx';
 import { MapContainer, TileLayer, ZoomControl, ScaleControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -432,6 +433,7 @@ export default function GeofencePage({ onBack }) {
                 this element and cannot outrank dialogs rendered by the page above it. */}
             <div style={{ flex: 1, position: 'relative', isolation: 'isolate' }}>
                 <MapContainer className="map-dim" center={CENTER} zoom={13} style={{ width: '100%', height: '100%' }} scrollWheelZoom zoomControl={false}>
+                    <KeepSized />
                     <MapLocationSearch anchor="top-center" />
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
