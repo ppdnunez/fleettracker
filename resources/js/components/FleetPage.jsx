@@ -1811,8 +1811,15 @@ function LiveLocationTab() {
                 </button>
             </div>
 
-            {/* Isolated so Leaflet's stacking stays local — see zLayers.js. */}
-            <div style={{ height: 600, borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46', position: 'relative', isolation: 'isolate' }}>
+            {/* Isolated so Leaflet's stacking stays local — see zLayers.js.
+
+                display:flex is load-bearing, not cosmetic. MapCanvas sizes itself with flex:1 and
+                carries no height of its own, so in a block parent it collapses to nothing and the
+                Leaflet container inside — height:100% of zero — goes with it. The symptom is not an
+                obviously broken layout: the panel keeps its 600px, the status badge and layer
+                buttons still draw because they are absolutely positioned, and Leaflet still fetches
+                a handful of tiles, so the network panel looks healthy. It just shows no map. */}
+            <div style={{ height: 600, display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #1e2c46', position: 'relative', isolation: 'isolate' }}>
                 {loading && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5e7094', fontSize: 13, zIndex: 500, background: '#111c33' }}>Loading…</div>
                 )}
