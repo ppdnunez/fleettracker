@@ -13,6 +13,22 @@
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
+    # The device posts its photos and clips to /img/uploads — which is also a real directory on
+    # disk, and that collision silently disabled the route. Two rules below conspire: Apache's
+    # mod_dir 301-redirects a directory URL that has no trailing slash, and the front controller
+    # deliberately skips anything that is a directory (!-d), so the request never reached
+    # Laravel at all. A device following a 301 re-issues as GET and drops the body, so the
+    # upload was lost with a redirect in the access log and nothing whatsoever in Laravel's.
+    #
+    # Confirmed against production 2026-09-02: POST /img/uploads answered 301, while the
+    # suffixed POST /img/uploads/face/uploadPic answered 200 — which is exactly why face
+    # photos arrived and media never did.
+    #
+    # Restricted to POST so that GET keeps its normal behaviour, and placed ahead of both rules
+    # because mod_rewrite runs before mod_dir; claiming the request here wins.
+    RewriteCond %{REQUEST_METHOD} =POST
+    RewriteRule ^img/uploads/?$ index.php [L]
+
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$

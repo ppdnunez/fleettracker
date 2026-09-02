@@ -46,7 +46,17 @@ class FaceUploadService
         $timestamp = (string) $request->input('timestamp', '');
         $sign      = (string) $request->input('sign', '');
         $imei      = (string) $request->input('imei', '');
-        $file      = $request->file('file');
+
+        // UPLOADFILE takes several names at once — "UPLOADFILE,a.jpg,b.jpg,c.jpg,d.mp4#" — so an
+        // alarm with three stills and a clip may arrive as four requests or as one carrying all
+        // four. Both shapes are handled, because nobody has yet seen a real media upload: Apache
+        // was redirecting every one of them away before Laravel saw the request.
+        $files = $this->uploadedFiles($request);
+
+        // The vendor's field name when it is there. Some firmware picks another, and answering
+        // "File content is empty" over a naming difference would be a lie about what arrived.
+        $primaryKey = array_key_exists('file', $files) ? 'file' : array_key_first($files);
+        $file       = $primaryKey === null ? null : $files[$primaryKey];
 
         // Read before storing: move() relocates the temp file, after which getSize() has nothing
         // left to stat and throws. The receipt is written after the store, so it has to be held.
@@ -83,9 +93,120 @@ class FaceUploadService
             'user_agent'       => $request->userAgent(),
         ]);
 
+        // Anything else in the same request. Only one part can be the signed one — the signature
+        // covers a single filename — so the rest are stored with signature_valid left null.
+        // Discarding evidence a device went to the trouble of uploading is the worse failure,
+        // and the receipt records exactly which files were verified and which were not.
+        // Only once the signed file has been accepted. A request whose signature failed must not
+        // deposit anything at all — otherwise the extras would be an unauthenticated way to write
+        // files to a public endpoint, which is precisely what the signature is there to prevent.
+        if ($result['code'] === 200) {
+            foreach ($files as $key => $extra) {
+                if ($key !== $primaryKey) {
+                    $this->storeAdditional($extra, $key, $imei, $request);
+                }
+            }
+        }
+
         unset($result['stored_path'], $result['signature_valid']);
 
         return $result;
+    }
+
+    /**
+     * Every uploaded part, flattened, keyed by the field it arrived under.
+     *
+     * allFiles() nests when a device posts `file[]` rather than `file`, and a nested array reaching
+     * the store would be written as nothing at all. Flattening keeps the field name, which is the
+     * only clue to what a device actually calls its parts — and the log line below is how that gets
+     * discovered rather than guessed at.
+     *
+     * @return array<string, UploadedFile>
+     */
+    private function uploadedFiles(Request $request): array
+    {
+        $flat = [];
+
+        $walk = function ($value, string $key) use (&$flat, &$walk): void {
+            if (is_array($value)) {
+                foreach ($value as $index => $item) {
+                    $walk($item, "{$key}[{$index}]");
+                }
+
+                return;
+            }
+
+            if ($value instanceof UploadedFile) {
+                $flat[$key] = $value;
+            }
+        };
+
+        foreach ($request->allFiles() as $key => $value) {
+            $walk($value, $key);
+        }
+
+        return $flat;
+    }
+
+    /**
+     * Stores a file that came alongside the signed one.
+     *
+     * Kept deliberately quiet: it never changes the response, because the device reads a single
+     * {code, message} envelope and a second opinion in it would confuse the firmware rather than
+     * inform anyone. What it does leave is a receipt per file, so the upload log shows all four
+     * parts of an alarm instead of one and three that vanished.
+     */
+    private function storeAdditional(UploadedFile $file, string $field, string $imei, Request $request): void
+    {
+        $name = basename(str_replace(chr(92), '/', (string) $file->getClientOriginalName()));
+
+        if (!$file->isValid() || $name === '') {
+            Log::warning('face/uploadPic — additional file skipped', [
+                'field' => $field,
+                'name'  => $name,
+                'error' => $file->getErrorMessage(),
+            ]);
+
+            return;
+        }
+
+        // Read before the move, which relocates the temp file and leaves getSize() nothing to stat.
+        $size = $file->getSize();
+
+        try {
+            $storedName = $this->store($file, $name);
+        } catch (\Throwable $e) {
+            Log::warning('face/uploadPic — additional file could not be stored', [
+                'field' => $field,
+                'name'  => $name,
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        $storedPath = self::UPLOAD_DIR . '/' . $storedName;
+        $driver     = $this->resolveDriver($storedName);
+
+        if ($driver) {
+            $this->linkToDriver($driver, $imei, $storedPath);
+        }
+
+        FaceUploadReceipt::create([
+            'imei'             => $imei ?: null,
+            'driver_id'        => $driver?->id,
+            'instruction_id'   => $request->input('instructionId') ?: null,
+            'file_name'        => $name,
+            'stored_path'      => $storedPath,
+            'file_size'        => $size,
+            // Null, not false: this file was never claimed by the signature, which is a different
+            // thing from having failed it.
+            'signature_valid'  => null,
+            'response_code'    => 200,
+            'response_message' => "Stored alongside the signed upload (field \"{$field}\")",
+            'ip'               => $request->ip(),
+            'user_agent'       => $request->userAgent(),
+        ]);
     }
 
     private function validateAndStore(
