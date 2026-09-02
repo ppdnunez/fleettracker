@@ -14,10 +14,10 @@ import { api } from '../api.js';
  *     informative, merged it is a fabricated mileage.
  */
 
-const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
-const TD = { padding: '9px 12px', fontSize: 12.5, borderBottom: '1px solid #1e2c46', color: '#cfdcf0' };
-const input  = { padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', background: '#111c33', outline: 'none' };
-const button = { padding: '7px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#d5c9b8', borderBottom: '2px solid #2c2c2c', whiteSpace: 'nowrap', background: '#222222' };
+const TD = { padding: '9px 12px', fontSize: 12.5, borderBottom: '1px solid #2c2c2c', color: '#d5c9b8' };
+const input  = { padding: '7px 10px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, color: '#d5c9b8', background: '#1a1a1a', outline: 'none' };
+const button = { padding: '7px 16px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 
 function age(minutes) {
     if (minutes == null) return 'unknown';
@@ -51,9 +51,9 @@ function DeviceFilter({ devices, deviceId, setDeviceId }) {
 /** Shown wherever a device reports nothing — the honest answer, with what it would take to change. */
 function NoObdNotice({ hours }) {
     return (
-        <div style={{ border: '1px dashed #24344f', borderRadius: 10, padding: 28, textAlign: 'center', color: '#9daec9', fontSize: 13, lineHeight: 1.7 }}>
+        <div style={{ border: '1px dashed #383838', borderRadius: 10, padding: 28, textAlign: 'center', color: '#9a8a75', fontSize: 13, lineHeight: 1.7 }}>
             No engine data in the last {hours} hours.
-            <div style={{ marginTop: 6, fontSize: 12, color: '#5e7094', maxWidth: 660, margin: '6px auto 0' }}>
+            <div style={{ marginTop: 6, fontSize: 12, color: '#5a4e42', maxWidth: 660, margin: '6px auto 0' }}>
                 These figures come from a vehicle's OBD-II / CAN bus, so they appear only for devices wired to
                 one and only on the frames that carry them — an ordinary GPS packet has none. A vehicle with no
                 OBD accessory fitted will always be empty here.
@@ -68,11 +68,11 @@ function Metric({ label, value, unit, stale, ageMinutes, tone }) {
 
     return (
         <div style={{ minWidth: 118 }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#9daec9', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</div>
-            <div style={{ fontSize: 21, fontWeight: 800, color: tone ?? '#eaeff9', lineHeight: 1.3 }}>
-                {value}<span style={{ fontSize: 12, fontWeight: 600, color: '#5e7094', marginLeft: 3 }}>{unit}</span>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#9a8a75', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</div>
+            <div style={{ fontSize: 21, fontWeight: 800, color: tone ?? '#f5f0e8', lineHeight: 1.3 }}>
+                {value}<span style={{ fontSize: 12, fontWeight: 600, color: '#5a4e42', marginLeft: 3 }}>{unit}</span>
             </div>
-            <div style={{ fontSize: 10.5, color: stale ? '#fcd34d' : '#5e7094' }}>
+            <div style={{ fontSize: 10.5, color: stale ? '#fcd34d' : '#5a4e42' }}>
                 {age(ageMinutes)}{stale ? ' · stale' : ''}
             </div>
         </div>
@@ -83,9 +83,9 @@ function FaultPill({ code, active }) {
     return (
         <span style={{
             padding: '2px 8px', borderRadius: 11, fontSize: 11, fontWeight: 700, fontFamily: 'monospace',
-            background: active ? '#3b1418' : '#16233c',
-            color:      active ? '#fca5a5' : '#9daec9',
-            border: `1px solid ${active ? '#7f1d1d' : '#24344f'}`,
+            background: active ? '#3b1418' : '#222222',
+            color:      active ? '#fca5a5' : '#9a8a75',
+            border: `1px solid ${active ? '#7f1d1d' : '#383838'}`,
         }}>{code}</span>
     );
 }
@@ -138,12 +138,12 @@ export function ObdEngineReport() {
                 const faults = d.dtcs?.codes ?? [];
 
                 return (
-                    <div key={d.deviceId} style={{ border: '1px solid #1e2c46', borderRadius: 10, overflow: 'hidden', background: '#111c33' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#16233c', borderBottom: '1px solid #1e2c46', flexWrap: 'wrap' }}>
-                            <strong style={{ fontSize: 13.5, color: '#eaeff9' }}>{d.deviceName}</strong>
-                            <span style={{ fontFamily: 'monospace', fontSize: 11.5, color: '#5e7094' }}>{d.imei}</span>
-                            {d.vehicleModel && <span style={{ fontSize: 11.5, color: '#9daec9' }}>{d.vehicleModel}</span>}
-                            {d.vin && <span style={{ fontSize: 11.5, color: '#9daec9' }}>VIN {d.vin}</span>}
+                    <div key={d.deviceId} style={{ border: '1px solid #2c2c2c', borderRadius: 10, overflow: 'hidden', background: '#1a1a1a' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#222222', borderBottom: '1px solid #2c2c2c', flexWrap: 'wrap' }}>
+                            <strong style={{ fontSize: 13.5, color: '#f5f0e8' }}>{d.deviceName}</strong>
+                            <span style={{ fontFamily: 'monospace', fontSize: 11.5, color: '#5a4e42' }}>{d.imei}</span>
+                            {d.vehicleModel && <span style={{ fontSize: 11.5, color: '#9a8a75' }}>{d.vehicleModel}</span>}
+                            {d.vin && <span style={{ fontSize: 11.5, color: '#9a8a75' }}>VIN {d.vin}</span>}
                             {/* The dongle's own state: a sleeping or upgrading unit explains a gap
                                 in the readings that would otherwise look like a fault. */}
                             {d.obdStatus && (
@@ -199,15 +199,15 @@ export function ObdEngineReport() {
 
                         {/* Only when the decoder met something it could not fully interpret. */}
                         {(d.diagnostics?.obdRaw || d.diagnostics?.obdSubType != null) && (
-                            <div style={{ margin: '0 14px 12px', padding: '9px 13px', background: '#16233c', border: '1px solid #24344f', borderRadius: 7, fontSize: 11.5, color: '#9daec9', lineHeight: 1.6 }}>
+                            <div style={{ margin: '0 14px 12px', padding: '9px 13px', background: '#222222', border: '1px solid #383838', borderRadius: 7, fontSize: 11.5, color: '#9a8a75', lineHeight: 1.6 }}>
                                 {/* Each field is the newest value of that key, so they may come
                                     from different frames — said plainly rather than implied. */}
-                                <b style={{ color: '#cfdcf0' }}>Undecoded fields</b>
-                                <span style={{ color: '#5e7094' }}> (newest of each)</span>{' '}
+                                <b style={{ color: '#d5c9b8' }}>Undecoded fields</b>
+                                <span style={{ color: '#5a4e42' }}> (newest of each)</span>{' '}
                                 {['obdMessageId', 'obdVehicleType', 'obdSubType'].filter(k => d.diagnostics[k] != null)
                                     .map(k => `${k} ${d.diagnostics[k]}`).join(' · ')}
                                 {d.diagnostics.obdRaw && (
-                                    <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#5e7094', marginTop: 3, wordBreak: 'break-all' }}>{d.diagnostics.obdRaw}</div>
+                                    <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#5a4e42', marginTop: 3, wordBreak: 'break-all' }}>{d.diagnostics.obdRaw}</div>
                                 )}
                             </div>
                         )}
@@ -215,14 +215,14 @@ export function ObdEngineReport() {
                         <div style={{ display: 'flex', gap: 26, flexWrap: 'wrap', padding: '0 14px 14px' }}>
                             {/* The two comparisons worth making explicit — see the file comment. */}
                             <div style={{ minWidth: 250 }}>
-                                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#9daec9', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>Distance</div>
-                                <div style={{ fontSize: 12.5, color: '#cfdcf0' }}>
-                                    Dash odometer <b style={{ color: '#eaeff9' }}>{d.distance.obdOdometerKm != null ? `${d.distance.obdOdometerKm.toLocaleString()} km` : '—'}</b>
+                                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#9a8a75', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>Distance</div>
+                                <div style={{ fontSize: 12.5, color: '#d5c9b8' }}>
+                                    Dash odometer <b style={{ color: '#f5f0e8' }}>{d.distance.obdOdometerKm != null ? `${d.distance.obdOdometerKm.toLocaleString()} km` : '—'}</b>
                                 </div>
-                                <div style={{ fontSize: 12.5, color: '#cfdcf0' }}>
-                                    GPS since registration <b style={{ color: '#eaeff9' }}>{d.distance.gpsTotalKm != null ? `${d.distance.gpsTotalKm.toLocaleString()} km` : '—'}</b>
+                                <div style={{ fontSize: 12.5, color: '#d5c9b8' }}>
+                                    GPS since registration <b style={{ color: '#f5f0e8' }}>{d.distance.gpsTotalKm != null ? `${d.distance.gpsTotalKm.toLocaleString()} km` : '—'}</b>
                                 </div>
-                                <div style={{ fontSize: 10.5, color: '#5e7094', marginTop: 3, lineHeight: 1.5 }}>
+                                <div style={{ fontSize: 10.5, color: '#5a4e42', marginTop: 3, lineHeight: 1.5 }}>
                                     Different measurements, not a discrepancy: the dash counts the vehicle's whole life,
                                     Traccar counts only since this device was fitted.
                                 </div>
@@ -230,9 +230,9 @@ export function ObdEngineReport() {
 
                             {d.speed.obdKmh != null && (
                                 <div style={{ minWidth: 200 }}>
-                                    <div style={{ fontSize: 10.5, fontWeight: 700, color: '#9daec9', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>Speed cross-check</div>
-                                    <div style={{ fontSize: 12.5, color: '#cfdcf0' }}>
-                                        OBD <b style={{ color: '#eaeff9' }}>{d.speed.obdKmh} km/h</b> · GPS <b style={{ color: '#eaeff9' }}>{d.speed.gpsKmh ?? '—'} km/h</b>
+                                    <div style={{ fontSize: 10.5, fontWeight: 700, color: '#9a8a75', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>Speed cross-check</div>
+                                    <div style={{ fontSize: 12.5, color: '#d5c9b8' }}>
+                                        OBD <b style={{ color: '#f5f0e8' }}>{d.speed.obdKmh} km/h</b> · GPS <b style={{ color: '#f5f0e8' }}>{d.speed.gpsKmh ?? '—'} km/h</b>
                                     </div>
                                     {d.speed.gpsKmh != null && Math.abs(d.speed.obdKmh - d.speed.gpsKmh) > 8 && (
                                         <div style={{ fontSize: 10.5, color: '#fcd34d', marginTop: 3, lineHeight: 1.5 }}>
@@ -245,15 +245,15 @@ export function ObdEngineReport() {
                         </div>
 
                         {faults.length > 0 && (
-                            <div style={{ padding: '10px 14px', borderTop: '1px solid #1e2c46', background: '#16233c' }}>
+                            <div style={{ padding: '10px 14px', borderTop: '1px solid #2c2c2c', background: '#222222' }}>
                                 {faults.map(f => (
-                                    <div key={f.code} style={{ fontSize: 12, color: '#cfdcf0', marginBottom: 3 }}>
+                                    <div key={f.code} style={{ fontSize: 12, color: '#d5c9b8', marginBottom: 3 }}>
                                         <b style={{ fontFamily: 'monospace', color: '#fca5a5' }}>{f.code}</b>
                                         {' — '}{f.description || f.subsystem || f.system || 'unrecognised code'}
-                                        {f.generic === false && <span style={{ color: '#5e7094' }}> (manufacturer-specific)</span>}
+                                        {f.generic === false && <span style={{ color: '#5a4e42' }}> (manufacturer-specific)</span>}
                                     </div>
                                 ))}
-                                <div style={{ fontSize: 10.5, color: '#5e7094', marginTop: 4 }}>Reported {fmtTime(d.dtcs?.reportedAt)}</div>
+                                <div style={{ fontSize: 10.5, color: '#5a4e42', marginTop: 4 }}>Reported {fmtTime(d.dtcs?.reportedAt)}</div>
                             </div>
                         )}
                     </div>
@@ -263,7 +263,7 @@ export function ObdEngineReport() {
             {!loading && reporting.length === 0 && <NoObdNotice hours={data?.lookbackHours ?? hours} />}
 
             {silent.length > 0 && reporting.length > 0 && (
-                <p style={{ fontSize: 12, color: '#5e7094' }}>No engine data from: {silent.map(d => d.deviceName).join(', ')}</p>
+                <p style={{ fontSize: 12, color: '#5a4e42' }}>No engine data from: {silent.map(d => d.deviceName).join(', ')}</p>
             )}
         </div>
     );
@@ -315,7 +315,7 @@ export function ObdHistoryReport() {
                     <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5e7094' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5a4e42' }}>Loading…</td></tr>
                         ) : rows.length === 0 ? (
                             <tr><td colSpan={COLS.length} style={{ padding: 0 }}><div style={{ padding: 14 }}><NoObdNotice hours={hours} /></div></td></tr>
                         ) : rows.map((r, i) => (
@@ -336,11 +336,11 @@ export function ObdHistoryReport() {
                                     {r.checksumValid === false
                                         ? <span style={{ color: '#fca5a5', fontWeight: 700 }} title="XOR check failed">Bad checksum</span>
                                         : r.obdStatus
-                                            ? <span style={{ color: r.obdStatus.code === 0x5A ? '#9daec9' : '#fcd34d' }} title={r.obdStatus.hex}>{r.obdStatus.label}</span>
-                                            : <span style={{ color: '#5e7094' }}>—</span>}
+                                            ? <span style={{ color: r.obdStatus.code === 0x5A ? '#9a8a75' : '#fcd34d' }} title={r.obdStatus.hex}>{r.obdStatus.label}</span>
+                                            : <span style={{ color: '#5a4e42' }}>—</span>}
                                 </td>
                                 <td style={TD}>
-                                    {r.dtcs.length === 0 ? <span style={{ color: '#5e7094' }}>—</span>
+                                    {r.dtcs.length === 0 ? <span style={{ color: '#5a4e42' }}>—</span>
                                         : <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>{r.dtcs.map(c => <FaultPill key={c} code={c} active />)}</span>}
                                 </td>
                             </tr>
@@ -390,7 +390,7 @@ export function ObdFaultsReport() {
                 </select>
                 <button onClick={load} style={button}>{loading ? 'Loading…' : 'Refresh'}</button>
                 {rows.length > 0 && (
-                    <span style={{ fontSize: 12, color: active > 0 ? '#fca5a5' : '#5e7094' }}>
+                    <span style={{ fontSize: 12, color: active > 0 ? '#fca5a5' : '#5a4e42' }}>
                         {active} still set · {rows.length - active} cleared
                     </span>
                 )}
@@ -399,7 +399,7 @@ export function ObdFaultsReport() {
             {error && <div style={{ marginBottom: 14, padding: '10px 14px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 8, fontSize: 12.5, color: '#fca5a5' }}>{error}</div>}
 
             {/* A stored code repeats on every frame, so these are spans rather than occurrences. */}
-            <p style={{ margin: '0 0 12px', fontSize: 12, color: '#5e7094', lineHeight: 1.6, maxWidth: 820 }}>
+            <p style={{ margin: '0 0 12px', fontSize: 12, color: '#5a4e42', lineHeight: 1.6, maxWidth: 820 }}>
                 One row per fault, not per packet: a stored code is re-sent on every OBD frame until it is
                 cleared, so each code is tracked from when it first appeared to when it stopped being reported.
                 "Cleared" means the vehicle stopped sending it — either it was reset in a workshop, or the
@@ -411,9 +411,9 @@ export function ObdFaultsReport() {
                     <thead><tr>{COLS.map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5e7094' }}>Loading…</td></tr>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5a4e42' }}>Loading…</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5e7094', lineHeight: 1.7 }}>
+                            <tr><td colSpan={COLS.length} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5a4e42', lineHeight: 1.7 }}>
                                 <span style={{ display: 'inline-block', maxWidth: 620 }}>
                                     No fault codes in this period. That is also what you see when no device is wired to an
                                     OBD bus — the two look identical from here, because a vehicle reporting no faults and a
@@ -426,7 +426,7 @@ export function ObdFaultsReport() {
                                 <td style={TD}>{r.deviceName ?? '—'}</td>
                                 <td style={TD}>
                                     {r.description || r.subsystem || (r.system ? `${r.system} fault` : 'Unrecognised code')}
-                                    <div style={{ fontSize: 10.5, color: '#5e7094' }}>
+                                    <div style={{ fontSize: 10.5, color: '#5a4e42' }}>
                                         {r.system ?? 'unknown system'}
                                         {r.generic === false && ' · manufacturer-specific'}
                                         {r.generic === true && ' · standard code'}

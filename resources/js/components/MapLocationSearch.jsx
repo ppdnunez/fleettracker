@@ -55,29 +55,29 @@ export default function MapLocationSearch({ anchor = 'top-left', offsetTop = 12 
         <div style={{ position: 'absolute', top: offsetTop, ...place, zIndex: 900, width: 300, maxWidth: '70%' }}>
             <form onSubmit={search} style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                background: '#0c1322', border: '1px solid #1e2c46', borderRadius: 8,
+                background: '#141414', border: '1px solid #2c2c2c', borderRadius: 8,
                 padding: '6px 10px', boxShadow: '0 4px 14px rgba(0,0,0,0.45)',
             }}>
                 <input
                     value={query}
                     onChange={e => setQuery(e.target.value)}
                     placeholder="Search location…"
-                    style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#eaeff9', background: 'transparent', minWidth: 0 }}
+                    style={{ flex: 1, border: 'none', outline: 'none', fontSize: 13, color: '#f5f0e8', background: 'transparent', minWidth: 0 }}
                 />
                 <button type="submit" disabled={busy} style={{ background: 'none', border: 'none', cursor: busy ? 'wait' : 'pointer', fontSize: 14, padding: 0 }}>🔍</button>
             </form>
 
             {(results.length > 0 || message) && (
                 <div style={{
-                    marginTop: 4, background: '#0c1322', border: '1px solid #1e2c46', borderRadius: 8,
+                    marginTop: 4, background: '#141414', border: '1px solid #2c2c2c', borderRadius: 8,
                     boxShadow: '0 8px 20px rgba(0,0,0,0.45)', overflow: 'hidden',
                 }}>
-                    {message && <p style={{ margin: 0, padding: '9px 12px', fontSize: 12, color: '#5e7094' }}>{message}</p>}
+                    {message && <p style={{ margin: 0, padding: '9px 12px', fontSize: 12, color: '#5a4e42' }}>{message}</p>}
                     {results.map(r => (
                         <button key={r.place_id} onClick={() => goTo(r)} style={{
                             display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px',
-                            border: 'none', borderBottom: '1px solid #1e2c46', background: '#0c1322',
-                            cursor: 'pointer', fontSize: 12.5, color: '#cfdcf0',
+                            border: 'none', borderBottom: '1px solid #2c2c2c', background: '#141414',
+                            cursor: 'pointer', fontSize: 12.5, color: '#d5c9b8',
                         }}>
                             {r.display_name}
                         </button>

@@ -10,10 +10,10 @@ const TYPE_PLURAL = { geofence: 'geofences', notification: 'notifications', driv
 
 const tagStyle = {
     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 6px 4px 10px',
-    background: '#16233c', color: '#cfdcf0', borderRadius: 16, fontSize: 12.5, fontWeight: 500,
+    background: '#222222', color: '#d5c9b8', borderRadius: 16, fontSize: 12.5, fontWeight: 500,
 };
 const tagRemoveBtnStyle = {
-    background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 11,
+    background: 'none', border: 'none', cursor: 'pointer', color: '#5a4e42', fontSize: 11,
     width: 16, height: 16, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
 };
 
@@ -23,8 +23,8 @@ function LinkField({ label, options, linkedIds, getLabel, onAdd, onRemove, disab
 
     return (
         <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 11.5, color: '#9daec9', fontWeight: 600, marginBottom: 6 }}>{label}</label>
-            <div style={{ border: '1px solid #24344f', borderRadius: 8, padding: '7px 8px', display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minHeight: 38 }}>
+            <label style={{ display: 'block', fontSize: 11.5, color: '#9a8a75', fontWeight: 600, marginBottom: 6 }}>{label}</label>
+            <div style={{ border: '1px solid #383838', borderRadius: 8, padding: '7px 8px', display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minHeight: 38 }}>
                 {linked.map(o => (
                     <span key={o.id} style={tagStyle}>
                         {getLabel(o)}
@@ -33,13 +33,13 @@ function LinkField({ label, options, linkedIds, getLabel, onAdd, onRemove, disab
                 ))}
                 {available.length > 0 && (
                     <select disabled={disabled} value="" onChange={e => { if (e.target.value) onAdd(Number(e.target.value)); }}
-                        style={{ border: 'none', outline: 'none', background: 'transparent', color: '#3b82f6', fontSize: 12.5, fontWeight: 500, cursor: disabled ? 'not-allowed' : 'pointer' }}>
+                        style={{ border: 'none', outline: 'none', background: 'transparent', color: '#d97706', fontSize: 12.5, fontWeight: 500, cursor: disabled ? 'not-allowed' : 'pointer' }}>
                         <option value="">+ Add…</option>
                         {available.map(o => <option key={o.id} value={o.id}>{getLabel(o)}</option>)}
                     </select>
                 )}
                 {linked.length === 0 && available.length === 0 && (
-                    <span style={{ fontSize: 12, color: '#5e7094' }}>None available</span>
+                    <span style={{ fontSize: 12, color: '#5a4e42' }}>None available</span>
                 )}
             </div>
         </div>
@@ -124,13 +124,13 @@ export default function ConnectionsModal({ owner, ownerType = 'device', onClose 
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <div style={{ background: '#111c33', borderRadius: 12, width: 420, maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
+            <div style={{ background: '#1a1a1a', borderRadius: 12, width: 420, maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #2c2c2c' }}>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Connections</h2>
-                        <p style={{ margin: '2px 0 0', fontSize: 12, color: '#5e7094' }}>{owner.name}</p>
+                        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#f5f0e8' }}>Connections</h2>
+                        <p style={{ margin: '2px 0 0', fontSize: 12, color: '#5a4e42' }}>{owner.name}</p>
                     </div>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5a4e42', fontSize: 16 }}>✕</button>
                 </div>
 
                 <div style={{ padding: 20 }}>
@@ -141,7 +141,7 @@ export default function ConnectionsModal({ owner, ownerType = 'device', onClose 
                     )}
 
                     {loading ? (
-                        <p style={{ textAlign: 'center', color: '#5e7094', fontSize: 13, padding: 24 }}>Loading…</p>
+                        <p style={{ textAlign: 'center', color: '#5a4e42', fontSize: 13, padding: 24 }}>Loading…</p>
                     ) : (
                         <>
                             <LinkField label="Geofences" options={allGeofences} linkedIds={linked.geofences} disabled={busy}
@@ -166,8 +166,8 @@ export default function ConnectionsModal({ owner, ownerType = 'device', onClose 
                     )}
                 </div>
 
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Done</button>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #2c2c2c', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#d97706', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Done</button>
                 </div>
             </div>
         </div>

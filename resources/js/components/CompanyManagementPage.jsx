@@ -16,20 +16,20 @@ import { api } from '../api.js';
 /* Tenant roles, kept in sync with App\Models\User::TENANT_ROLES. Platform roles (admin,
    super_admin) are absent on purpose — they belong to logins with no company. */
 const ROLES = [
-    ['client_admin', 'Company Admin', 'Manages this company’s logins. Same device access as everyone else here.'],
-    ['operator',     'Operator',      'Full day-to-day use of this company’s fleet.'],
-    ['viewer',       'Viewer',        'Read-only.'],
+    ['client_admin', 'Company Admin', 'Everything: Fleet, all Settings, Reports, and this company’s logins.'],
+    ['operator',     'Operator',      'Fleet and Reports, plus Media Gallery, Sim Data, Geofence, Alert Recipients and Fuel Thresholds.'],
+    ['viewer',       'Viewer',        'Read-only: Reports, Fleet Dashboard and Vehicle Track. Cannot change anything.'],
 ];
 const ROLE_LABELS = Object.fromEntries(ROLES.map(([k, l]) => [k, l]));
 
-const label     = { display: 'block', fontSize: 11.5, color: '#9daec9', fontWeight: 600, marginBottom: 6 };
-const input     = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #24344f', borderRadius: 7, fontSize: 13, outline: 'none' };
-const th        = { textAlign: 'left', padding: '9px 14px', fontSize: 11, fontWeight: 700, color: '#9daec9', textTransform: 'uppercase', letterSpacing: 0.4, borderBottom: '1px solid #1e2c46', whiteSpace: 'nowrap' };
-const td        = { padding: '11px 14px', fontSize: 13, color: '#eaeff9', borderBottom: '1px solid #1e2c46', verticalAlign: 'middle' };
+const label     = { display: 'block', fontSize: 11.5, color: '#9a8a75', fontWeight: 600, marginBottom: 6 };
+const input     = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #383838', borderRadius: 7, fontSize: 13, outline: 'none' };
+const th        = { textAlign: 'left', padding: '9px 14px', fontSize: 11, fontWeight: 700, color: '#9a8a75', textTransform: 'uppercase', letterSpacing: 0.4, borderBottom: '1px solid #2c2c2c', whiteSpace: 'nowrap' };
+const td        = { padding: '11px 14px', fontSize: 13, color: '#f5f0e8', borderBottom: '1px solid #2c2c2c', verticalAlign: 'middle' };
 const btn       = (bg, fg) => ({ padding: '7px 13px', border: 'none', borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', background: bg, color: fg });
-const linkBtn   = { background: 'none', border: 'none', padding: 0, marginRight: 12, fontSize: 12.5, fontWeight: 600, color: '#4da8ff', cursor: 'pointer' };
+const linkBtn   = { background: 'none', border: 'none', padding: 0, marginRight: 12, fontSize: 12.5, fontWeight: 600, color: '#f59e0b', cursor: 'pointer' };
 const pill      = (ok) => ({ display: 'inline-block', padding: '2px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, background: ok ? '#0f2b24' : '#3b1418', color: ok ? '#4ade80' : '#fca5a5' });
-const rolePill  = { display: 'inline-block', padding: '2px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, background: '#152a4a', color: '#7fc4ff' };
+const rolePill  = { display: 'inline-block', padding: '2px 9px', borderRadius: 12, fontSize: 11, fontWeight: 700, background: '#372817', color: '#f59e0b' };
 
 const errorText = (e, fallback) => {
     const data = e.response?.data;
@@ -39,11 +39,11 @@ const errorText = (e, fallback) => {
 
 function Banner({ kind, children }) {
     const tone = {
-        info:  ['#152a4a', '#24507f', '#7fc4ff'],
+        info:  ['#372817', '#78440a', '#f59e0b'],
         warn:  ['#33260c', '#7c5e10', '#fcd34d'],
         error: ['#3b1418', '#7f1d1d', '#fca5a5'],
         ok:    ['#0f2b24', '#1f6b52', '#4ade80'],
-    }[kind] || ['#1e2c46', '#1e2c46', '#334155'];
+    }[kind] || ['#2c2c2c', '#2c2c2c', '#3a3a3a'];
 
     return (
         <div style={{ padding: '10px 14px', background: tone[0], border: `1px solid ${tone[1]}`, borderRadius: 8, fontSize: 12.5, color: tone[2], lineHeight: 1.6 }}>
@@ -55,14 +55,14 @@ function Banner({ kind, children }) {
 function Modal({ title, onClose, children, footer, width = 460 }) {
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <div style={{ background: '#111c33', borderRadius: 12, width, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>{title}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
+            <div style={{ background: '#1a1a1a', borderRadius: 12, width, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #2c2c2c' }}>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#f5f0e8' }}>{title}</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5a4e42', fontSize: 16 }}>✕</button>
                 </div>
                 <div style={{ padding: 20 }}>{children}</div>
                 {footer && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '14px 20px', borderTop: '1px solid #1e2c46' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '14px 20px', borderTop: '1px solid #2c2c2c' }}>
                         {footer}
                     </div>
                 )}
@@ -128,8 +128,8 @@ function CompanyModal({ company, onClose, onSaved }) {
     return (
         <Modal title={isNew ? 'New Company' : `Edit ${company.name}`} onClose={onClose} width={520}
             footer={<>
-                <button onClick={onClose} style={btn('#1e2c46', '#334155')}>Cancel</button>
-                <button onClick={save} disabled={saving} style={{ ...btn('#4da8ff', '#fff'), opacity: saving ? 0.6 : 1 }}>
+                <button onClick={onClose} style={btn('#2c2c2c', '#3a3a3a')}>Cancel</button>
+                <button onClick={save} disabled={saving} style={{ ...btn('#f59e0b', '#fff'), opacity: saving ? 0.6 : 1 }}>
                     {saving ? 'Saving…' : isNew ? 'Create Company' : 'Save Changes'}
                 </button>
             </>}>
@@ -168,7 +168,7 @@ function CompanyModal({ company, onClose, onSaved }) {
                 <div style={{ marginBottom: 14 }}>
                     <label style={label}>Rotate Traccar password (optional)</label>
                     <input style={input} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Leave blank to keep the current one" />
-                    <div style={{ fontSize: 11.5, color: '#9daec9', marginTop: 5 }}>
+                    <div style={{ fontSize: 11.5, color: '#9a8a75', marginTop: 5 }}>
                         Changes it in Traccar and here at the same time. Traccar user: <code style={{ fontFamily: 'monospace' }}>{company.traccar_email}</code>
                     </div>
                 </div>
@@ -183,8 +183,8 @@ function CompanyModal({ company, onClose, onSaved }) {
             </div>
 
             {isNew && (
-                <div style={{ borderTop: '1px solid #1e2c46', paddingTop: 14 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#eaeff9', marginBottom: 10, cursor: 'pointer' }}>
+                <div style={{ borderTop: '1px solid #2c2c2c', paddingTop: 14 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#f5f0e8', marginBottom: 10, cursor: 'pointer' }}>
                         <input type="checkbox" checked={withAdmin} onChange={e => setWithAdmin(e.target.checked)} />
                         Create the company’s first login (a Company Admin)
                     </label>
@@ -243,8 +243,8 @@ function UserModal({ companyId, user, onClose, onSaved }) {
     return (
         <Modal title={isNew ? 'New Login' : `Edit ${user.name}`} onClose={onClose}
             footer={<>
-                <button onClick={onClose} style={btn('#1e2c46', '#334155')}>Cancel</button>
-                <button onClick={save} disabled={saving} style={{ ...btn('#4da8ff', '#fff'), opacity: saving ? 0.6 : 1 }}>
+                <button onClick={onClose} style={btn('#2c2c2c', '#3a3a3a')}>Cancel</button>
+                <button onClick={save} disabled={saving} style={{ ...btn('#f59e0b', '#fff'), opacity: saving ? 0.6 : 1 }}>
                     {saving ? 'Saving…' : isNew ? 'Create Login' : 'Save Changes'}
                 </button>
             </>}>
@@ -266,16 +266,16 @@ function UserModal({ companyId, user, onClose, onSaved }) {
             </div>
             <div>
                 <label style={label}>Role</label>
-                <div style={{ border: '1px solid #24344f', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ border: '1px solid #383838', borderRadius: 8, overflow: 'hidden' }}>
                     {ROLES.map(([key, title, desc]) => (
                         <label key={key} style={{
                             display: 'flex', alignItems: 'flex-start', gap: 9, padding: '10px 12px', cursor: 'pointer',
-                            background: role === key ? '#152a4a' : '#111c33', borderBottom: '1px solid #1e2c46',
+                            background: role === key ? '#372817' : '#1a1a1a', borderBottom: '1px solid #2c2c2c',
                         }}>
                             <input type="radio" name="role" checked={role === key} onChange={() => setRole(key)} style={{ marginTop: 2 }} />
                             <span>
-                                <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#eaeff9' }}>{title}</span>
-                                <span style={{ display: 'block', fontSize: 11.5, color: '#9daec9', marginTop: 1 }}>{desc}</span>
+                                <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#f5f0e8' }}>{title}</span>
+                                <span style={{ display: 'block', fontSize: 11.5, color: '#9a8a75', marginTop: 1 }}>{desc}</span>
                             </span>
                         </label>
                     ))}
@@ -320,34 +320,34 @@ function UsersPanel({ company, currentUser }) {
     return (
         <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontSize: 13, color: '#9daec9' }}>
+                <div style={{ fontSize: 13, color: '#9a8a75' }}>
                     {loading ? 'Loading…' : `${users.length} login${users.length === 1 ? '' : 's'} — all sharing this company’s device access.`}
                 </div>
-                <button onClick={() => setEditing(null)} style={btn('#4da8ff', '#fff')}>+ New Login</button>
+                <button onClick={() => setEditing(null)} style={btn('#f59e0b', '#fff')}>+ New Login</button>
             </div>
 
             {error && <div style={{ marginBottom: 12 }}><Banner kind="error">{error}</Banner></div>}
 
-            <div style={{ border: '1px solid #1e2c46', borderRadius: 10, overflow: 'hidden', background: '#111c33' }}>
+            <div style={{ border: '1px solid #2c2c2c', borderRadius: 10, overflow: 'hidden', background: '#1a1a1a' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead style={{ background: '#16233c' }}>
+                    <thead style={{ background: '#222222' }}>
                         <tr><th style={th}>Name</th><th style={th}>Email</th><th style={th}>Role</th><th style={{ ...th, textAlign: 'right' }}>Actions</th></tr>
                     </thead>
                     <tbody>
                         {!loading && users.length === 0 && (
-                            <tr><td style={{ ...td, textAlign: 'center', color: '#9daec9' }} colSpan={4}>No logins yet.</td></tr>
+                            <tr><td style={{ ...td, textAlign: 'center', color: '#9a8a75' }} colSpan={4}>No logins yet.</td></tr>
                         )}
                         {users.map(u => (
                             <tr key={u.id}>
                                 <td style={td}>
                                     {u.name}
-                                    {u.id === currentUser.id && <span style={{ marginLeft: 7, fontSize: 11, color: '#9daec9' }}>(you)</span>}
+                                    {u.id === currentUser.id && <span style={{ marginLeft: 7, fontSize: 11, color: '#9a8a75' }}>(you)</span>}
                                 </td>
                                 <td style={td}>{u.email}</td>
                                 <td style={td}><span style={rolePill}>{ROLE_LABELS[u.role] || u.role}</span></td>
                                 <td style={{ ...td, textAlign: 'right', whiteSpace: 'nowrap' }}>
                                     <button style={linkBtn} onClick={() => setEditing(u)}>Edit</button>
-                                    <button style={{ ...linkBtn, color: u.id === currentUser.id ? '#24344f' : '#dc2626', marginRight: 0, cursor: u.id === currentUser.id ? 'not-allowed' : 'pointer' }}
+                                    <button style={{ ...linkBtn, color: u.id === currentUser.id ? '#383838' : '#dc2626', marginRight: 0, cursor: u.id === currentUser.id ? 'not-allowed' : 'pointer' }}
                                         disabled={u.id === currentUser.id} onClick={() => remove(u)}>Delete</button>
                                 </td>
                             </tr>
@@ -398,7 +398,7 @@ function DevicesPanel({ company, onRepaired }) {
         }
     };
 
-    if (loading) return <div style={{ fontSize: 13, color: '#9daec9' }}>Asking Traccar as {company.name}…</div>;
+    if (loading) return <div style={{ fontSize: 13, color: '#9a8a75' }}>Asking Traccar as {company.name}…</div>;
 
     if (!state?.ok) {
         return (
@@ -408,9 +408,9 @@ function DevicesPanel({ company, onRepaired }) {
                 {/* Only offered when the account is genuinely gone. For a merely wrong password the
                     fix is Edit > rotate, which keeps Traccar's existing user and its permissions. */}
                 {state?.missing_user && (
-                    <div style={{ marginTop: 14, padding: 14, border: '1px solid #1e2c46', borderRadius: 10, background: '#111c33' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#eaeff9', marginBottom: 4 }}>Re-create this company’s Traccar user</div>
-                        <div style={{ fontSize: 12.5, color: '#9daec9', marginBottom: 12, lineHeight: 1.6 }}>
+                    <div style={{ marginTop: 14, padding: 14, border: '1px solid #2c2c2c', borderRadius: 10, background: '#1a1a1a' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#f5f0e8', marginBottom: 4 }}>Re-create this company’s Traccar user</div>
+                        <div style={{ fontSize: 12.5, color: '#9a8a75', marginBottom: 12, lineHeight: 1.6 }}>
                             Creates <code style={{ fontFamily: 'monospace' }}>{company.traccar_email}</code> in Traccar again and re-links it to
                             group {company.traccar_group_id ?? '—'}. If that group still exists its devices are kept, so the company gets its fleet back.
                             Its Turprotrack logins are untouched.
@@ -419,7 +419,7 @@ function DevicesPanel({ company, onRepaired }) {
                         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                             <input style={{ ...input, flex: 1 }} type="password" value={repairPass}
                                 onChange={e => setRepairPass(e.target.value)} placeholder="New Traccar password (min 6 characters)" />
-                            <button onClick={repair} disabled={repairing} style={{ ...btn('#4da8ff', '#fff'), opacity: repairing ? 0.6 : 1, flexShrink: 0 }}>
+                            <button onClick={repair} disabled={repairing} style={{ ...btn('#f59e0b', '#fff'), opacity: repairing ? 0.6 : 1, flexShrink: 0 }}>
                                 {repairing ? 'Working…' : 'Re-create'}
                             </button>
                         </div>
@@ -440,9 +440,9 @@ function DevicesPanel({ company, onRepaired }) {
             </div>
 
             {state.devices.length > 0 && (
-                <div style={{ border: '1px solid #1e2c46', borderRadius: 10, overflow: 'hidden', background: '#111c33' }}>
+                <div style={{ border: '1px solid #2c2c2c', borderRadius: 10, overflow: 'hidden', background: '#1a1a1a' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead style={{ background: '#16233c' }}>
+                        <thead style={{ background: '#222222' }}>
                             <tr><th style={th}>Device</th><th style={th}>IMEI</th><th style={th}>Group</th><th style={th}>Status</th></tr>
                         </thead>
                         <tbody>
@@ -450,7 +450,7 @@ function DevicesPanel({ company, onRepaired }) {
                                 <tr key={d.id}>
                                     <td style={td}>{d.name}</td>
                                     <td style={{ ...td, fontFamily: 'monospace', fontSize: 12 }}>{d.uniqueId}</td>
-                                    <td style={td}>{d.groupId || <span style={{ color: '#5e7094' }}>none</span>}</td>
+                                    <td style={td}>{d.groupId || <span style={{ color: '#5a4e42' }}>none</span>}</td>
                                     <td style={td}><span style={pill(d.status === 'online')}>{(d.status || 'unknown').toUpperCase()}</span></td>
                                 </tr>
                             ))}
@@ -514,9 +514,9 @@ export default function CompanyManagementPage({ user }) {
         }
 
         return (
-            <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: '#16233c' }}>
-                <h1 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#eaeff9' }}>Users — {user.client.name}</h1>
-                <p style={{ margin: '0 0 16px', fontSize: 13, color: '#9daec9' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: '#222222' }}>
+                <h1 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#f5f0e8' }}>Users — {user.client.name}</h1>
+                <p style={{ margin: '0 0 16px', fontSize: 13, color: '#9a8a75' }}>
                     Everyone here signs in to Turprotrack separately but shares your company’s device access.
                 </p>
                 <UsersPanel company={{ id: user.client.id, name: user.client.name }} currentUser={user} />
@@ -525,23 +525,23 @@ export default function CompanyManagementPage({ user }) {
     }
 
     return (
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: '#16233c' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: '#222222' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, gap: 16 }}>
                 <div>
-                    <h1 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#eaeff9' }}>Companies & Users</h1>
-                    <p style={{ margin: 0, fontSize: 13, color: '#9daec9', maxWidth: 640 }}>
+                    <h1 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: '#f5f0e8' }}>Companies & Users</h1>
+                    <p style={{ margin: 0, fontSize: 13, color: '#9a8a75', maxWidth: 640 }}>
                         Each company is one Traccar group and one Traccar user. Its logins all authenticate as that user,
                         so Traccar itself keeps one company out of another’s devices.
                     </p>
                 </div>
-                <button onClick={() => setEditing(null)} style={{ ...btn('#4da8ff', '#fff'), flexShrink: 0 }}>+ New Company</button>
+                <button onClick={() => setEditing(null)} style={{ ...btn('#f59e0b', '#fff'), flexShrink: 0 }}>+ New Company</button>
             </div>
 
             {error && <div style={{ marginBottom: 14 }}><Banner kind="error">{error}</Banner></div>}
 
-            <div style={{ border: '1px solid #1e2c46', borderRadius: 10, overflow: 'hidden', background: '#111c33', marginBottom: 20 }}>
+            <div style={{ border: '1px solid #2c2c2c', borderRadius: 10, overflow: 'hidden', background: '#1a1a1a', marginBottom: 20 }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead style={{ background: '#16233c' }}>
+                    <thead style={{ background: '#222222' }}>
                         <tr>
                             <th style={th}>Company</th>
                             <th style={th}>Traccar user</th>
@@ -552,15 +552,15 @@ export default function CompanyManagementPage({ user }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {loading && <tr><td style={{ ...td, textAlign: 'center', color: '#9daec9' }} colSpan={6}>Loading…</td></tr>}
+                        {loading && <tr><td style={{ ...td, textAlign: 'center', color: '#9a8a75' }} colSpan={6}>Loading…</td></tr>}
                         {!loading && companies.length === 0 && (
-                            <tr><td style={{ ...td, textAlign: 'center', color: '#9daec9' }} colSpan={6}>No companies yet. Create one to get started.</td></tr>
+                            <tr><td style={{ ...td, textAlign: 'center', color: '#9a8a75' }} colSpan={6}>No companies yet. Create one to get started.</td></tr>
                         )}
                         {companies.map(c => (
-                            <tr key={c.id} style={{ background: openCompany?.id === c.id ? '#16233c' : '#111c33' }}>
+                            <tr key={c.id} style={{ background: openCompany?.id === c.id ? '#222222' : '#1a1a1a' }}>
                                 <td style={{ ...td, fontWeight: 600 }}>{c.name}</td>
                                 <td style={{ ...td, fontFamily: 'monospace', fontSize: 12 }}>{c.traccar_email || <span style={{ color: '#dc2626', fontFamily: 'inherit' }}>none</span>}</td>
-                                <td style={td}>{c.traccar_group_id ?? <span style={{ color: '#5e7094' }}>—</span>}</td>
+                                <td style={td}>{c.traccar_group_id ?? <span style={{ color: '#5a4e42' }}>—</span>}</td>
                                 <td style={td}>{c.users_count}</td>
                                 <td style={td}><span style={pill(c.status === 'active')}>{c.status}</span></td>
                                 <td style={{ ...td, textAlign: 'right', whiteSpace: 'nowrap' }}>
@@ -575,16 +575,16 @@ export default function CompanyManagementPage({ user }) {
             </div>
 
             {openCompany && (
-                <div style={{ border: '1px solid #1e2c46', borderRadius: 10, background: '#111c33', overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '12px 16px', borderBottom: '1px solid #1e2c46' }}>
-                        <strong style={{ fontSize: 14, color: '#eaeff9', marginRight: 10 }}>{openCompany.name}</strong>
+                <div style={{ border: '1px solid #2c2c2c', borderRadius: 10, background: '#1a1a1a', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '12px 16px', borderBottom: '1px solid #2c2c2c' }}>
+                        <strong style={{ fontSize: 14, color: '#f5f0e8', marginRight: 10 }}>{openCompany.name}</strong>
                         {[['users', 'Logins'], ['devices', 'Devices it can see']].map(([key, text]) => (
                             <button key={key} onClick={() => setTab(key)} style={{
                                 padding: '6px 12px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
-                                background: tab === key ? '#152a4a' : 'transparent', color: tab === key ? '#7fc4ff' : '#9daec9',
+                                background: tab === key ? '#372817' : 'transparent', color: tab === key ? '#f59e0b' : '#9a8a75',
                             }}>{text}</button>
                         ))}
-                        <button onClick={() => setOpenCompany(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 15 }}>✕</button>
+                        <button onClick={() => setOpenCompany(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#5a4e42', fontSize: 15 }}>✕</button>
                     </div>
                     <div style={{ padding: 16 }}>
                         {tab === 'users'

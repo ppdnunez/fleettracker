@@ -17,16 +17,16 @@ function simStatus(dateStr, notifyDays) {
     if (days <= (notifyDays ?? DEFAULT_NOTICE_DAYS)) return 'Expiring soon';
     return 'Normal';
 }
-const STATUS_COLOR = { Expired: '#ef4444', 'Expiring soon': '#f59e0b', Normal: '#16a34a', 'Not set': '#9ca3af' };
+const STATUS_COLOR = { Expired: '#ef4444', 'Expiring soon': '#f59e0b', Normal: '#16a34a', 'Not set': '#9a8a75' };
 
 function Badge({ text }) {
-    const color = STATUS_COLOR[text] || '#9ca3af';
+    const color = STATUS_COLOR[text] || '#9a8a75';
     return <span style={{ fontSize: 11.5, fontWeight: 700, color, background: `${color}1a`, padding: '3px 9px', borderRadius: 999 }}>{text}</span>;
 }
 
 const fieldStyle = { display: 'flex', flexDirection: 'column', gap: 4 };
-const labelStyle = { fontSize: 11.5, color: '#9daec9', fontWeight: 600 };
-const inputStyle = { padding: '8px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box', width: '100%', background: '#111c33', color: '#eaeff9' };
+const labelStyle = { fontSize: 11.5, color: '#9a8a75', fontWeight: 600 };
+const inputStyle = { padding: '8px 10px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box', width: '100%', background: '#1a1a1a', color: '#f5f0e8' };
 
 // Edits only the SIM fields, but loads and re-submits the vehicle's full settings row. The two
 // relay booleans are `required` on PUT /vehicle-settings/{imei}, so they have to be sent, and
@@ -99,12 +99,12 @@ function SimSettingsModal({ device, pickableDevices, onClose, onSaved }) {
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <div style={{ background: '#111c33', borderRadius: 12, width: 420, boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>
+            <div style={{ background: '#1a1a1a', borderRadius: 12, width: 420, boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #2c2c2c' }}>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#f5f0e8' }}>
                         {device ? `SIM Data — ${device.name || device.imei}` : 'Add SIM Data'}
                     </h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5a4e42', fontSize: 16 }}>✕</button>
                 </div>
 
                 <div style={{ padding: 20 }}>
@@ -126,7 +126,7 @@ function SimSettingsModal({ device, pickableDevices, onClose, onSaved }) {
                     )}
 
                     {loading ? (
-                        <p style={{ fontSize: 13, color: '#5e7094' }}>Loading…</p>
+                        <p style={{ fontSize: 13, color: '#5a4e42' }}>Loading…</p>
                     ) : (
                         <>
                             <div style={{ ...fieldStyle, marginBottom: 14 }}>
@@ -144,16 +144,16 @@ function SimSettingsModal({ device, pickableDevices, onClose, onSaved }) {
                                     <input type="number" min="1" max="365" placeholder="Default 14" value={simNotifyDays} onChange={e => setSimNotifyDays(e.target.value)} disabled={fieldsDisabled} style={inputStyle} />
                                 </div>
                             </div>
-                            <p style={{ margin: '10px 0 0', fontSize: 11.5, color: '#5e7094' }}>
+                            <p style={{ margin: '10px 0 0', fontSize: 11.5, color: '#5a4e42' }}>
                                 Subscribers to the "SIM Card Data/Load Expiry" alert (Alert Recipients) are emailed once the expiry falls within this window.
                             </p>
                         </>
                     )}
                 </div>
 
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                    <button onClick={handleSave} disabled={saving || fieldsDisabled} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: (saving || fieldsDisabled) ? 'not-allowed' : 'pointer' }}>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #2c2c2c', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #2c2c2c', background: '#1a1a1a', color: '#9a8a75', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={handleSave} disabled={saving || fieldsDisabled} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#d97706', color: '#fff', fontSize: 13, fontWeight: 700, cursor: (saving || fieldsDisabled) ? 'not-allowed' : 'pointer' }}>
                         {saving ? 'Saving…' : 'Save'}
                     </button>
                 </div>
@@ -162,9 +162,9 @@ function SimSettingsModal({ device, pickableDevices, onClose, onSaved }) {
     );
 }
 
-const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
-const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, borderBottom: '1px solid #1e2c46', color: '#eaeff9' };
-const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: 5, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
+const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#d5c9b8', borderBottom: '2px solid #2c2c2c', whiteSpace: 'nowrap', background: '#222222' };
+const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, borderBottom: '1px solid #2c2c2c', color: '#f5f0e8' };
+const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#d97706', padding: 5, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
 
 export default function SimDataManagementPage() {
     const [devices, setDevices]   = useState([]); // every tracker Traccar shows this account
@@ -226,16 +226,16 @@ export default function SimDataManagementPage() {
     );
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#111c33' }}>
-            <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid #1e2c46', flexShrink: 0 }}>
-                <p style={{ margin: 0, fontSize: 12.5, color: '#9daec9' }}>Track each tracker's SIM card data/load expiry and get emailed before it runs out.</p>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#1a1a1a' }}>
+            <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid #2c2c2c', flexShrink: 0 }}>
+                <p style={{ margin: 0, fontSize: 12.5, color: '#9a8a75' }}>Track each tracker's SIM card data/load expiry and get emailed before it runs out.</p>
             </div>
 
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #1e2c46', flexShrink: 0, display: 'flex', gap: 8 }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #2c2c2c', flexShrink: 0, display: 'flex', gap: 8 }}>
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, plate no., IMEI, or SIM number"
-                    style={{ width: '100%', maxWidth: 420, boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none' }} />
-                <button onClick={load} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Refresh</button>
-                <button onClick={() => setEditing('new')} style={{ marginLeft: 'auto', padding: '7px 14px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add SIM Data</button>
+                    style={{ width: '100%', maxWidth: 420, boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, outline: 'none' }} />
+                <button onClick={load} style={{ padding: '7px 14px', background: '#1a1a1a', color: '#d5c9b8', border: '1px solid #383838', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Refresh</button>
+                <button onClick={() => setEditing('new')} style={{ marginLeft: 'auto', padding: '7px 14px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Add SIM Data</button>
             </div>
 
             {error && (
@@ -259,9 +259,9 @@ export default function SimDataManagementPage() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
+                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5a4e42' }}>Loading…</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No devices found.</td></tr>
+                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5a4e42' }}>No devices found.</td></tr>
                         ) : filtered.map(r => (
                             <tr key={r.imei}>
                                 <td style={{ ...TD, fontWeight: 500 }}>{r.name}</td>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\ModuleAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -77,6 +78,11 @@ class AuthController extends Controller
             // Lets the UI show the company's own user administration without having to infer it
             // from role and client together, and mirrors what CompanyUserController enforces.
             'is_company_admin' => $user->isCompanyAdmin(),
+            // What the navigation may offer, decided by the same table the middleware
+            // refuses requests with. Sending it rather than letting the browser infer it
+            // from the role means the two can never disagree about what a role can reach.
+            'modules'   => ModuleAccess::forUser($user),
+            'can_write' => ModuleAccess::canWrite($user),
             'client'   => $user->client ? [
                 'id'     => $user->client->id,
                 'name'   => $user->client->name,

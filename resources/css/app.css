@@ -8,10 +8,10 @@
         margin: 0;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
         -webkit-font-smoothing: antialiased;
-        background: #080d18;
+        background: #0f0f0f;
         /* Inherited by anything that never set a colour of its own — which, on light panels, was
            relying on the browser's black. */
-        color: #eaeff9;
+        color: #f5f0e8;
     }
 
     /* Form controls are styled inline all over the app, but almost none of them set a text colour
@@ -20,18 +20,18 @@
        in three hundred inline styles. Anything that does set its own colour still wins, because
        inline styles beat a stylesheet. */
     input, select, textarea {
-        color: #eaeff9;
+        color: #f5f0e8;
         color-scheme: dark;
     }
     /* The native dropdown list is painted by the OS, not by the select's own background. */
-    option { background: #16233c; color: #eaeff9; }
-    input::placeholder, textarea::placeholder { color: #5e7094; }
+    option { background: #222222; color: #f5f0e8; }
+    input::placeholder, textarea::placeholder { color: #5a4e42; }
 }
 
 @layer utilities {
     .scrollbar-thin::-webkit-scrollbar { width: 4px; }
     .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-    .scrollbar-thin::-webkit-scrollbar-thumb { background: #24344f; border-radius: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #383838; border-radius: 4px; }
 }
 
 /* Permanent geofence name labels drawn at each zone's centre. Leaflet's default tooltip chrome
@@ -43,7 +43,7 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    color: #0f172a;
+    color: #0f0f0f;
     font-size: 12px;
     font-weight: 700;
     white-space: nowrap;
@@ -58,10 +58,10 @@
    compact dark chip instead, and it never intercepts clicks meant for the marker under it. */
 .leaflet-tooltip.device-label {
     background: rgba(12, 19, 34, 0.92);
-    border: 1px solid #1e2c46;
+    border: 1px solid #2c2c2c;
     border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-    color: #eaeff9;
+    color: #f5f0e8;
     font-size: 11.5px;
     font-weight: 700;
     padding: 3px 7px;
@@ -85,29 +85,29 @@
    styles cannot reach markup Leaflet creates itself. */
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
-    background: #111c33;
-    color: #eaeff9;
+    background: #1a1a1a;
+    color: #f5f0e8;
     box-shadow: 0 3px 14px rgba(0, 0, 0, 0.5);
 }
-.leaflet-popup-content-wrapper { border: 1px solid #1e2c46; }
-.leaflet-container a.leaflet-popup-close-button { color: #5e7094; }
-.leaflet-container a.leaflet-popup-close-button:hover { color: #eaeff9; }
+.leaflet-popup-content-wrapper { border: 1px solid #2c2c2c; }
+.leaflet-container a.leaflet-popup-close-button { color: #5a4e42; }
+.leaflet-container a.leaflet-popup-close-button:hover { color: #f5f0e8; }
 /* Distance bar. Leaflet draws it as a white-bordered box with black text on the map. */
 .leaflet-control-scale-line {
-    background: rgba(12, 19, 34, 0.82);
-    border: 1px solid #24344f;
+    background: rgba(26, 26, 26, 0.9);
+    border: 1px solid #383838;
     border-top: none;
-    color: #cfdcf0;
+    color: #d5c9b8;
     font-size: 11px;
     font-weight: 600;
     text-shadow: none;
 }
 
 .leaflet-control-attribution {
-    background: rgba(12, 19, 34, 0.82) !important;
-    color: #5e7094;
+    background: rgba(26, 26, 26, 0.9) !important;
+    color: #5a4e42;
 }
-.leaflet-control-attribution a { color: #7fc4ff; }
+.leaflet-control-attribution a { color: #f59e0b; }
 
 /* ══════════════════════════════════════════════════════════════════ */
 /*  Fleet cockpit dashboard                                           */
@@ -117,16 +117,16 @@
 /* ══════════════════════════════════════════════════════════════════ */
 
 .mine-cockpit-canvas {
-    --mine-ground: #060a14;
-    --mine-panel: #0c1322;
-    --mine-raised: #121c32;
-    --mine-inset: #0a1120;
-    --mine-border: #1e2c46;
-    --mine-hairline: #2a3c5c;
-    --mine-text: #eaeff9;
-    --mine-secondary: #9daec9;
-    --mine-muted: #5e7094;
-    --mine-blue: #4da8ff;
+    --mine-ground: #0f0f0f;
+    --mine-panel: #141414;
+    --mine-raised: #1a1a1a;
+    --mine-inset: #101010;
+    --mine-border: #2c2c2c;
+    --mine-hairline: #3a3a3a;
+    --mine-text: #f5f0e8;
+    --mine-secondary: #9a8a75;
+    --mine-muted: #5a4e42;
+    --mine-accent: #f59e0b;
 
     flex: 1;
     min-height: 0;
@@ -134,7 +134,7 @@
     padding: 28px;
     color: var(--mine-text);
     background:
-        radial-gradient(ellipse 900px 620px at 4% -8%, rgba(77, 168, 255, 0.07), transparent 58%),
+        radial-gradient(ellipse 900px 620px at 4% -8%, rgba(217, 119, 6, 0.07), transparent 58%),
         radial-gradient(ellipse 720px 520px at 104% 8%, rgba(67, 212, 212, 0.045), transparent 55%),
         var(--mine-ground);
     scrollbar-color: var(--mine-border) transparent;
@@ -152,59 +152,67 @@
 
 /* ── KPI strip ─────────────────────────────────────────────────── */
 .mine-kpi-grid {
+    /* Separate cards rather than one joined block. The tiles were hairline-divided cells of a
+       single bordered strip; as five distinct cards each figure reads as its own measurement,
+       which is what a stat row is for. */
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 1px;
-    margin-bottom: 28px;
-    overflow: hidden;
-    border: 1px solid var(--mine-border);
-    border-radius: 8px;
-    background: var(--mine-border);
-    box-shadow: 0 12px 28px -22px rgba(0, 0, 0, 0.85);
+    gap: 16px;
+    margin-bottom: 24px;
 }
-.mine-kpi-tile { min-width: 0; padding: 11px 20px 12px; background: var(--mine-raised); }
+.mine-kpi-tile {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 18px;
+    background: var(--mine-raised);
+    border: 1px solid var(--mine-border);
+    border-radius: 12px;
+}
 .mine-kpi-label {
     display: flex;
     align-items: center;
     gap: 7px;
-    margin-bottom: 6px;
     overflow: hidden;
     color: var(--mine-muted);
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.075em;
+    letter-spacing: 0.12em;
     text-overflow: ellipsis;
     text-transform: uppercase;
     white-space: nowrap;
 }
 .mine-kpi-label i {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     flex: none;
-    border-radius: 2px;
+    border-radius: 50%;
     background: var(--mine-kpi-color);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--mine-kpi-color) 45%, transparent);
 }
 .mine-kpi-value {
     overflow: hidden;
     color: var(--mine-text);
-    font-family: Georgia, Cambria, 'Times New Roman', serif;
-    font-size: 26px;
+    font-family: Oswald, 'Barlow Condensed', system-ui, sans-serif;
+    font-size: 32px;
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 1;
     letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.mine-kpi-unit {
+    margin-left: 2px;
+    font-size: 0.55em;
+    font-weight: 600;
+    opacity: 0.7;
+}
 .mine-kpi-note {
-    margin-top: 6px;
-    padding-top: 6px;
     overflow: hidden;
     color: var(--mine-muted);
-    border-top: 1px dashed var(--mine-border);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 11px;
+    font-size: 12px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -214,9 +222,8 @@
     margin-bottom: 28px;
     overflow: hidden;
     border: 1px solid var(--mine-border);
-    border-radius: 8px;
+    border-radius: 14px;
     background: var(--mine-raised);
-    box-shadow: 0 12px 28px -22px rgba(0, 0, 0, 0.9);
 }
 .mine-panel-header {
     min-height: 72px;
@@ -241,17 +248,8 @@
     line-height: 1.55;
 }
 
-.mine-live-map-frame {
-    height: 560px;
-    padding: 18px;
-    background:
-        linear-gradient(rgba(42, 60, 92, 0.25) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(42, 60, 92, 0.25) 1px, transparent 1px),
-        var(--mine-inset);
-    background-size: 36px 36px;
-}
-/* Leaflet paints its own light chrome; keep it inside the framed inset. */
-.mine-live-map-frame > * { height: 100%; border-radius: 4px; overflow: hidden; }
+.mine-live-map-frame { height: 560px; }
+.mine-live-map-frame > * { height: 100%; }
 
 /* ── live operations view: device rail | map | detail rail ─────── */
 .mine-map-layout {
@@ -259,7 +257,6 @@
     gap: 1px;
     height: 100%;
     background: var(--mine-border);
-    border-radius: 4px;
     overflow: hidden;
 }
 /* Flex so MapCanvas's own flex:1 root fills the stage; the legend is absolute and stays
@@ -274,7 +271,7 @@
     min-height: 0;
     background: var(--mine-raised);
 }
-.mine-device-rail { width: 236px; }
+.mine-device-rail { width: 260px; }
 .mine-detail-rail { width: 292px; overflow-y: auto; }
 
 .mine-rail-head {
@@ -291,25 +288,52 @@
     letter-spacing: 0.075em;
     text-transform: uppercase;
 }
-.mine-rail-search { padding: 10px 12px; border-bottom: 1px solid var(--mine-border); }
+.mine-rail-count {
+    padding: 1px 7px;
+    border: 1px solid #78440a;
+    border-radius: 4px;
+    background: rgba(217, 119, 6, 0.15);
+    color: var(--mine-accent);
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+}
+
+.mine-rail-search { padding: 10px 12px; }
 .mine-rail-search input {
     width: 100%;
-    padding: 7px 10px;
+    padding: 8px 10px 8px 30px;
     color: var(--mine-text);
     border: 1px solid var(--mine-border);
-    border-radius: 5px;
-    background: var(--mine-inset);
+    border-radius: 6px;
+    background: #222222;
     font-size: 12.5px;
     outline: none;
 }
+/* The magnifier is a background image rather than an element: the input has to stay a single
+   focusable control, and a sibling icon would need a wrapper that positions over it. */
+.mine-rail-search {
+    position: relative;
+}
+.mine-rail-search::before {
+    content: '';
+    position: absolute;
+    left: 21px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    margin-top: -6px;
+    pointer-events: none;
+    opacity: 0.5;
+    background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a8a75' stroke-width='2'><circle cx='11' cy='11' r='8'/><path d='M21 21l-4.35-4.35'/></svg>");
+}
 .mine-rail-search input::placeholder { color: var(--mine-muted); }
-.mine-rail-search input:focus { border-color: var(--mine-blue); }
+.mine-rail-search input:focus { border-color: var(--mine-accent); }
 
 .mine-device-scroll { flex: 1; min-height: 0; overflow-y: auto; }
 .mine-device-item {
     width: 100%;
     display: block;
-    padding: 10px 13px;
+    padding: 11px 14px;
     border: none;
     border-bottom: 1px solid var(--mine-border);
     border-left: 3px solid transparent;
@@ -318,8 +342,8 @@
     text-align: left;
     transition: background 0.14s, border-left-color 0.14s;
 }
-.mine-device-item:hover { background: var(--mine-inset); }
-.mine-device-item.is-selected { border-left-color: var(--mine-blue); background: #16233c; }
+.mine-device-item:hover { background: #222222; }
+.mine-device-item.is-selected { border-left-color: var(--mine-accent); background: #2e2110; }
 /* Name on the left, status icons pinned right. The icon column never shrinks and the name
    truncates instead, so a long device name pushes the icons off the row rather than through
    them — which is exactly the collision this layout exists to prevent. */
@@ -344,9 +368,14 @@
 /* Alarm wording gets its own line: it is the one thing here that can be long, and it must not
    squeeze the state or the signal off the row above. */
 .mine-device-alarm {
-    display: block;
-    margin-top: 4px;
+    display: inline-block;
+    max-width: 100%;
+    margin-top: 6px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(239, 68, 68, 0.12);
     color: #fca5a5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 10.5px;
     font-weight: 700;
     overflow: hidden;
@@ -356,7 +385,7 @@
 .mine-device-imei {
     display: block;
     margin-bottom: 5px;
-    color: var(--mine-blue);
+    color: var(--mine-muted);
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 11px;
 }
@@ -494,8 +523,8 @@
     background: var(--mine-secondary);
     transition: transform 0.16s, background 0.16s;
 }
-.mine-unit-switch button[aria-pressed='true'] { background: #14304f; }
-.mine-unit-switch button[aria-pressed='true']::after { background: var(--mine-blue); transform: translateX(16px); }
+.mine-unit-switch button[aria-pressed='true'] { background: #2a1f0c; }
+.mine-unit-switch button[aria-pressed='true']::after { background: var(--mine-accent); transform: translateX(16px); }
 
 @media (max-width: 1180px) {
     .mine-map-layout { flex-wrap: wrap; }

@@ -14,7 +14,7 @@ const ALERT_DIRECTIONS = [
     { value: 'exit',  label: 'Exit only' },
     { value: 'both',  label: 'Both' },
 ];
-const SHAPE_STYLE = { color: '#3b82f6', weight: 2, fillOpacity: 0.15 };
+const SHAPE_STYLE = { color: '#d97706', weight: 2, fillOpacity: 0.15 };
 const SHAPE_STYLE_SELECTED = { color: '#f59e0b', weight: 3, fillOpacity: 0.25 };
 
 /* ── Traccar's WKT subset (CIRCLE / POLYGON / LINESTRING) <-> Leaflet geometry ──
@@ -157,14 +157,14 @@ function DrawLayer({ geofences, selectedId, editingId, onCreate, onEditSave, onE
 
     return (
         <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 500, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ background: '#111c33', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ background: '#1a1a1a', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {TOOLS.map(t => (
                     <button key={t.key} title={t.label} disabled={!ready} onClick={() => startTool(t.key)}
                         style={{
                             width: 32, height: 32, fontSize: 15, lineHeight: 1,
-                            border: activeTool === t.key ? '1.5px solid #3b82f6' : '1px solid #1e2c46',
-                            borderRadius: 6, background: activeTool === t.key ? '#152a4a' : '#111c33',
-                            cursor: ready ? 'pointer' : 'not-allowed', color: t.key === 'delete' ? '#ef4444' : '#cfdcf0',
+                            border: activeTool === t.key ? '1.5px solid #d97706' : '1px solid #2c2c2c',
+                            borderRadius: 6, background: activeTool === t.key ? '#372817' : '#1a1a1a',
+                            cursor: ready ? 'pointer' : 'not-allowed', color: t.key === 'delete' ? '#ef4444' : '#d5c9b8',
                         }}>
                         {t.icon}
                     </button>
@@ -172,23 +172,23 @@ function DrawLayer({ geofences, selectedId, editingId, onCreate, onEditSave, onE
             </div>
 
             {pending && (
-                <div style={{ background: '#111c33', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 10, width: 200 }}>
-                    <label style={{ display: 'block', fontSize: 11.5, color: '#9daec9', fontWeight: 600, marginBottom: 4 }}>Geofence name</label>
+                <div style={{ background: '#1a1a1a', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 10, width: 200 }}>
+                    <label style={{ display: 'block', fontSize: 11.5, color: '#9a8a75', fontWeight: 600, marginBottom: 4 }}>Geofence name</label>
                     <input autoFocus value={pendingName} onChange={e => setPendingName(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', padding: '6px 8px', border: '1px solid #24344f', borderRadius: 5, fontSize: 13, outline: 'none', marginBottom: 8 }} />
+                        style={{ width: '100%', boxSizing: 'border-box', padding: '6px 8px', border: '1px solid #383838', borderRadius: 5, fontSize: 13, outline: 'none', marginBottom: 8 }} />
                     <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={confirmPending} style={{ flex: 1, padding: '6px 0', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 5, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Save</button>
-                        <button onClick={cancelPending} style={{ flex: 1, padding: '6px 0', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 5, fontSize: 12.5, cursor: 'pointer' }}>Cancel</button>
+                        <button onClick={confirmPending} style={{ flex: 1, padding: '6px 0', background: '#d97706', color: '#fff', border: 'none', borderRadius: 5, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+                        <button onClick={cancelPending} style={{ flex: 1, padding: '6px 0', background: '#1a1a1a', color: '#d5c9b8', border: '1px solid #383838', borderRadius: 5, fontSize: 12.5, cursor: 'pointer' }}>Cancel</button>
                     </div>
                 </div>
             )}
 
             {editingId && (
-                <div style={{ background: '#111c33', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 10, width: 200, fontSize: 12 }}>
-                    <p style={{ margin: '0 0 8px', color: '#cfdcf0' }}>Drag the shape to edit it, then save.</p>
+                <div style={{ background: '#1a1a1a', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', padding: 10, width: 200, fontSize: 12 }}>
+                    <p style={{ margin: '0 0 8px', color: '#d5c9b8' }}>Drag the shape to edit it, then save.</p>
                     <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={saveEdit} style={{ flex: 1, padding: '6px 0', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 5, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Save</button>
-                        <button onClick={onEditCancel} style={{ flex: 1, padding: '6px 0', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 5, fontSize: 12.5, cursor: 'pointer' }}>Cancel</button>
+                        <button onClick={saveEdit} style={{ flex: 1, padding: '6px 0', background: '#d97706', color: '#fff', border: 'none', borderRadius: 5, fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+                        <button onClick={onEditCancel} style={{ flex: 1, padding: '6px 0', background: '#1a1a1a', color: '#d5c9b8', border: '1px solid #383838', borderRadius: 5, fontSize: 12.5, cursor: 'pointer' }}>Cancel</button>
                     </div>
                 </div>
             )}
@@ -236,7 +236,7 @@ function WatchState({ zone, devices }) {
     return (
         <span style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: tone, flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: tone === '#4ade80' ? '#5e7094' : tone }}>{text}</span>
+            <span style={{ fontSize: 11, color: tone === '#4ade80' ? '#5a4e42' : tone }}>{text}</span>
         </span>
     );
 }
@@ -247,7 +247,7 @@ function LinkedDevices({ zone, devices, onChanged }) {
 
     if (!zone) {
         return (
-            <div style={{ padding: '12px 16px', borderTop: '1px solid #1e2c46', fontSize: 12, color: '#5e7094' }}>
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #2c2c2c', fontSize: 12, color: '#5a4e42' }}>
                 Select a geofence to manage its linked devices.
             </div>
         );
@@ -278,12 +278,12 @@ function LinkedDevices({ zone, devices, onChanged }) {
     };
 
     return (
-        <div style={{ borderTop: '1px solid #1e2c46', padding: '10px 14px', maxHeight: 200, overflowY: 'auto', flexShrink: 0 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: '#9daec9', marginBottom: 8, letterSpacing: 0.3 }}>
+        <div style={{ borderTop: '1px solid #2c2c2c', padding: '10px 14px', maxHeight: 200, overflowY: 'auto', flexShrink: 0 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: '#9a8a75', marginBottom: 8, letterSpacing: 0.3 }}>
                 Linked Devices — {zone.name}
             </div>
             {devices.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 12, color: '#5e7094' }}>No devices available.</p>
+                <p style={{ margin: 0, fontSize: 12, color: '#5a4e42' }}>No devices available.</p>
             ) : devices.map(d => {
                 const linked = directionByImei[d.uniqueId] !== undefined;
                 return (
@@ -293,14 +293,14 @@ function LinkedDevices({ zone, devices, onChanged }) {
                             checked={linked}
                             disabled={!!busy}
                             onChange={() => toggle(d.uniqueId, linked)}
-                            style={{ accentColor: '#3b82f6', width: 15, height: 15, flexShrink: 0 }}
+                            style={{ accentColor: '#d97706', width: 15, height: 15, flexShrink: 0 }}
                         />
-                        <span style={{ flex: 1, fontSize: 12.5, color: '#cfdcf0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                        <span style={{ flex: 1, fontSize: 12.5, color: '#d5c9b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
                         <select
                             value={directionByImei[d.uniqueId] ?? 'both'}
                             disabled={!linked || !!busy}
                             onChange={e => setDirection(d.uniqueId, e.target.value)}
-                            style={{ padding: '3px 6px', border: '1px solid #24344f', borderRadius: 5, fontSize: 12, background: linked ? '#111c33' : '#16233c', cursor: linked ? 'pointer' : 'not-allowed', flexShrink: 0 }}
+                            style={{ padding: '3px 6px', border: '1px solid #383838', borderRadius: 5, fontSize: 12, background: linked ? '#1a1a1a' : '#222222', cursor: linked ? 'pointer' : 'not-allowed', flexShrink: 0 }}
                         >
                             {ALERT_DIRECTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
@@ -389,9 +389,9 @@ export default function GeofencePage({ onBack }) {
     return (
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
             {/* Left panel */}
-            <div style={{ width: 280, minWidth: 280, display: 'flex', flexDirection: 'column', background: '#111c33', borderRight: '1px solid #1e2c46' }}>
-                <div style={{ height: 58, display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', borderBottom: '1px solid #1e2c46', flexShrink: 0 }}>
-                    <button onClick={onBack} title="Back" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#cfdcf0', fontSize: 18, display: 'flex' }}>←</button>
+            <div style={{ width: 280, minWidth: 280, display: 'flex', flexDirection: 'column', background: '#1a1a1a', borderRight: '1px solid #2c2c2c' }}>
+                <div style={{ height: 58, display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', borderBottom: '1px solid #2c2c2c', flexShrink: 0 }}>
+                    <button onClick={onBack} title="Back" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d5c9b8', fontSize: 18, display: 'flex' }}>←</button>
                 </div>
 
                 {error && (
@@ -402,19 +402,19 @@ export default function GeofencePage({ onBack }) {
 
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                     {loading ? (
-                        <p style={{ textAlign: 'center', color: '#5e7094', fontSize: 13, padding: 24 }}>Loading…</p>
+                        <p style={{ textAlign: 'center', color: '#5a4e42', fontSize: 13, padding: 24 }}>Loading…</p>
                     ) : geofences.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: '#5e7094', fontSize: 13, padding: 24 }}>No geofences yet. Draw one on the map to get started.</p>
+                        <p style={{ textAlign: 'center', color: '#5a4e42', fontSize: 13, padding: 24 }}>No geofences yet. Draw one on the map to get started.</p>
                     ) : geofences.map(g => (
                         <div key={g.id} onClick={() => setSelectedId(g.id)}
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid #1e2c46', background: selectedId === g.id ? '#152a4a' : 'transparent' }}>
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid #2c2c2c', background: selectedId === g.id ? '#372817' : 'transparent' }}>
                             <span style={{ minWidth: 0, flex: 1 }}>
-                                <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: '#eaeff9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                                <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: '#f5f0e8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
                                 <WatchState zone={g} devices={devices} />
                             </span>
                             <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                                 <button onClick={e => { e.stopPropagation(); setSelectedId(g.id); setEditingId(g.id); }} title="Edit"
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9daec9', padding: 4 }}>✏</button>
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9a8a75', padding: 4 }}>✏</button>
                                 <button onClick={e => { e.stopPropagation(); requestDelete(g.id); }} title="Delete"
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4 }}>🗑</button>
                             </div>
@@ -454,13 +454,13 @@ export default function GeofencePage({ onBack }) {
 
                 {pendingDeleteId && (
                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                        <div style={{ background: '#111c33', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
-                            <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Delete geofence?</h3>
-                            <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#9daec9' }}>
+                        <div style={{ background: '#1a1a1a', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
+                            <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#f5f0e8' }}>Delete geofence?</h3>
+                            <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#9a8a75' }}>
                                 "{geofences.find(g => g.id === pendingDeleteId)?.name}" will be permanently removed.
                             </p>
                             <div style={{ display: 'flex', gap: 8 }}>
-                                <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                                <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #2c2c2c', background: '#1a1a1a', color: '#9a8a75', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                                 <button onClick={confirmDelete} style={{ flex: 1, padding: 9, borderRadius: 7, border: 'none', background: '#ef4444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
                             </div>
                         </div>

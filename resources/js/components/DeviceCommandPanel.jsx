@@ -24,19 +24,19 @@ export const REPORT_METHOD_OPTIONS = [
     { value: '1', label: '1 — GPRS + SMS' },
 ];
 
-export const sectionStyle = { border: '1px solid #1e2c46', borderRadius: 8, padding: 14, marginBottom: 14 };
-export const sectionTitle = { margin: '0 0 10px', fontSize: 12.5, fontWeight: 700, color: '#cfdcf0', textTransform: 'uppercase', letterSpacing: 0.4 };
+export const sectionStyle = { border: '1px solid #2c2c2c', borderRadius: 8, padding: 14, marginBottom: 14 };
+export const sectionTitle = { margin: '0 0 10px', fontSize: 12.5, fontWeight: 700, color: '#d5c9b8', textTransform: 'uppercase', letterSpacing: 0.4 };
 export const rowStyle     = { display: 'flex', alignItems: 'flex-end', gap: 10, flexWrap: 'wrap' };
-export const labelStyle   = { display: 'block', fontSize: 11.5, color: '#9daec9', fontWeight: 600, marginBottom: 5 };
-export const inputStyle   = { padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', background: '#111c33', color: '#eaeff9' };
+export const labelStyle   = { display: 'block', fontSize: 11.5, color: '#9a8a75', fontWeight: 600, marginBottom: 5 };
+export const inputStyle   = { padding: '7px 10px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, outline: 'none', background: '#1a1a1a', color: '#f5f0e8' };
 export const selectStyle  = { ...inputStyle, cursor: 'pointer' };
-export const hintStyle    = { margin: '10px 0 0', fontSize: 11.5, color: '#5e7094', lineHeight: 1.4 };
+export const hintStyle    = { margin: '10px 0 0', fontSize: 11.5, color: '#5a4e42', lineHeight: 1.4 };
 
 export const btnStyle = (disabled) => ({
-    padding: '7px 14px', borderRadius: 6, border: '1px solid #3b82f6', background: '#111c33', color: '#3b82f6',
+    padding: '7px 14px', borderRadius: 6, border: '1px solid #d97706', background: '#1a1a1a', color: '#d97706',
     fontSize: 12.5, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, whiteSpace: 'nowrap',
 });
-export const btnPrimary = (disabled) => ({ ...btnStyle(disabled), background: '#3b82f6', color: '#fff' });
+export const btnPrimary = (disabled) => ({ ...btnStyle(disabled), background: '#d97706', color: '#fff' });
 
 /** Function switch + reporting method, the pair every alert type in these panels starts with. */
 export function SwitchAndMethod({ enabled, setEnabled, method, setMethod }) {
@@ -120,12 +120,12 @@ export function CommandLog({ log }) {
     return (
         <div style={{ marginTop: 14 }}>
             <p style={sectionTitle}>Command Log</p>
-            <div style={{ maxHeight: 160, overflowY: 'auto', border: '1px solid #1e2c46', borderRadius: 8 }}>
+            <div style={{ maxHeight: 160, overflowY: 'auto', border: '1px solid #2c2c2c', borderRadius: 8 }}>
                 {log.map((entry, i) => (
-                    <div key={i} style={{ padding: '8px 12px', borderBottom: i < log.length - 1 ? '1px solid #1e2c46' : 'none', fontSize: 12 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, color: '#cfdcf0' }}>
+                    <div key={i} style={{ padding: '8px 12px', borderBottom: i < log.length - 1 ? '1px solid #2c2c2c' : 'none', fontSize: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, color: '#d5c9b8' }}>
                             <span style={{ fontFamily: 'monospace' }}>{entry.command}</span>
-                            <span style={{ color: '#5e7094', flexShrink: 0 }}>
+                            <span style={{ color: '#5a4e42', flexShrink: 0 }}>
                                 {entry.channel === 'sms' ? 'SMS' : 'Data'} · {entry.time}
                             </span>
                         </div>
@@ -134,7 +134,7 @@ export function CommandLog({ log }) {
                         {/* Only when a fallback actually happened: one line per channel tried, so a
                             failure on the first is visible rather than hidden behind the retry. */}
                         {entry.attempts?.length > 1 && (
-                            <div style={{ marginTop: 4, paddingLeft: 8, borderLeft: '2px solid #1e2c46' }}>
+                            <div style={{ marginTop: 4, paddingLeft: 8, borderLeft: '2px solid #2c2c2c' }}>
                                 {entry.attempts.map((a, k) => (
                                     <div key={k} style={{ fontSize: 11, color: a.ok ? '#16a34a' : '#fca5a5' }}>
                                         {a.channel === 'sms' ? 'SMS' : 'Data'}: {a.message}
@@ -165,21 +165,21 @@ export function CommandModalShell({ title, device, imei, deviceName, width, onCl
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
-            <div style={{ background: '#111c33', borderRadius: 12, width, maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46', flexShrink: 0 }}>
+            <div style={{ background: '#1a1a1a', borderRadius: 12, width, maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #2c2c2c', flexShrink: 0 }}>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>{title}</h2>
-                        <p style={{ margin: '2px 0 0', fontSize: 12, color: '#9daec9' }}>{deviceName || imei} · {imei}</p>
+                        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#f5f0e8' }}>{title}</h2>
+                        <p style={{ margin: '2px 0 0', fontSize: 12, color: '#9a8a75' }}>{deviceName || imei} · {imei}</p>
                     </div>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5a4e42', fontSize: 16 }}>✕</button>
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
                     <div style={{
                         marginBottom: 14, padding: '10px 12px', borderRadius: 8, fontSize: 12, lineHeight: 1.6,
-                        background: noPhone ? '#33260c' : '#152a4a',
-                        border: `1px solid ${noPhone ? '#7c5e10' : '#24507f'}`,
-                        color: noPhone ? '#fcd34d' : '#7fc4ff',
+                        background: noPhone ? '#33260c' : '#372817',
+                        border: `1px solid ${noPhone ? '#7c5e10' : '#78440a'}`,
+                        color: noPhone ? '#fcd34d' : '#f59e0b',
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                             <span style={{ fontWeight: 700 }}>Send via</span>
@@ -217,8 +217,8 @@ export function CommandModalShell({ title, device, imei, deviceName, width, onCl
                     {children}
                 </div>
 
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
-                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #2c2c2c', display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
+                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #2c2c2c', background: '#1a1a1a', color: '#9a8a75', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Close</button>
                 </div>
             </div>
         </div>

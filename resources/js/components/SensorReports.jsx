@@ -15,11 +15,11 @@ import { api } from '../api.js';
  * as if it were live.
  */
 
-const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
-const TD = { padding: '10px 12px', fontSize: 12.5, borderBottom: '1px solid #1e2c46', color: '#cfdcf0' };
+const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#d5c9b8', borderBottom: '2px solid #2c2c2c', whiteSpace: 'nowrap', background: '#222222' };
+const TD = { padding: '10px 12px', fontSize: 12.5, borderBottom: '1px solid #2c2c2c', color: '#d5c9b8' };
 
-const input  = { padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', background: '#111c33', outline: 'none' };
-const button = { padding: '7px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const input  = { padding: '7px 10px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, color: '#d5c9b8', background: '#1a1a1a', outline: 'none' };
+const button = { padding: '7px 16px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 
 const LOOKBACK_OPTIONS = [2, 6, 12, 24, 48, 72];
 
@@ -45,17 +45,17 @@ function fmtTime(iso) {
 }
 
 /** A single reading: the value, and how old it is. Staleness is stated, never hidden. */
-function Reading({ label, value, unit, ageMinutes, stale, tone = '#7fc4ff' }) {
+function Reading({ label, value, unit, ageMinutes, stale, tone = '#f59e0b' }) {
     return (
         <div style={{
-            border: `1px solid ${stale ? '#7c5e10' : '#1e2c46'}`, borderRadius: 9,
-            background: stale ? '#231a06' : '#16233c', padding: '9px 12px', minWidth: 128,
+            border: `1px solid ${stale ? '#7c5e10' : '#2c2c2c'}`, borderRadius: 9,
+            background: stale ? '#231a06' : '#222222', padding: '9px 12px', minWidth: 128,
         }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#9daec9', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#9a8a75', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</div>
             <div style={{ fontSize: 19, fontWeight: 800, color: stale ? '#fcd34d' : tone, lineHeight: 1.3 }}>
                 {value == null ? '—' : value}<span style={{ fontSize: 12, fontWeight: 600, marginLeft: 2 }}>{unit}</span>
             </div>
-            <div style={{ fontSize: 11, color: stale ? '#fcd34d' : '#5e7094' }}>
+            <div style={{ fontSize: 11, color: stale ? '#fcd34d' : '#5a4e42' }}>
                 {age(ageMinutes)}{stale ? ' · stale' : ''}
             </div>
         </div>
@@ -125,7 +125,7 @@ function SensorReport({ mode }) {
                     {devices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
 
-                <span style={{ fontSize: 12.5, color: '#9daec9' }}>Look back</span>
+                <span style={{ fontSize: 12.5, color: '#9a8a75' }}>Look back</span>
                 <select value={hours} onChange={e => setHours(Number(e.target.value))} style={{ ...input, cursor: 'pointer' }}>
                     {LOOKBACK_OPTIONS.map(h => <option key={h} value={h}>{h} hours</option>)}
                 </select>
@@ -134,7 +134,7 @@ function SensorReport({ mode }) {
 
                 {/* Why a lookback control exists at all: readings arrive on their own packets, and
                     a device parked overnight may not have sent one for hours. */}
-                <span style={{ fontSize: 12, color: '#5e7094', marginLeft: 'auto', maxWidth: 460 }}>
+                <span style={{ fontSize: 12, color: '#5a4e42', marginLeft: 'auto', maxWidth: 460 }}>
                     Shows the newest genuine reading in the window, with the time it was taken —
                     not the latest GPS packet, which usually carries no sensor data.
                 </span>
@@ -147,14 +147,14 @@ function SensorReport({ mode }) {
             )}
 
             {loading && !data ? (
-                <p style={{ padding: 40, textAlign: 'center', color: '#5e7094', fontSize: 13 }}>Loading readings…</p>
+                <p style={{ padding: 40, textAlign: 'center', color: '#5a4e42', fontSize: 13 }}>Loading readings…</p>
             ) : (
                 <>
                     {reporting.map(device => (
-                        <div key={device.deviceId} style={{ border: '1px solid #1e2c46', borderRadius: 10, marginBottom: 12, overflow: 'hidden' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#16233c', borderBottom: '1px solid #1e2c46' }}>
-                                <strong style={{ fontSize: 13.5, color: '#eaeff9' }}>{device.deviceName}</strong>
-                                <span style={{ fontFamily: 'monospace', fontSize: 11.5, color: '#5e7094' }}>{device.imei}</span>
+                        <div key={device.deviceId} style={{ border: '1px solid #2c2c2c', borderRadius: 10, marginBottom: 12, overflow: 'hidden' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#222222', borderBottom: '1px solid #2c2c2c' }}>
+                                <strong style={{ fontSize: 13.5, color: '#f5f0e8' }}>{device.deviceName}</strong>
+                                <span style={{ fontFamily: 'monospace', fontSize: 11.5, color: '#5a4e42' }}>{device.imei}</span>
                                 {device.tyreAlarms.length > 0 && (
                                     <span style={{ marginLeft: 'auto', fontSize: 11.5, fontWeight: 700, color: '#fca5a5' }}>
                                         Tyre alarm at {device.tyreAlarms.join(', ')}
@@ -178,12 +178,12 @@ function SensorReport({ mode }) {
                                                             <td style={TD}>{t.axle ?? '—'}</td>
                                                             <td style={TD}>{t.position ?? '—'}</td>
                                                             <td style={{ ...TD, fontFamily: 'monospace', fontSize: 11.5 }}>{t.sensorId ?? '—'}</td>
-                                                            <td style={{ ...TD, fontWeight: 700, color: alarmed ? '#fca5a5' : '#eaeff9' }}>
+                                                            <td style={{ ...TD, fontWeight: 700, color: alarmed ? '#fca5a5' : '#f5f0e8' }}>
                                                                 {t.pressureBar == null ? '—' : `${t.pressureBar} bar`}
                                                             </td>
                                                             <td style={TD}>{t.temperature == null ? '—' : `${t.temperature} °C`}</td>
                                                             <td style={TD}>{t.moving == null ? '—' : t.moving ? 'Yes' : 'No'}</td>
-                                                            <td style={{ ...TD, color: t.stale ? '#fcd34d' : '#9daec9' }}>
+                                                            <td style={{ ...TD, color: t.stale ? '#fcd34d' : '#9a8a75' }}>
                                                                 {age(t.ageMinutes)}{t.stale ? ' · stale' : ''}
                                                             </td>
                                                         </tr>
@@ -209,9 +209,9 @@ function SensorReport({ mode }) {
                     ))}
 
                     {reporting.length === 0 && (
-                        <div style={{ border: '1px dashed #24344f', borderRadius: 10, padding: 32, textAlign: 'center', color: '#9daec9', fontSize: 13 }}>
+                        <div style={{ border: '1px dashed #383838', borderRadius: 10, padding: 32, textAlign: 'center', color: '#9a8a75', fontSize: 13 }}>
                             No {isTyre ? 'tyre' : 'temperature or humidity'} readings in the last {data?.lookbackHours ?? hours} hours.
-                            <div style={{ marginTop: 6, fontSize: 12, color: '#5e7094' }}>
+                            <div style={{ marginTop: 6, fontSize: 12, color: '#5a4e42' }}>
                                 Only devices with a sensor module attached report these. Try a longer window before
                                 concluding a sensor has failed — readings arrive on their own packets, not with every fix.
                             </div>
@@ -221,14 +221,14 @@ function SensorReport({ mode }) {
                     {/* Named, not hidden: knowing which vehicles are not reporting is the point of a
                         compliance view, and an empty card would look like a healthy zero. */}
                     {silent.length > 0 && reporting.length > 0 && (
-                        <p style={{ fontSize: 12, color: '#5e7094', margin: '4px 0 16px' }}>
+                        <p style={{ fontSize: 12, color: '#5a4e42', margin: '4px 0 16px' }}>
                             No readings from: {silent.map(d => d.deviceName).join(', ')}
                         </p>
                     )}
 
-                    <h3 style={{ margin: '18px 0 8px', fontSize: 13.5, fontWeight: 700, color: '#eaeff9' }}>
+                    <h3 style={{ margin: '18px 0 8px', fontSize: 13.5, fontWeight: 700, color: '#f5f0e8' }}>
                         {isTyre ? 'Tyre alarms' : 'Temperature & humidity alarms'}
-                        <span style={{ fontWeight: 500, color: '#5e7094' }}> · last {hours} hours</span>
+                        <span style={{ fontWeight: 500, color: '#5a4e42' }}> · last {hours} hours</span>
                     </h3>
 
                     <div style={{ overflowX: 'auto' }}>
@@ -236,7 +236,7 @@ function SensorReport({ mode }) {
                             <thead><tr>{['Time', 'Device', 'IMEI', 'Alarm'].map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                             <tbody>
                                 {alarms.length === 0 ? (
-                                    <tr><td colSpan={4} style={{ ...TD, textAlign: 'center', padding: 28, color: '#5e7094' }}>No alarms raised in this window.</td></tr>
+                                    <tr><td colSpan={4} style={{ ...TD, textAlign: 'center', padding: 28, color: '#5a4e42' }}>No alarms raised in this window.</td></tr>
                                 ) : alarms.map(a => (
                                     <tr key={a.id}>
                                         <td style={TD}>{fmtTime(a.occurredAt)}</td>
@@ -252,11 +252,11 @@ function SensorReport({ mode }) {
                     {/* Every reading in the window, not just the newest — the record behind the
                         tiles above, and what a compliance question is actually answered with.
                         Collapsed by default because it can run to hundreds of rows. */}
-                    <h3 style={{ margin: '20px 0 8px', fontSize: 13.5, fontWeight: 700, color: '#eaeff9', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <h3 style={{ margin: '20px 0 8px', fontSize: 13.5, fontWeight: 700, color: '#f5f0e8', display: 'flex', alignItems: 'center', gap: 10 }}>
                         Reading history
-                        <span style={{ fontWeight: 500, color: '#5e7094' }}>· {history.length} reading{history.length === 1 ? '' : 's'} in {hours}h</span>
+                        <span style={{ fontWeight: 500, color: '#5a4e42' }}>· {history.length} reading{history.length === 1 ? '' : 's'} in {hours}h</span>
                         {history.length > 0 && (
-                            <button onClick={() => setShowHistory(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7fc4ff', fontSize: 12.5, fontWeight: 600, padding: 0 }}>
+                            <button onClick={() => setShowHistory(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f59e0b', fontSize: 12.5, fontWeight: 600, padding: 0 }}>
                                 {showHistory ? 'Hide' : 'Show'}
                             </button>
                         )}
@@ -279,7 +279,7 @@ function SensorReport({ mode }) {
                                                         ...r.humidity.map(h => `${SENSOR_LABELS[h.key] ?? h.key}: ${h.value}%`),
                                                     ].join('  ·  ')}
                                             </td>
-                                            <td style={{ ...TD, color: r.alarm ? '#fca5a5' : '#5e7094' }}>{r.alarm ?? '—'}</td>
+                                            <td style={{ ...TD, color: r.alarm ? '#fca5a5' : '#5a4e42' }}>{r.alarm ?? '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

@@ -51,11 +51,11 @@ const GaugeSVG = () => (
     </svg>
 );
 /* ── tiny components ───────────────────────────────────────── */
-const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: 5, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
+const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#d97706', padding: 5, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
 
 /* ── table styles ──────────────────────────────────────────── */
-const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
-const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, borderBottom: '1px solid #1e2c46' };
+const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#d5c9b8', borderBottom: '2px solid #2c2c2c', whiteSpace: 'nowrap', background: '#222222' };
+const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, borderBottom: '1px solid #2c2c2c' };
 
 /* ── main component ────────────────────────────────────────── */
 export default function DeviceManagement({ devices, loading, onRefresh }) {
@@ -81,27 +81,27 @@ export default function DeviceManagement({ devices, loading, onRefresh }) {
     const toggleOne  = (id) => setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#111c33' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#1a1a1a' }}>
             {/* Search bar */}
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #1e2c46', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #2c2c2c', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', flexShrink: 0 }}>
                 <input value={filter.imei} onChange={e => setFilter(f => ({ ...f, imei: e.target.value }))}
                     placeholder="IMEI(Press Enter for multiple lines)"
-                    style={{ padding: '7px 12px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', width: 220 }} />
+                    style={{ padding: '7px 12px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, outline: 'none', width: 220 }} />
                 <input value={filter.name} onChange={e => setFilter(f => ({ ...f, name: e.target.value }))}
                     placeholder="Device name"
-                    style={{ padding: '7px 12px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', width: 150 }} />
+                    style={{ padding: '7px 12px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, outline: 'none', width: 150 }} />
                 <select value={filter.model} onChange={e => setFilter(f => ({ ...f, model: e.target.value }))}
-                    style={{ padding: '7px 12px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none', minWidth: 130, background: '#111c33', cursor: 'pointer' }}>
+                    style={{ padding: '7px 12px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, outline: 'none', minWidth: 130, background: '#1a1a1a', cursor: 'pointer' }}>
                     <option value="">All model</option>
                     {models.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                <button onClick={() => {}} style={{ padding: '7px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
-                <button onClick={() => setFilter({ imei: '', name: '', model: '' })} style={{ padding: '7px 14px', background: '#111c33', color: '#cfdcf0', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
+                <button onClick={() => {}} style={{ padding: '7px 20px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Search</button>
+                <button onClick={() => setFilter({ imei: '', name: '', model: '' })} style={{ padding: '7px 14px', background: '#1a1a1a', color: '#d5c9b8', border: '1px solid #383838', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>Reset</button>
             </div>
 
             {/* Action buttons row 1 */}
             <div style={{ padding: '8px 20px 4px', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flexShrink: 0 }}>
-                <button onClick={() => setShowImport(true)} style={{ padding: '6px 13px', borderRadius: 6, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
+                <button onClick={() => setShowImport(true)} style={{ padding: '6px 13px', borderRadius: 6, border: 'none', background: '#d97706', color: '#fff', fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
                     <ImportSVG />Import device
                 </button>
                 <div style={{ flex: 1 }} />
@@ -127,24 +127,24 @@ export default function DeviceManagement({ devices, loading, onRefresh }) {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={9} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
+                            <tr><td colSpan={9} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5a4e42' }}>Loading…</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={9} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No data found</td></tr>
+                            <tr><td colSpan={9} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5a4e42' }}>No data found</td></tr>
                         ) : filtered.map((d, i) => (
-                            <tr key={d.id} style={{ background: selected.has(d.id) ? '#152a4a' : '#111c33' }}>
+                            <tr key={d.id} style={{ background: selected.has(d.id) ? '#372817' : '#1a1a1a' }}>
                                 <td style={TD}><input type="checkbox" checked={selected.has(d.id)} onChange={() => toggleOne(d.id)} /></td>
-                                <td style={{ ...TD, color: '#9daec9' }}>{i + 1}</td>
+                                <td style={{ ...TD, color: '#9a8a75' }}>{i + 1}</td>
                                 <td style={TD}>nextgenpng</td>
                                 <td style={{ ...TD, fontWeight: 500 }}>{d.name}</td>
-                                <td style={{ ...TD, color: '#3b82f6', textAlign: 'center' }}>{d.imei ?? d.id}</td>
+                                <td style={{ ...TD, color: '#d97706', textAlign: 'center' }}>{d.imei ?? d.id}</td>
                                 <td style={{ ...TD, textAlign: 'center' }}>{d.tracker || '—'}</td>
                                 {/* Read-only: the number is set through Edit, like every other
                                     Traccar device field. Shown because a device without one cannot
                                     receive the SMS commands the panels below send. */}
-                                <td style={{ ...TD, textAlign: 'center', whiteSpace: 'nowrap', color: d.phone ? '#cfdcf0' : '#5e7094' }}>
+                                <td style={{ ...TD, textAlign: 'center', whiteSpace: 'nowrap', color: d.phone ? '#d5c9b8' : '#5a4e42' }}>
                                     {d.phone || '—'}
                                 </td>
-                                <td style={{ ...TD, textAlign: 'center', color: d.expirationTime ? '#cfdcf0' : '#5e7094' }}>{d.expirationTime ? new Date(d.expirationTime).toLocaleDateString() : '—'}</td>
+                                <td style={{ ...TD, textAlign: 'center', color: d.expirationTime ? '#d5c9b8' : '#5a4e42' }}>{d.expirationTime ? new Date(d.expirationTime).toLocaleDateString() : '—'}</td>
                                 <td style={{ ...TD, textAlign: 'center', whiteSpace: 'nowrap' }}>
                                     <button style={iconBtn} title="Edit"        onClick={() => setEditDevice(d)}><EditSVG /></button>
                                     <button style={iconBtn} title="iButton Configuration" onClick={() => setIbuttonDevice(d)}><CardSVG /></button>

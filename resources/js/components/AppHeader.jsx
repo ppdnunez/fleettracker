@@ -11,15 +11,15 @@ export default function AppHeader({ user, title }) {
 
     return (
         <header style={{
-            height: 58, flexShrink: 0, background: '#0c1322', borderBottom: '1px solid #1e2c46',
+            height: 58, flexShrink: 0, background: '#141414', borderBottom: '1px solid #2c2c2c',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', gap: 12,
         }}>
             <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.4, color: '#5e7094', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.4, color: '#5a4e42', textTransform: 'uppercase' }}>
                     Fleet Operations
                 </div>
                 <div style={{
-                    fontSize: 15, fontWeight: 700, color: '#eaeff9', lineHeight: 1.25,
+                    fontSize: 15, fontWeight: 700, color: '#f5f0e8', lineHeight: 1.25,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>
                     {title || 'Dashboard'}
@@ -34,7 +34,7 @@ export default function AppHeader({ user, title }) {
                     <span style={{
                         padding: '3px 10px', borderRadius: 999, fontSize: 11.5, fontWeight: 700,
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        background: '#16233c', color: '#7fc4ff', border: '1px solid #24507f',
+                        background: '#222222', color: '#f59e0b', border: '1px solid #78440a',
                     }}>
                         {user.client.name}
                     </span>
@@ -48,17 +48,17 @@ export default function AppHeader({ user, title }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
                     <div style={{
                         width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                        background: 'linear-gradient(135deg,#14b8a6,#0d9488)',
+                        background: 'linear-gradient(135deg,#d97706,#b45309)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 13.5, fontWeight: 700, color: '#04211d',
                     }}>
                         {initial}
                     </div>
                     <div style={{ overflow: 'hidden', lineHeight: 1.25 }}>
-                        <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: '#eaeff9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: '#f5f0e8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {user.name}
                         </p>
-                        <p style={{ margin: 0, fontSize: 10.5, color: '#5e7094', textTransform: 'capitalize' }}>
+                        <p style={{ margin: 0, fontSize: 10.5, color: '#5a4e42', textTransform: 'capitalize' }}>
                             {user.role || 'Administrator'}
                         </p>
                     </div>

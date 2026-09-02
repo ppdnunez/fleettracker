@@ -24,11 +24,11 @@ const CATEGORIES = [
 const CATEGORY_LABELS = Object.fromEntries(CATEGORIES.map(([k, l]) => [k, l]));
 const categoryLabel = (key) => CATEGORY_LABELS[key] || key;
 
-const fieldLabelStyle = { display: 'block', fontSize: 11.5, color: '#9daec9', fontWeight: 600, marginBottom: 6 };
-const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #24344f', borderRadius: 7, fontSize: 13, outline: 'none' };
+const fieldLabelStyle = { display: 'block', fontSize: 11.5, color: '#9a8a75', fontWeight: 600, marginBottom: 6 };
+const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid #383838', borderRadius: 7, fontSize: 13, outline: 'none' };
 const tagStyle = {
     display: 'inline-flex', alignItems: 'center', padding: '3px 9px', margin: '2px 4px 2px 0',
-    background: '#152a4a', color: '#7fc4ff', borderRadius: 14, fontSize: 11.5, fontWeight: 600,
+    background: '#372817', color: '#f59e0b', borderRadius: 14, fontSize: 11.5, fontWeight: 600,
 };
 const sourceTagStyle = (source) => ({
     fontSize: 10, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase',
@@ -43,13 +43,13 @@ function CategoriesField({ selected, onChange, disabled }) {
         onChange(selected.includes(key) ? selected.filter(k => k !== key) : [...selected, key]);
     };
     return (
-        <div style={{ border: '1px solid #24344f', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ border: '1px solid #383838', borderRadius: 8, overflow: 'hidden' }}>
             {CATEGORIES.map(([key, label, source]) => (
                 <label key={key} style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', fontSize: 13,
                     cursor: disabled ? 'not-allowed' : 'pointer',
-                    background: selected.includes(key) ? '#152a4a' : '#111c33',
-                    color: '#eaeff9', borderBottom: '1px solid #1e2c46',
+                    background: selected.includes(key) ? '#372817' : '#1a1a1a',
+                    color: '#f5f0e8', borderBottom: '1px solid #2c2c2c',
                 }}>
                     <input type="checkbox" checked={selected.includes(key)} disabled={disabled} onChange={() => toggle(key)} />
                     <span>{label}</span>
@@ -88,10 +88,10 @@ function RecipientModal({ recipient, onClose, onSaved }) {
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-            <div style={{ background: '#111c33', borderRadius: 12, width: 440, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2c46' }}>
-                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>{isNew ? 'New Recipient' : 'Edit Recipient'}</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5e7094', fontSize: 16 }}>✕</button>
+            <div style={{ background: '#1a1a1a', borderRadius: 12, width: 440, maxHeight: '88vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #2c2c2c' }}>
+                    <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#f5f0e8' }}>{isNew ? 'New Recipient' : 'Edit Recipient'}</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5a4e42', fontSize: 16 }}>✕</button>
                 </div>
 
                 <div style={{ padding: 20 }}>
@@ -116,15 +116,15 @@ function RecipientModal({ recipient, onClose, onSaved }) {
                         <CategoriesField selected={categories} disabled={saving} onChange={setCategories} />
                     </div>
 
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#cfdcf0', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#d5c9b8', cursor: 'pointer' }}>
                         <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} disabled={saving} />
                         Active
                     </label>
                 </div>
 
-                <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2c46', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-                    <button onClick={handleSave} disabled={saving} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #2c2c2c', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <button onClick={onClose} style={{ padding: '8px 18px', borderRadius: 7, border: '1.5px solid #2c2c2c', background: '#1a1a1a', color: '#9a8a75', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={handleSave} disabled={saving} style={{ padding: '8px 18px', borderRadius: 7, border: 'none', background: '#d97706', color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}>
                         {saving ? 'Saving…' : 'Save'}
                     </button>
                 </div>
@@ -133,9 +133,9 @@ function RecipientModal({ recipient, onClose, onSaved }) {
     );
 }
 
-const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
-const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, borderBottom: '1px solid #1e2c46', color: '#eaeff9' };
-const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', padding: 5, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
+const TH = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#d5c9b8', borderBottom: '2px solid #2c2c2c', whiteSpace: 'nowrap', background: '#222222' };
+const TD = { padding: '11px 14px', verticalAlign: 'middle', fontSize: 13, borderBottom: '1px solid #2c2c2c', color: '#f5f0e8' };
+const iconBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#d97706', padding: 5, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
 
 export default function AlertRecipientsPage() {
     const [recipients, setRecipients] = useState([]);
@@ -177,10 +177,10 @@ export default function AlertRecipientsPage() {
     };
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#111c33', position: 'relative' }}>
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #1e2c46', flexShrink: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#1a1a1a', position: 'relative' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #2c2c2c', flexShrink: 0 }}>
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by email or name"
-                    style={{ width: '100%', maxWidth: 420, boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, outline: 'none' }} />
+                    style={{ width: '100%', maxWidth: 420, boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, outline: 'none' }} />
             </div>
 
             {error && (
@@ -202,9 +202,9 @@ export default function AlertRecipientsPage() {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>Loading…</td></tr>
+                            <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5a4e42' }}>Loading…</td></tr>
                         ) : filtered.length === 0 ? (
-                            <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5e7094' }}>No recipients yet — add one to start receiving alert emails.</td></tr>
+                            <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', padding: 48, color: '#5a4e42' }}>No recipients yet — add one to start receiving alert emails.</td></tr>
                         ) : filtered.map(r => (
                             <tr key={r.id}>
                                 <td style={{ ...TD, fontWeight: 500 }}>{r.email}</td>
@@ -213,7 +213,7 @@ export default function AlertRecipientsPage() {
                                     {(r.categories || []).map(c => <span key={c} style={tagStyle}>{categoryLabel(c)}</span>)}
                                 </td>
                                 <td style={{ ...TD, textAlign: 'center' }}>
-                                    <span style={{ fontSize: 11, fontWeight: 700, color: r.active ? '#16a34a' : '#5e7094' }}>● {r.active ? 'Active' : 'Paused'}</span>
+                                    <span style={{ fontSize: 11, fontWeight: 700, color: r.active ? '#16a34a' : '#5a4e42' }}>● {r.active ? 'Active' : 'Paused'}</span>
                                 </td>
                                 <td style={{ ...TD, textAlign: 'center', whiteSpace: 'nowrap' }}>
                                     <button style={iconBtn} title="Edit" onClick={() => setEditing(r)}>✏</button>
@@ -226,7 +226,7 @@ export default function AlertRecipientsPage() {
             </div>
 
             <button onClick={() => setEditing('new')} title="Add recipient"
-                style={{ position: 'absolute', bottom: 24, right: 24, width: 52, height: 52, borderRadius: '50%', background: '#3b82f6', color: '#fff', border: 'none', fontSize: 26, lineHeight: 1, cursor: 'pointer', boxShadow: '0 4px 14px rgba(59,130,246,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                style={{ position: 'absolute', bottom: 24, right: 24, width: 52, height: 52, borderRadius: '50%', background: '#d97706', color: '#fff', border: 'none', fontSize: 26, lineHeight: 1, cursor: 'pointer', boxShadow: '0 4px 14px rgba(217,119,6,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 +
             </button>
 
@@ -240,11 +240,11 @@ export default function AlertRecipientsPage() {
 
             {pendingDeleteId && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-                    <div style={{ background: '#111c33', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
-                        <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#eaeff9' }}>Delete recipient?</h3>
-                        <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#9daec9' }}>They will stop receiving all alert emails.</p>
+                    <div style={{ background: '#1a1a1a', borderRadius: 12, padding: '24px 28px', width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.25)', textAlign: 'center' }}>
+                        <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#f5f0e8' }}>Delete recipient?</h3>
+                        <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#9a8a75' }}>They will stop receiving all alert emails.</p>
                         <div style={{ display: 'flex', gap: 8 }}>
-                            <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #1e2c46', background: '#111c33', color: '#9daec9', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                            <button onClick={() => setPendingDeleteId(null)} style={{ flex: 1, padding: 9, borderRadius: 7, border: '1.5px solid #2c2c2c', background: '#1a1a1a', color: '#9a8a75', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                             <button onClick={handleDelete} style={{ flex: 1, padding: 9, borderRadius: 7, border: 'none', background: '#ef4444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Delete</button>
                         </div>
                     </div>

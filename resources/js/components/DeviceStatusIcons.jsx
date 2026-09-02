@@ -55,7 +55,7 @@ function AlarmIcon({ size }) {
 function EngineIcon({ size, on }) {
     // Ignition off is drawn muted rather than hidden: "engine off" and "no data" are different
     // things, and an operator needs to be able to tell them apart.
-    const color = on ? '#22c55e' : '#5e7094';
+    const color = on ? '#22c55e' : '#5a4e42';
     return (
         <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.4" strokeLinejoin="round" aria-hidden="true">
             <path d="M2 6.6h1.6V5.2h3.1v1.4h2.1l1.9 1.9h1.6V7.1h1.7v4.1h-1.7V9.9h-1.6l-1.9 1.9H4.6L2 9.6Z" />
@@ -72,7 +72,7 @@ function BatteryIcon({ size, level, charging }) {
             <rect x="1.4" y="4.2" width="11.4" height="7.6" rx="1.6" fill="none" stroke={color} strokeWidth="1.3" />
             <rect x="13.4" y="6.4" width="1.5" height="3.2" rx="0.6" fill={color} />
             <rect x="2.9" y="5.7" width={8.4 * (pct / 100)} height="4.6" rx="0.7" fill={color} />
-            {charging && <path d="M8.4 4.9 6.2 8.4h1.7l-.5 2.8 2.4-3.7H8.1Z" fill="#0c1322" stroke={color} strokeWidth="0.7" strokeLinejoin="round" />}
+            {charging && <path d="M8.4 4.9 6.2 8.4h1.7l-.5 2.8 2.4-3.7H8.1Z" fill="#141414" stroke={color} strokeWidth="0.7" strokeLinejoin="round" />}
         </svg>
     );
 }

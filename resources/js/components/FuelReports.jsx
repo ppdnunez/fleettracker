@@ -9,10 +9,10 @@ import { api } from '../api.js';
  * two hours ago is shown as two hours old, not as the current level.
  */
 
-const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
-const TD = { padding: '10px 12px', fontSize: 12.5, borderBottom: '1px solid #1e2c46', color: '#cfdcf0' };
-const input  = { padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', background: '#111c33', outline: 'none' };
-const button = { padding: '7px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#d5c9b8', borderBottom: '2px solid #2c2c2c', whiteSpace: 'nowrap', background: '#222222' };
+const TD = { padding: '10px 12px', fontSize: 12.5, borderBottom: '1px solid #2c2c2c', color: '#d5c9b8' };
+const input  = { padding: '7px 10px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, color: '#d5c9b8', background: '#1a1a1a', outline: 'none' };
+const button = { padding: '7px 16px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 
 function age(minutes) {
     if (minutes == null) return 'unknown';
@@ -33,7 +33,7 @@ function TankBar({ percent }) {
     const pct  = Math.max(0, Math.min(100, percent ?? 0));
     const tone = pct <= 15 ? '#ef4444' : pct <= 30 ? '#f59e0b' : '#4ade80';
     return (
-        <div style={{ height: 8, borderRadius: 4, background: '#16233c', overflow: 'hidden', minWidth: 120 }}>
+        <div style={{ height: 8, borderRadius: 4, background: '#222222', overflow: 'hidden', minWidth: 120 }}>
             <div style={{ width: `${pct}%`, height: '100%', background: tone }} />
         </div>
     );
@@ -50,9 +50,9 @@ function Litres({ value, percent, note }) {
 
     return (
         <td style={{ ...TD, whiteSpace: 'nowrap' }}>
-            <div style={{ fontWeight: 600, color: '#eaeff9' }}>{value == null ? '—' : `${value.toFixed(1)} L`}</div>
-            {percent != null && <div style={{ fontSize: 11, color: '#9daec9' }}>{percent.toFixed(1)}%</div>}
-            {note && <div style={{ fontSize: 10.5, color: '#5e7094' }}>{note}</div>}
+            <div style={{ fontWeight: 600, color: '#f5f0e8' }}>{value == null ? '—' : `${value.toFixed(1)} L`}</div>
+            {percent != null && <div style={{ fontSize: 11, color: '#9a8a75' }}>{percent.toFixed(1)}%</div>}
+            {note && <div style={{ fontSize: 10.5, color: '#5a4e42' }}>{note}</div>}
         </td>
     );
 }
@@ -104,7 +104,7 @@ export function FuelLevelReport() {
         <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                 <DeviceFilter devices={devices} deviceId={deviceId} setDeviceId={setDeviceId} />
-                <span style={{ fontSize: 12.5, color: '#9daec9' }}>Look back</span>
+                <span style={{ fontSize: 12.5, color: '#9a8a75' }}>Look back</span>
                 <select value={hours} onChange={e => setHours(Number(e.target.value))} style={{ ...input, cursor: 'pointer' }}>
                     {[2, 6, 12, 24, 48, 72].map(h => <option key={h} value={h}>{h} hours</option>)}
                 </select>
@@ -114,27 +114,27 @@ export function FuelLevelReport() {
             {error && <div style={{ marginBottom: 14, padding: '10px 14px', background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 8, fontSize: 12.5, color: '#fca5a5' }}>{error}</div>}
 
             {reporting.map(d => (
-                <div key={d.deviceId} style={{ border: '1px solid #1e2c46', borderRadius: 10, marginBottom: 12, overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#16233c', borderBottom: '1px solid #1e2c46' }}>
-                        <strong style={{ fontSize: 13.5, color: '#eaeff9' }}>{d.deviceName}</strong>
-                        <span style={{ fontFamily: 'monospace', fontSize: 11.5, color: '#5e7094' }}>{d.imei}</span>
-                        {d.sensorType && <span style={{ fontSize: 11.5, color: '#9daec9' }}>{d.sensorType}</span>}
-                        <span style={{ marginLeft: 'auto', fontSize: 11.5, color: d.level?.stale ? '#fcd34d' : '#5e7094' }}>
+                <div key={d.deviceId} style={{ border: '1px solid #2c2c2c', borderRadius: 10, marginBottom: 12, overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#222222', borderBottom: '1px solid #2c2c2c' }}>
+                        <strong style={{ fontSize: 13.5, color: '#f5f0e8' }}>{d.deviceName}</strong>
+                        <span style={{ fontFamily: 'monospace', fontSize: 11.5, color: '#5a4e42' }}>{d.imei}</span>
+                        {d.sensorType && <span style={{ fontSize: 11.5, color: '#9a8a75' }}>{d.sensorType}</span>}
+                        <span style={{ marginLeft: 'auto', fontSize: 11.5, color: d.level?.stale ? '#fcd34d' : '#5a4e42' }}>
                             {age(d.level?.ageMinutes ?? d.litres?.ageMinutes)}{d.level?.stale ? ' · stale' : ''}
                         </span>
                     </div>
 
                     <div style={{ padding: 14, display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                         <div style={{ minWidth: 190 }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: '#9daec9', textTransform: 'uppercase', letterSpacing: 0.4 }}>Level</div>
-                            <div style={{ fontSize: 24, fontWeight: 800, color: '#eaeff9', lineHeight: 1.25 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#9a8a75', textTransform: 'uppercase', letterSpacing: 0.4 }}>Level</div>
+                            <div style={{ fontSize: 24, fontWeight: 800, color: '#f5f0e8', lineHeight: 1.25 }}>
                                 {d.level?.value != null ? `${d.level.value}%` : d.litres?.value != null ? `${d.litres.value} L` : '—'}
                             </div>
                             {d.level?.value != null && <TankBar percent={d.level.value} />}
 
                             {/* Percent and litres are different facts, and only litres drives
                                 Traccar's drop events — so a derived figure says it is derived. */}
-                            <div style={{ marginTop: 6, fontSize: 11.5, color: '#5e7094' }}>
+                            <div style={{ marginTop: 6, fontSize: 11.5, color: '#5a4e42' }}>
                                 {d.litres?.value != null
                                     ? `${d.litres.value} L reported`
                                     : d.derivedLitres != null
@@ -145,12 +145,12 @@ export function FuelLevelReport() {
 
                         {d.tanks.length > 0 && (
                             <div>
-                                <div style={{ fontSize: 11, fontWeight: 700, color: '#9daec9', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Additional tanks</div>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: '#9a8a75', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Additional tanks</div>
                                 {d.tanks.map(t => (
                                     <div key={t.tank} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                                        <span style={{ fontSize: 12, color: '#cfdcf0', width: 54 }}>Tank {t.tank}</span>
+                                        <span style={{ fontSize: 12, color: '#d5c9b8', width: 54 }}>Tank {t.tank}</span>
                                         <TankBar percent={t.value} />
-                                        <span style={{ fontSize: 12, color: '#eaeff9', fontWeight: 700 }}>{t.value}%</span>
+                                        <span style={{ fontSize: 12, color: '#f5f0e8', fontWeight: 700 }}>{t.value}%</span>
                                     </div>
                                 ))}
                             </div>
@@ -168,7 +168,7 @@ export function FuelLevelReport() {
                                                     {/* Battery and error had their own columns, but a wired probe
                                                         reports neither, so both stood empty on every row. They only
                                                         appear now when the probe actually sends them. */}
-                                                    {p.battery != null && <span style={{ marginLeft: 8, fontSize: 11, color: '#9daec9' }}>batt {p.battery}%</span>}
+                                                    {p.battery != null && <span style={{ marginLeft: 8, fontSize: 11, color: '#9a8a75' }}>batt {p.battery}%</span>}
                                                     {p.error && <div style={{ fontSize: 11, color: '#fca5a5' }}>{p.error}</div>}
                                                 </td>
                                                 <td style={TD}>{p.value}</td>
@@ -185,16 +185,16 @@ export function FuelLevelReport() {
             ))}
 
             {!loading && reporting.length === 0 && (
-                <div style={{ border: '1px dashed #24344f', borderRadius: 10, padding: 32, textAlign: 'center', color: '#9daec9', fontSize: 13 }}>
+                <div style={{ border: '1px dashed #383838', borderRadius: 10, padding: 32, textAlign: 'center', color: '#9a8a75', fontSize: 13 }}>
                     No fuel readings in the last {data?.lookbackHours ?? hours} hours.
-                    <div style={{ marginTop: 6, fontSize: 12, color: '#5e7094' }}>
+                    <div style={{ marginTop: 6, fontSize: 12, color: '#5a4e42' }}>
                         Only devices with a fuel probe report these, and readings arrive on their own packets rather than with every fix.
                     </div>
                 </div>
             )}
 
             {silent.length > 0 && reporting.length > 0 && (
-                <p style={{ fontSize: 12, color: '#5e7094' }}>No readings from: {silent.map(d => d.deviceName).join(', ')}</p>
+                <p style={{ fontSize: 12, color: '#5a4e42' }}>No readings from: {silent.map(d => d.deviceName).join(', ')}</p>
             )}
         </div>
     );
@@ -255,9 +255,9 @@ export function FuelEventsReport() {
                     <thead><tr>{['Time', 'Device', 'Event', 'Source', 'Before', 'After', 'Change'].map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5e7094' }}>Loading…</td></tr>
+                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5a4e42' }}>Loading…</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5e7094' }}>No fuel events in this period.</td></tr>
+                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5a4e42' }}>No fuel events in this period.</td></tr>
                         ) : rows.map(r => (
                             <tr key={r.id}>
                                 <td style={{ ...TD, whiteSpace: 'nowrap' }}>{fmtTime(r.occurredAt)}</td>
@@ -268,8 +268,8 @@ export function FuelEventsReport() {
                                 <td style={TD}>
                                     <span style={{
                                         padding: '2px 8px', borderRadius: 11, fontSize: 11, fontWeight: 700,
-                                        background: r.source === 'threshold' ? '#152a4a' : '#0f2b24',
-                                        color:      r.source === 'threshold' ? '#7fc4ff' : '#4ade80',
+                                        background: r.source === 'threshold' ? '#372817' : '#0f2b24',
+                                        color:      r.source === 'threshold' ? '#f59e0b' : '#4ade80',
                                     }}>{r.source === 'threshold' ? 'Traccar threshold' : 'Sensor'}</span>
                                 </td>
                                 <Litres value={r.before} percent={r.beforePercent} />
@@ -278,7 +278,7 @@ export function FuelEventsReport() {
                                 {r.after == null && r.atEvent != null
                                     ? <Litres value={r.atEvent} percent={r.atEventPercent} note="at alarm" />
                                     : <Litres value={r.after} percent={r.afterPercent} />}
-                                <td style={{ ...TD, fontWeight: 700, color: r.change == null ? '#5e7094' : r.change < 0 ? '#fca5a5' : '#4ade80' }}>
+                                <td style={{ ...TD, fontWeight: 700, color: r.change == null ? '#5a4e42' : r.change < 0 ? '#fca5a5' : '#4ade80' }}>
                                     {r.change == null ? '—' : `${r.change > 0 ? '+' : ''}${r.change.toFixed(1)} L`}
                                     {r.changePercent != null && (
                                         <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>
@@ -327,18 +327,18 @@ export function FuelTheftWatch() {
         <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
                 <DeviceFilter devices={devices} deviceId={deviceId} setDeviceId={setDeviceId} />
-                <span style={{ fontSize: 12.5, color: '#9daec9' }}>Window</span>
+                <span style={{ fontSize: 12.5, color: '#9a8a75' }}>Window</span>
                 <select value={minutes} onChange={e => setMinutes(Number(e.target.value))} style={{ ...input, cursor: 'pointer' }}>
                     {[15, 30, 60, 120, 240].map(m => <option key={m} value={m}>{m} min</option>)}
                 </select>
-                <span style={{ fontSize: 12.5, color: '#9daec9' }}>Alert on drop over</span>
+                <span style={{ fontSize: 12.5, color: '#9a8a75' }}>Alert on drop over</span>
                 <input type="number" min="0.5" max="100" step="0.5" value={drop} onChange={e => setDrop(Number(e.target.value))} style={{ ...input, width: 80 }} />
-                <span style={{ fontSize: 12.5, color: '#9daec9' }}>%</span>
+                <span style={{ fontSize: 12.5, color: '#9a8a75' }}>%</span>
                 <button onClick={load} style={button}>{loading ? 'Scanning…' : 'Rescan'}</button>
             </div>
 
             {/* Why this exists at all, stated where it is used. */}
-            <p style={{ margin: '0 0 14px', fontSize: 12, color: '#5e7094', maxWidth: 780, lineHeight: 1.6 }}>
+            <p style={{ margin: '0 0 14px', fontSize: 12, color: '#5a4e42', maxWidth: 780, lineHeight: 1.6 }}>
                 Traccar's own fuel-drop events compare two consecutive positions, so a slow siphon never trips them —
                 40 litres drawn over fifteen minutes is a few tenths between any two fixes. This compares the whole
                 window instead, and only flags a vehicle that was <b>stationary with the ignition off throughout</b>,
@@ -358,9 +358,9 @@ export function FuelTheftWatch() {
                     <thead><tr>{['Device', 'Window', 'Before', 'After', 'Drop', 'Vehicle state', 'Verdict'].map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5e7094' }}>Scanning…</td></tr>
+                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5a4e42' }}>Scanning…</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5e7094' }}>
+                            <tr><td colSpan={7} style={{ ...TD, textAlign: 'center', padding: 36, color: '#5a4e42' }}>
                                 No fuel drop detected. A vehicle needs at least two fuel readings in the window to be assessed.
                             </td></tr>
                         ) : rows.map(r => (
@@ -369,11 +369,11 @@ export function FuelTheftWatch() {
                                 <td style={{ ...TD, whiteSpace: 'nowrap' }}>{fmtTime(r.from)} → {fmtTime(r.to)}</td>
                                 <td style={TD}>{r.beforeLevel != null ? `${r.beforeLevel}%` : '—'}</td>
                                 <td style={TD}>{r.afterLevel != null ? `${r.afterLevel}%` : '—'}</td>
-                                <td style={{ ...TD, fontWeight: 700, color: r.suspected ? '#fca5a5' : '#cfdcf0' }}>
+                                <td style={{ ...TD, fontWeight: 700, color: r.suspected ? '#fca5a5' : '#d5c9b8' }}>
                                     {r.dropPercent}%{r.dropLitres != null ? ` · ${r.dropLitres} L` : ''}
                                 </td>
                                 <td style={TD}>{r.moved ? 'Moved / ignition on' : 'Parked, ignition off'}</td>
-                                <td style={{ ...TD, fontWeight: 700, color: r.suspected ? '#fca5a5' : '#5e7094' }}>
+                                <td style={{ ...TD, fontWeight: 700, color: r.suspected ? '#fca5a5' : '#5a4e42' }}>
                                     {r.suspected ? 'Investigate' : r.moved ? 'Consumption while driving' : 'Below threshold'}
                                 </td>
                             </tr>

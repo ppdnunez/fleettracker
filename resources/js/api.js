@@ -132,6 +132,10 @@ export const api = {
     getFaceRawLog:       (params)        => axios.get('/api/face/raw-log',     { params }),
     // Everything in public/img/uploads — face templates plus device stills and clips.
     getMediaFiles:       (params)        => axios.get('/api/media', { params }),
+    // The name goes in the body, not the path: these filenames carry dots, and a route parameter
+    // would have to fight Laravel's extension handling for nothing. The server re-checks that it
+    // is a bare name resolving inside the gallery directory.
+    deleteMediaFile:     (name)          => axios.delete('/api/media', { data: { name } }),
 
     // Who receives each alert email. getAlertChannels() reports whether the pipeline can actually
     // deliver — this app's mailer, and Traccar (which raises the geofence/fuel/alarm events).

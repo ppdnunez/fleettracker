@@ -28,15 +28,15 @@ import {
 
 /* ── palette, matching the rest of the dark operations pages ── */
 const S = {
-    panel:    '#111c33',
-    raised:   '#16233c',
-    border:   '#1e2c46',
-    field:    '#24344f',
-    text:     '#eaeff9',
-    label:    '#cfdcf0',
-    muted:    '#9daec9',
-    faint:    '#5e7094',
-    accent:   '#3b82f6',
+    panel:    '#1a1a1a',
+    raised:   '#222222',
+    border:   '#2c2c2c',
+    field:    '#383838',
+    text:     '#f5f0e8',
+    label:    '#d5c9b8',
+    muted:    '#9a8a75',
+    faint:    '#5a4e42',
+    accent:   '#d97706',
     ok:       '#16a34a',
     warn:     '#f59e0b',
     danger:   '#ef4444',
@@ -59,7 +59,7 @@ const primaryBtn = (disabled) => ({
 
 /** Colour and wording per lifecycle state. See the docblock for why they are kept distinct. */
 const STATUS = {
-    pending: { label: 'PENDING', colour: '#7fc4ff', bg: '#152a4a', border: '#24507f' },
+    pending: { label: 'PENDING', colour: '#f59e0b', bg: '#372817', border: '#78440a' },
     queued:  { label: 'QUEUED',  colour: '#fcd34d', bg: '#33260c', border: '#7c5e10' },
     success: { label: 'SUCCESS', colour: '#4ade80', bg: '#0d2a18', border: '#166534' },
     timeout: { label: 'TIMEOUT', colour: '#fcd34d', bg: '#33260c', border: '#7c5e10' },
@@ -681,7 +681,7 @@ export default function CommandPage() {
                             </div>
                         )}
                         {notice && !error && (
-                            <div style={{ marginTop: 12, padding: '9px 12px', background: '#152a4a', border: '1px solid #24507f', borderRadius: 7, fontSize: 12.5, color: '#7fc4ff' }}>
+                            <div style={{ marginTop: 12, padding: '9px 12px', background: '#372817', border: '1px solid #78440a', borderRadius: 7, fontSize: 12.5, color: '#f59e0b' }}>
                                 {notice}
                             </div>
                         )}

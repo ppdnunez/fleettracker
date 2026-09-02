@@ -13,7 +13,7 @@ function CollapseArrow({ open }) {
 
 function SearchIcon() {
     return (
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#94a3b8" strokeWidth="1.7">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9a8a75" strokeWidth="1.7">
             <circle cx="6" cy="6" r="4.5"/><line x1="9.5" y1="9.5" x2="13" y2="13"/>
         </svg>
     );
@@ -27,16 +27,16 @@ export default function DeviceList({ devices, selected, onSelect, search, setSea
                 width: open ? 260 : 0,
                 minWidth: open ? 260 : 0,
                 overflow: 'hidden',
-                background: '#111c33',
-                borderRight: open ? '1px solid #1e2c46' : 'none',
+                background: '#1a1a1a',
+                borderRight: open ? '1px solid #2c2c2c' : 'none',
                 transition: 'width 0.22s ease, min-width 0.22s ease',
                 display: 'flex',
                 flexDirection: 'column',
             }}>
                 <div style={{ width: 260, display: 'flex', flexDirection: 'column', height: '100%' }}>
                     {/* Header — no hamburger */}
-                    <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderBottom: '1px solid #1e2c46', flexShrink: 0 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#5e7094', letterSpacing: 1.2 }}>DEVICES</span>
+                    <div style={{ height: 44, display: 'flex', alignItems: 'center', padding: '0 14px', borderBottom: '1px solid #2c2c2c', flexShrink: 0 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#5a4e42', letterSpacing: 1.2 }}>DEVICES</span>
                     </div>
 
                     {/* Search */}
@@ -44,28 +44,28 @@ export default function DeviceList({ devices, selected, onSelect, search, setSea
                         <div style={{ position: 'relative' }}>
                             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex' }}><SearchIcon /></span>
                             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search device..."
-                                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px 8px 32px', border: '1.5px solid #1e2c46', borderRadius: 8, fontSize: 13, outline: 'none', background: '#16233c', color: '#eaeff9' }} />
+                                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px 8px 32px', border: '1.5px solid #2c2c2c', borderRadius: 8, fontSize: 13, outline: 'none', background: '#222222', color: '#f5f0e8' }} />
                         </div>
                     </div>
 
                     {/* List */}
                     <div style={{ flex: 1, overflowY: 'auto' }}>
                         {loading ? (
-                            <p style={{ textAlign: 'center', color: '#5e7094', fontSize: 12, paddingTop: 32 }}>Loading devices…</p>
+                            <p style={{ textAlign: 'center', color: '#5a4e42', fontSize: 12, paddingTop: 32 }}>Loading devices…</p>
                         ) : devices.length === 0 ? (
-                            <p style={{ textAlign: 'center', color: '#5e7094', fontSize: 12, paddingTop: 32 }}>No devices found.</p>
+                            <p style={{ textAlign: 'center', color: '#5a4e42', fontSize: 12, paddingTop: 32 }}>No devices found.</p>
                         ) : devices.map(d => (
-                            <div key={d.id} onClick={() => onSelect(d.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #1e2c46', background: selected === d.id ? '#152a4a' : 'transparent', borderLeft: `3px solid ${selected === d.id ? '#3b82f6' : 'transparent'}` }}>
+                            <div key={d.id} onClick={() => onSelect(d.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #2c2c2c', background: selected === d.id ? '#372817' : 'transparent', borderLeft: `3px solid ${selected === d.id ? '#d97706' : 'transparent'}` }}>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                                        <div style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0, background: selected === d.id ? '#1c3a63' : '#16233c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚙</div>
-                                        <span style={{ fontSize: 13, fontWeight: 700, color: '#eaeff9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                                        <div style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0, background: selected === d.id ? '#4a3410' : '#222222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>⚙</div>
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: '#f5f0e8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
                                     </div>
                                     <div style={{ paddingLeft: 36 }}>
-                                        <span style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{d.tracker}</span>
+                                        <span style={{ fontSize: 11, color: '#d97706', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{d.tracker}</span>
                                     </div>
                                     <div style={{ paddingLeft: 36, marginTop: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: d.status === 'ONLINE' ? '#22c55e' : '#5e7094' }}>● {d.status}</span>
+                                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: d.status === 'ONLINE' ? '#22c55e' : '#5a4e42' }}>● {d.status}</span>
                                         {/* Named, not just flagged: a red dot alone does not tell an
                                             operator whether to call the driver or the police. */}
                                         {alarmLabel(d.alarm) && (
@@ -91,10 +91,10 @@ export default function DeviceList({ devices, selected, onSelect, search, setSea
 
             {/* Right-side collapse strip */}
             <button onClick={onToggle} title={open ? 'Collapse' : 'Expand'} style={{
-                width: 13, background: '#1e2c46', border: 'none', cursor: 'pointer',
+                width: 13, background: '#2c2c2c', border: 'none', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#9daec9', flexShrink: 0, transition: 'background 0.15s',
-                borderRight: '1px solid #24344f',
+                color: '#9a8a75', flexShrink: 0, transition: 'background 0.15s',
+                borderRight: '1px solid #383838',
             }}>
                 <CollapseArrow open={open} />
             </button>

@@ -29,8 +29,10 @@ const CENTER = [-9.4438, 147.1803];
 // Marker colours, exported so the map legend can name the exact same states it draws.
 export const MARKER_COLORS = {
     online:   { fill: '#22c55e', stroke: '#4ade80' },
-    offline:  { fill: '#94a3b8', stroke: '#64748b' },
-    selected: { fill: '#3b82f6', stroke: '#7fc4ff' },
+    offline:  { fill: '#9a8a75', stroke: '#5a4e42' },
+    // Blue, not amber. Amber is the interface accent now, so an amber marker would read as
+    // chrome; the selected vehicle has to stand out *from* the chrome.
+    selected: { fill: '#3b82f6', stroke: '#60a5fa' },
 };
 
 function makeIcon(selected, online, vehicleType) {
@@ -67,10 +69,10 @@ function FlyToSelected({ device }) {
    Leaflet's own controls are white boxes, which now clash with everything around them, so the
    zoom, geofence toggle and layer picker are drawn here in the app's own palette instead. */
 
-const CTRL_BG     = '#0c1322';
-const CTRL_BORDER = '#1e2c46';
-const CTRL_FG     = '#9daec9';
-const CTRL_ON     = '#3b82f6';
+const CTRL_BG     = '#141414';
+const CTRL_BORDER = '#2c2c2c';
+const CTRL_FG     = '#9a8a75';
+const CTRL_ON     = '#d97706';
 
 const ctrlButton = (active) => ({
     width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -116,7 +118,7 @@ function HoverTip({ label, children }) {
             {hover && (
                 <div style={{
                     position: 'absolute', top: '50%', right: '100%', marginRight: 8, transform: 'translateY(-50%)',
-                    background: '#080d18', color: '#eaeff9', fontSize: 11.5, fontWeight: 600,
+                    background: '#0f0f0f', color: '#f5f0e8', fontSize: 11.5, fontWeight: 600,
                     padding: '4px 9px', borderRadius: 5, whiteSpace: 'nowrap', border: `1px solid ${CTRL_BORDER}`,
                     boxShadow: '0 2px 8px rgba(0,0,0,0.45)', pointerEvents: 'none', zIndex: 1001,
                 }}>
@@ -213,7 +215,7 @@ function MapLayerPicker({ layerKey, onChange }) {
                     {Object.entries(MAP_LAYERS).map(([key, def]) => (
                         <label key={key} style={{
                             display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px',
-                            fontSize: 13, color: layerKey === key ? '#eaeff9' : CTRL_FG, cursor: 'pointer',
+                            fontSize: 13, color: layerKey === key ? '#f5f0e8' : CTRL_FG, cursor: 'pointer',
                         }}>
                             <input type="radio" name="mapLayer" checked={layerKey === key}
                                 onChange={() => { onChange(key); setOpen(false); }}
@@ -262,15 +264,15 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
                     position: 'absolute', top: 58, left: 12, zIndex: 500,
                     display: 'flex', alignItems: 'center', gap: 8,
                     padding: '5px 11px', borderRadius: 999, background: 'rgba(12,19,34,0.92)',
-                    border: '1px solid #1e2c46', boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
-                    fontSize: 11.5, fontWeight: 600, color: '#9daec9',
+                    border: '1px solid #2c2c2c', boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                    fontSize: 11.5, fontWeight: 600, color: '#9a8a75',
                 }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: liveConnected ? '#22c55e' : '#94a3b8' }} />
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: liveConnected ? '#22c55e' : '#9a8a75' }} />
                         {liveConnected ? 'Live' : 'Reconnecting…'}
                     </span>
                     {nextRefreshIn !== undefined && (
-                        <span style={{ color: '#5e7094', fontWeight: 500 }}>refresh in {nextRefreshIn}s</span>
+                        <span style={{ color: '#5a4e42', fontWeight: 500 }}>refresh in {nextRefreshIn}s</span>
                     )}
                 </div>
             )}
@@ -298,7 +300,7 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
                     const shape = areaToShape(g.area);
                     if (!shape) return null;
 
-                    const pathOptions = { color: '#3b82f6', weight: 2, fillOpacity: 0.12 };
+                    const pathOptions = { color: '#d97706', weight: 2, fillOpacity: 0.12 };
                     // Named on the map itself: a zone the driver is being alerted about is only
                     // useful if you can tell which one it is without opening the editor.
                     const label = g.name
@@ -343,7 +345,7 @@ export default function MapCanvas({ devices, selected, onSelect, selectedDevice,
                                 {alarmLabel(d.alarm) && (
                                     <span style={{ color: '#f87171', fontWeight: 700 }}>⚠ {alarmLabel(d.alarm)}<br /></span>
                                 )}
-                                <span style={{ color: d.status === 'ONLINE' ? '#4ade80' : '#5e7094' }}>
+                                <span style={{ color: d.status === 'ONLINE' ? '#4ade80' : '#5a4e42' }}>
                                     ● {d.status}
                                 </span>
                             </Popup>

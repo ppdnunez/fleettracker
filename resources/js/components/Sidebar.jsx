@@ -1,16 +1,21 @@
 import { useState } from 'react';
+import Logo from './Logo.jsx';
 import { REPORT_GROUPS, groupForSection } from './reportSections.js';
 
 /* ── palette (shares the cockpit dashboard's dark operations tokens) ── */
 const S = {
-    bg:         '#0c1322',
-    border:     '#1e2c46',
-    hairline:   '#16233c',
-    text:       '#eaeff9',
-    secondary:  '#9daec9',
-    muted:      '#5e7094',
-    accent:     '#4da8ff',
-    activeBg:   '#16233c',
+    bg:         '#141414',
+    border:     '#2c2c2c',
+    hairline:   '#222222',
+    text:       '#f5f0e8',
+    secondary:  '#9a8a75',
+    muted:      '#5a4e42',
+    accent:     '#f59e0b',
+    accentDeep: '#d97706',
+    // The amber glow flattened onto the rail, and a neutral hover a shade above it.
+    activeTint: '#2e2110',
+    hoverBg:    '#1e1e1e',
+    activeBg:   '#222222',
     danger:     '#ef4444',
 };
 
@@ -95,12 +100,6 @@ const CheckInSVG = () => (
     </svg>
 );
 /* Settings group + its two new sub-modules */
-const SettingsSVG = () => (
-    <svg width="17" height="17" viewBox="0 0 17 17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="8.5" cy="8.5" r="2.4"/>
-        <path d="M13.6 10.4a1.2 1.2 0 0 0 .24 1.32l.05.05a1.4 1.4 0 1 1-2 2l-.04-.05a1.2 1.2 0 0 0-1.33-.24 1.2 1.2 0 0 0-.73 1.1v.13a1.4 1.4 0 1 1-2.8 0v-.07a1.2 1.2 0 0 0-.78-1.1 1.2 1.2 0 0 0-1.33.24l-.04.05a1.4 1.4 0 1 1-2-2l.05-.04a1.2 1.2 0 0 0 .24-1.33 1.2 1.2 0 0 0-1.1-.73H1.9a1.4 1.4 0 1 1 0-2.8h.07a1.2 1.2 0 0 0 1.1-.78 1.2 1.2 0 0 0-.24-1.33l-.05-.04a1.4 1.4 0 1 1 2-2l.04.05a1.2 1.2 0 0 0 1.33.24h.06a1.2 1.2 0 0 0 .73-1.1V1.9a1.4 1.4 0 1 1 2.8 0v.07a1.2 1.2 0 0 0 .73 1.1 1.2 1.2 0 0 0 1.33-.24l.04-.05a1.4 1.4 0 1 1 2 2l-.05.04a1.2 1.2 0 0 0-.24 1.33v.06a1.2 1.2 0 0 0 1.1.73h.13a1.4 1.4 0 1 1 0 2.8h-.07a1.2 1.2 0 0 0-1.1.73Z"/>
-    </svg>
-);
 const SimSVG = () => (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
         <path d="M2.6 1.9h6.1l3.7 3.6v7.6H2.6z"/>
@@ -127,12 +126,6 @@ const TerminalSVG = () => (
         <rect x="1.4" y="2.2" width="12.2" height="10.6" rx="1.6"/>
         <polyline points="4.2,6 6.3,7.9 4.2,9.8"/>
         <line x1="8" y1="9.9" x2="10.8" y2="9.9"/>
-    </svg>
-);
-const ChevSVG = ({ open }) => (
-    <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-        style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s ease', flexShrink: 0 }}>
-        <polyline points="2,3.5 5.5,7.5 9,3.5"/>
     </svg>
 );
 const LogoutSVG = () => (
@@ -198,59 +191,93 @@ const REPORT_ICONS = {
 const EXPANDED_W = 220;
 const COLLAPSED_W = 62;
 
-function NavItem({ icon, label, active, onClick, depth = 0, open, sidebarOpen }) {
-    const left = 8 + depth * 14;
+/**
+ * A section heading — FLEET, SETTINGS, REPORT.
+ *
+ * A label, not a control. These used to be collapsible buttons, which meant the thing you
+ * wanted was usually one click behind a chevron; with three short sections there is nothing to
+ * collapse *for*. Hidden entirely when the rail is collapsed to icons, where a 62px column has
+ * no room for a word and the groups are legible from the icons alone.
+ */
+function NavGroupLabel({ children, sidebarOpen }) {
+    if (!sidebarOpen) return <div style={{ height: 10 }} />;
+
     return (
-        <button onClick={onClick} title={!sidebarOpen ? label : undefined} style={{
-            display: 'flex', alignItems: 'center', gap: 9, width: '100%', textAlign: 'left',
-            padding: sidebarOpen ? `8px 8px 8px ${left}px` : '8px 0',
-            justifyContent: sidebarOpen ? 'flex-start' : 'center',
-            borderRadius: 8, border: 'none', cursor: 'pointer',
-            // The active item is marked by the accent bar and the brighter type alone. A filled
-            // block behind it read as a button rather than as "you are here".
-            borderLeft: `3px solid ${active ? S.accent : 'transparent'}`,
-            background: 'transparent',
-            color: active ? S.text : S.secondary,
-            fontSize: 13, fontWeight: active ? 700 : 500, marginBottom: 1, flexShrink: 0,
-            transition: 'background 0.14s, color 0.14s',
-        }}>
-            {icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, color: active ? S.accent : S.muted }}>{icon}</span>}
+        <div style={{
+            padding: '14px 10px 6px',
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.14em',
+            textTransform: 'uppercase', color: S.muted,
+        }}>{children}</div>
+    );
+}
+
+/**
+ * One navigable entry.
+ *
+ * Selected state is three things at once — amber text, an amber left rule, and a warm tint
+ * behind it. The tint alone was rejected before as looking like a pressed button; with the
+ * rule and the coloured type it reads as position instead, which is what the reference does.
+ */
+function NavItem({ icon, label, active, onClick, sidebarOpen }) {
+    const [hover, setHover] = useState(false);
+
+    return (
+        <button onClick={onClick} title={!sidebarOpen ? label : undefined}
+            onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+            style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+                padding: sidebarOpen ? '8px 12px' : '9px 0',
+                justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                border: 'none', cursor: 'pointer',
+                borderLeft: `2px solid ${active ? S.accentDeep : 'transparent'}`,
+                background: active ? S.activeTint : hover ? S.hoverBg : 'transparent',
+                color: active ? S.accent : hover ? S.text : S.secondary,
+                fontSize: 13.5, fontWeight: active ? 600 : 400, flexShrink: 0,
+                transition: 'background 0.15s, color 0.15s',
+            }}>
+            {/* The icon dims with the label rather than carrying its own colour, so a row reads
+                as one object. Full strength only where the eye is meant to land. */}
+            {icon && <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, opacity: active ? 1 : 0.7 }}>{icon}</span>}
             {sidebarOpen && <span style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{label}</span>}
-            {sidebarOpen && open !== undefined && <ChevSVG open={open} />}
         </button>
     );
 }
 
 /* ── main component ─────────────────────────────────────────── */
+/* `module` names the entry in the server's ModuleAccess table. The user profile carries the
+   list of modules the signed-in role may reach, so what the nav offers and what the API permits
+   come from one place. An entry with no module is available to anyone signed in. */
 const FLEET_ITEMS = [
-    { label: 'Dashboard',           key: 'Dashboard',          icon: <DashSVG /> },
-    { label: 'Driver',              key: 'Driver',             icon: <PersonSVG /> },
-    { label: 'Vehicle',             key: 'Vehicle',            icon: <CarSVG /> },
-    { label: 'Vehicle Track',       key: 'VehicleTrack',       icon: <PinSVG /> },
-    { label: 'Vehicle Maintenance', key: 'VehicleMaintenance', icon: <WrenchSVG /> },
-    { label: 'Fuel Management',     key: 'FuelManagement',     icon: <FuelSVG /> },
+    { label: 'Dashboard',           key: 'Dashboard',          icon: <DashSVG />,   module: 'fleet.dashboard' },
+    { label: 'Driver',              key: 'Driver',             icon: <PersonSVG />, module: 'fleet.driver' },
+    { label: 'Vehicle',             key: 'Vehicle',            icon: <CarSVG />,    module: 'fleet.vehicle' },
+    { label: 'Vehicle Track',       key: 'VehicleTrack',       icon: <PinSVG />,    module: 'fleet.vehicleTrack' },
+    { label: 'Vehicle Maintenance', key: 'VehicleMaintenance', icon: <WrenchSVG />, module: 'fleet.vehicleMaintenance' },
+    { label: 'Fuel Management',     key: 'FuelManagement',     icon: <FuelSVG />,   module: 'fleet.fuelManagement' },
 ];
 
 /* Device and platform configuration. `hidden` keeps an entry out of the nav without unrouting it:
    Dashboard.jsx still renders these pages, so anything already pointing at one (a bookmark, a deep
    link) keeps working. Drop the flag to bring an item back.
 
-   `adminOnly` is a different thing: it hides an entry from anyone who cannot use it. It is a
-   convenience, not the control — the API refuses these calls on its own (platform.admin
-   middleware, and CompanyUserController's per-request check). */
+   `module` names an entry in the server's ModuleAccess table, and the entry is offered only to a
+   role whose profile lists that module. It is a convenience, not the control: the API refuses the
+   same calls on its own through the `module` middleware, platform.admin, and
+   CompanyUserController's per-request check. Hiding a link stops nobody who can open a console. */
 const SETTINGS_ITEMS = [
-    { label: 'Companies & Users',   page: 'Companies',           icon: <CompanySVG />, adminOnly: true },
-    { label: 'Device Management',   page: 'Device Management',   icon: <DeviceSVG /> },
-    { label: 'Sim Data Management', page: 'Sim Data Management', icon: <SimSVG /> },
+    { label: 'Companies & Users',   page: 'Companies',           icon: <CompanySVG />, module: 'settings.companies' },
+    { label: 'Device Management',   page: 'Device Management',   icon: <DeviceSVG />,  module: 'settings.deviceManagement' },
+    { label: 'Sim Data Management', page: 'Sim Data Management', icon: <SimSVG />,     module: 'settings.simData' },
     { label: 'Device Map & Video',  page: 'Dashboard',           icon: <PinSVG />,    hidden: true },
-    { label: 'Geofence',            page: 'Geofence',            icon: <PinSVG /> },
-    { label: 'Alert Recipients',    page: 'Alert Recipients',    icon: <MailSVG /> },
-    { label: 'Fuel Thresholds',     page: 'Fuel Thresholds',     icon: <FuelSVG />, adminOnly: true },
-    { label: 'Media Gallery',       page: 'Media Gallery',       icon: <MediaSVG /> },
-    { label: 'Face Logs',           page: 'Face Logs',           icon: <PersonSVG /> },
+    { label: 'Geofence',            page: 'Geofence',            icon: <PinSVG />,     module: 'settings.geofence' },
+    { label: 'Alert Recipients',    page: 'Alert Recipients',    icon: <MailSVG />,    module: 'settings.alertRecipients' },
+    { label: 'Fuel Thresholds',     page: 'Fuel Thresholds',     icon: <FuelSVG />,    module: 'settings.fuelThresholds' },
+    { label: 'Media Gallery',       page: 'Media Gallery',       icon: <MediaSVG />,   module: 'settings.mediaGallery' },
+    { label: 'Face Logs',           page: 'Face Logs',           icon: <PersonSVG />,  module: 'settings.faceLogs' },
     // Send a device a command and read its reply. Distinct from Saved Commands below, which is
     // Traccar's library of command definitions and sends nothing.
-    { label: 'Command',             page: 'Command',             icon: <TerminalSVG /> },
+    { label: 'Command',             page: 'Command',             icon: <TerminalSVG />, module: 'settings.command' },
     { label: 'Saved Commands',      page: 'Saved Commands',      icon: <ReportSVG />, hidden: true },
     { label: 'Notification',        page: 'Notification',        icon: <ReportSVG />, hidden: true },
     { label: 'Calendars',           page: 'Calendars',           icon: <CheckInSVG />,hidden: true },
@@ -260,14 +287,19 @@ const SETTINGS_ITEMS = [
     { label: 'Drivers',             page: 'Drivers',             icon: <PersonSVG />, hidden: true },
 ];
 export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, reportSection, setReportSection, fleetPage, setFleetPage, user }) {
-    // Platform administrators manage every company; a company's own administrator manages just
-    // its logins. Everyone else has no user administration to reach.
-    const canManageUsers = !!(user?.is_admin || user?.is_company_admin);
-    const visibleSettingsItems = SETTINGS_ITEMS.filter(i => !i.hidden && (!i.adminOnly || canManageUsers));
+    // Which modules this login may reach, straight from the profile — the server decides, and
+    // the nav only reflects it. An empty list means a role the server does not recognise, which
+    // is deliberately given nothing rather than everything.
+    const modules = user?.modules ?? [];
+    const canReach = (m) => !m || modules.includes(m);
 
-    const [reportOpen,   setReportOpen]   = useState(false);
-    const [settingsOpen, setSettingsOpen] = useState(false);
-    const [fleetOpen,    setFleetOpen]    = useState(false);
+    const visibleFleetItems    = FLEET_ITEMS.filter(i => canReach(i.module));
+    const visibleSettingsItems = SETTINGS_ITEMS.filter(i => !i.hidden && canReach(i.module));
+    const canSeeReports  = canReach('reports');
+    // A section with nothing left in it is a heading that opens onto an empty list, so the
+    // heading goes too.
+    const canSeeFleet    = visibleFleetItems.length > 0;
+    const canSeeSettings = visibleSettingsItems.length > 0;
 
     const W = open ? EXPANDED_W : COLLAPSED_W;
 
@@ -278,9 +310,6 @@ export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, 
     // Which statistics module the open report belongs to, so the module stays highlighted while the
     // reader moves between its tabs.
     const activeReportGroup = isReportActive ? groupForSection(reportSection) : null;
-    // Matches against the full list, hidden entries included, so landing on a hidden page still
-    // highlights its parent group rather than showing nothing as selected.
-    const isSettingsActive = SETTINGS_ITEMS.some(i => i.page === page);
     const isFleetActive    = page === 'Fleet';
 
     return (
@@ -291,62 +320,56 @@ export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, 
         }}>
             {/* Logo + hamburger */}
             <div style={{ height: 58, display: 'flex', alignItems: 'center', borderBottom: `1px solid ${S.border}`, flexShrink: 0, paddingLeft: open ? 14 : 0, justifyContent: open ? 'flex-start' : 'center', gap: 10, overflow: 'hidden' }}>
-                {open && (
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg,#14b8a6,#0d9488)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>📡</div>
-                )}
-                {open && <span style={{ fontSize: 14, fontWeight: 800, color: S.text, whiteSpace: 'nowrap', flex: 1 }}>Turprotrack</span>}
+                {/* Collapsed, the header carries the hamburger alone. The mark at 30px in a 62px
+                    column sat directly above the identical-width nav icons and read as another
+                    one of them; with it gone the button is unambiguously the way back.
+                    Expanded, the subtitle is abbreviated — the full phrase does not fit in 220px
+                    beside the mark and the collapse button. */}
+                {open && <div style={{ flex: 1, minWidth: 0 }}><Logo size="sm" subtitle="Fleet · GPS · Ops" /></div>}
                 <button onClick={onToggle} title="Toggle sidebar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: S.secondary, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 6, flexShrink: 0 }}>
                     <HamSVG />
                 </button>
             </div>
 
-            {/* Nav */}
-            <nav style={{ flex: 1, padding: open ? '10px 8px' : '10px 6px', overflowY: 'auto', overflowX: 'hidden' }}>
-                {/* Fleet — the day-to-day operations, so it leads. */}
-                <NavItem icon={<FleetSVG />} label="Fleet" active={isFleetActive}
-                    open={open ? fleetOpen : undefined}
-                    onClick={() => { if (open) setFleetOpen(o => !o); else { navTo('Fleet'); } }}
-                    sidebarOpen={open} />
+            {/* Nav
 
-                {open && fleetOpen && (
-                    <div style={{ marginLeft: 4 }}>
-                        {FLEET_ITEMS.map(({ label, key, icon }) => (
-                            <NavItem key={key} icon={icon} label={label} depth={1} sidebarOpen={open}
+                Flat sections rather than collapsible groups. Everything a role can reach is on
+                screen, which is the whole point of a rail this short — the previous version put
+                every destination one chevron behind a heading that was itself a navigation target,
+                so a click could either move you or merely reveal where you might move to.
+
+                The Report section keeps one entry per statistics module rather than a single
+                "Reports" link. Those are eight distinct destinations, and collapsing them to one
+                would trade navigation for tidiness. */}
+            <nav style={{ flex: 1, padding: open ? '4px 0 12px' : '8px 0 12px', overflowY: 'auto', overflowX: 'hidden' }}>
+                {canSeeFleet && (
+                    <>
+                        <NavGroupLabel sidebarOpen={open}>Fleet</NavGroupLabel>
+                        {visibleFleetItems.map(({ label, key, icon }) => (
+                            <NavItem key={key} icon={icon} label={label} sidebarOpen={open}
                                 active={isFleetActive && fleetPage === key}
                                 onClick={() => { navTo('Fleet'); setFleetPage(key); }} />
                         ))}
-                    </div>
+                    </>
                 )}
 
-                {/* Settings — device and platform configuration */}
-                <NavItem icon={<SettingsSVG />} label="Settings" active={isSettingsActive && !isReportActive}
-                    open={open ? settingsOpen : undefined}
-                    onClick={() => { if (open) setSettingsOpen(o => !o); else navTo('Dashboard'); }}
-                    sidebarOpen={open} />
-
-                {open && settingsOpen && (
-                    <div style={{ marginLeft: 4 }}>
+                {canSeeSettings && (
+                    <>
+                        <NavGroupLabel sidebarOpen={open}>Settings</NavGroupLabel>
                         {visibleSettingsItems.map(({ label, page: target, icon }) => (
-                            <NavItem key={label} icon={icon} label={label} depth={1} sidebarOpen={open}
+                            <NavItem key={label} icon={icon} label={label} sidebarOpen={open}
                                 active={page === target && !isReportActive}
                                 onClick={() => navTo(target)} />
                         ))}
-                    </div>
+                    </>
                 )}
 
-                {/* Report */}
-                <NavItem icon={<ReportSVG />} label="Report" active={isReportActive}
-                    open={open ? reportOpen : undefined}
-                    onClick={() => { if (open) setReportOpen(o => !o); else { setPage('Report'); } }}
-                    sidebarOpen={open} />
-
-                {/* One entry per statistics module; the reports inside it are tabs on the page
-                    itself, so the nav stays one level deep instead of three. */}
-                {open && reportOpen && (
-                    <div style={{ marginLeft: 4 }}>
+                {canSeeReports && (
+                    <>
+                        <NavGroupLabel sidebarOpen={open}>Report</NavGroupLabel>
                         {REPORT_GROUPS.map(group => (
                             <NavItem key={group.label} icon={REPORT_ICONS[group.label]} label={group.label}
-                                depth={1} sidebarOpen={open}
+                                sidebarOpen={open}
                                 active={activeReportGroup?.label === group.label}
                                 // Re-clicking the module the reader is already in keeps their tab
                                 // rather than throwing them back to the first one.
@@ -354,7 +377,7 @@ export default function Sidebar({ page, setPage, onLogoutClick, open, onToggle, 
                                     activeReportGroup?.label === group.label ? reportSection : group.sections[0]
                                 )} />
                         ))}
-                    </div>
+                    </>
                 )}
             </nav>
 

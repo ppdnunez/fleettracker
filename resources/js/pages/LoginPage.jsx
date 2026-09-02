@@ -1,34 +1,60 @@
 import { useState } from 'react';
 import { api } from '../api.js';
+import Logo from '../components/Logo.jsx';
 
 /**
- * The login fields, with their colours pinned.
+ * Sign-in, on the industrial palette the rest of the app uses.
  *
- * Only `color` was set here and nothing set a background, so on a machine in dark mode the
- * browser supplied its own dark field behind text explicitly coloured near-black and whatever you
- * typed was invisible. `colorScheme: 'light'` tells the UA not to restyle the control at all;
- * setting background and colour together means the field reads the same under either OS theme.
+ * This was a white card on a gradient — the last light surface left once the modules were
+ * repainted, and the first thing anyone sees. It is charcoal and amber now, so the product does
+ * not change character between the login screen and the dashboard behind it.
+ */
+
+const AMBER      = '#d97706';
+const SURFACE    = '#1a1a1a';
+const SURFACE_2  = '#222222';
+const BORDER     = '#2c2c2c';
+const TEXT       = '#f5f0e8';
+const TEXT_MUTED = '#9a8a75';
+const TEXT_FAINT = '#5a4e42';
+
+/**
+ * The credential fields.
+ *
+ * `colorScheme: 'dark'` is doing real work: it tells the browser this control is dark, which fixes
+ * the caret and the placeholder without either being styled by hand. It is also the inverse of the
+ * bug this file had before — a field with a colour but no background, which a machine in dark mode
+ * filled with its own dark grey behind near-black text.
  */
 const INPUT_STYLE = {
-    width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8,
+    width: '100%', padding: '10px 14px', border: `1px solid ${BORDER}`, borderRadius: 8,
     fontSize: 14, outline: 'none', boxSizing: 'border-box',
-    background: '#fff', color: '#0f172a', colorScheme: 'light',
+    background: SURFACE_2, color: TEXT, colorScheme: 'dark',
 };
 
 /**
  * Autofill is the one case an inline style cannot reach: Chrome paints saved credentials with its
- * own background and text colour at a specificity no inline style beats, which in dark mode is
- * the same unreadable pairing again. A large inset shadow is the long-standing way to repaint the
- * field, and -webkit-text-fill-color the only thing that moves the text with it.
+ * own background and text colour at a specificity no inline style beats — white on pale yellow,
+ * which on this card would be the only light rectangle on screen. A large inset shadow is the
+ * long-standing way to repaint the field, and -webkit-text-fill-color the only thing that moves
+ * the text with it.
+ *
+ * The focus ring is here for the same reason: `outline: none` on the fields would otherwise leave
+ * a keyboard user with no idea which one they are in.
  */
-const AUTOFILL_CSS = `
+const LOGIN_CSS = `
     input:-webkit-autofill,
     input:-webkit-autofill:hover,
     input:-webkit-autofill:focus {
-        -webkit-box-shadow: 0 0 0 1000px #fff inset;
-        -webkit-text-fill-color: #0f172a;
-        caret-color: #0f172a;
+        -webkit-box-shadow: 0 0 0 1000px ${SURFACE_2} inset;
+        -webkit-text-fill-color: ${TEXT};
+        caret-color: ${TEXT};
     }
+    .login-field:focus {
+        border-color: ${AMBER};
+        box-shadow: 0 0 0 3px rgba(217,119,6,0.15);
+    }
+    .login-submit:hover:not(:disabled) { background: #f59e0b; }
 `;
 
 export default function LoginPage({ onLogin }) {
@@ -55,45 +81,95 @@ export default function LoginPage({ onLogin }) {
         }
     };
 
+    const label = {
+        display: 'block', marginBottom: 6,
+        fontFamily: "Oswald, 'Barlow Condensed', system-ui, sans-serif",
+        fontSize: 11, fontWeight: 500, letterSpacing: '0.12em',
+        textTransform: 'uppercase', color: TEXT_MUTED,
+    };
+
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#0f172a,#1e3a5f)', position: 'relative' }}>
-            <div style={{ position: 'fixed', inset: 0, opacity: 0.06, backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none' }} />
-            <div style={{ background: '#fff', borderRadius: 16, padding: '44px 40px', width: 380, boxShadow: '0 24px 64px rgba(0,0,0,0.4)', position: 'relative', zIndex: 1 }}>
-                <style>{AUTOFILL_CSS}</style>
-                <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 14, background: 'linear-gradient(135deg,#1e40af,#3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 12px' }}>📡</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>Turprotrack</div>
-                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>GPS Fleet Management System</div>
+        <div style={{
+            minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#0f0f0f', position: 'relative', padding: 20,
+        }}>
+            {/* A faint amber wash off one corner, so a full-screen charcoal page has some
+                direction to it rather than reading as an unpainted surface. */}
+            <div style={{
+                position: 'fixed', inset: 0, pointerEvents: 'none',
+                background: 'radial-gradient(1100px 620px at 18% 12%, rgba(217,119,6,0.10), transparent 60%)',
+            }} />
+            {/* Survey grid. Amber rather than white: at 4% a white grid on charcoal reads grey and
+                slightly dirty, where the amber keeps the page one colour temperature. */}
+            <div style={{
+                position: 'fixed', inset: 0, pointerEvents: 'none', opacity: 0.045,
+                backgroundImage: 'linear-gradient(#f59e0b 1px,transparent 1px),linear-gradient(90deg,#f59e0b 1px,transparent 1px)',
+                backgroundSize: '44px 44px',
+            }} />
+
+            <div style={{
+                background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16,
+                padding: '40px 40px 32px', width: 390, position: 'relative', zIndex: 1,
+                boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+            }}>
+                <style>{LOGIN_CSS}</style>
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+                    <Logo size="lg" subtitle="Fleet · GPS · Operations" />
                 </div>
 
+                {/* A rule under the lockup, amber fading out — the same device the module headers
+                    use to separate a title from its content. */}
+                <div style={{
+                    height: 1, margin: '18px 0 24px',
+                    background: `linear-gradient(90deg, transparent, ${AMBER}, transparent)`,
+                    opacity: 0.55,
+                }} />
+
                 <div style={{ marginBottom: 14 }}>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Email</label>
-                    <input style={INPUT_STYLE}
+                    <label style={label}>Email</label>
+                    <input className="login-field" style={INPUT_STYLE}
                         type="email" value={email} placeholder="admin@fleet.com"
                         onChange={e => setEmail(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
                 </div>
 
-                <div style={{ marginBottom: 14 }}>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Password</label>
-                    <input style={INPUT_STYLE}
+                <div style={{ marginBottom: 16 }}>
+                    <label style={label}>Password</label>
+                    <input className="login-field" style={INPUT_STYLE}
                         type="password" value={password} placeholder="••••••••"
                         onChange={e => setPassword(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
                 </div>
 
                 {error && (
-                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#dc2626', marginBottom: 14 }}>
+                    <div style={{
+                        background: '#3b1418', border: '1px solid #7f1d1d', borderRadius: 8,
+                        padding: '10px 14px', fontSize: 13, color: '#fca5a5', marginBottom: 14,
+                    }}>
                         {error}
                     </div>
                 )}
 
-                <button style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#1e40af,#3b82f6)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.7 : 1 }}
-                    onClick={handleSubmit} disabled={loading}>
+                <button className="login-submit" onClick={handleSubmit} disabled={loading}
+                    style={{
+                        width: '100%', padding: 12, borderRadius: 8, border: 'none',
+                        background: AMBER, color: '#141414',
+                        fontFamily: "Oswald, 'Barlow Condensed', system-ui, sans-serif",
+                        fontSize: 15, fontWeight: 700, letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        cursor: loading ? 'default' : 'pointer',
+                        opacity: loading ? 0.7 : 1,
+                        transition: 'background 0.15s',
+                    }}>
                     {loading ? 'Signing in…' : 'Sign In'}
                 </button>
 
-                <p style={{ textAlign: 'center', marginTop: 18, fontSize: 12, color: '#94a3b8' }}>
+                <p style={{
+                    textAlign: 'center', marginTop: 20, fontSize: 11,
+                    fontFamily: "Oswald, 'Barlow Condensed', system-ui, sans-serif",
+                    letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_FAINT,
+                }}>
                     Demo: admin@fleet.com / admin123
                 </p>
             </div>

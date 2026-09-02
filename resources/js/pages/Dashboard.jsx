@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { api } from '../api.js';
 import { traccarSocketUrl, InsecureSocketError } from '../traccarSocketUrl.js';
+import { PAGE_MODULES, FLEET_PAGE_MODULES, moduleChecker, firstAllowedPage, firstAllowedFleetPage } from '../modules.js';
 
 // Eager: the shell, and the live map that the dashboard opens on. Everything
 // here is on screen within the first paint, so deferring it would only add a
@@ -43,8 +44,25 @@ const DriverPage             = lazy(() => import('../components/DriverPage.jsx')
 function PageLoading() {
     return (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#64748b', fontSize: 14 }}>
+                      color: '#5a4e42', fontSize: 14 }}>
             Loading…
+        </div>
+    );
+}
+
+/**
+ * Shown in place of a page this login's role may not open.
+ *
+ * It should be rare — the sidebar does not offer these pages, and Dashboard redirects away from
+ * one reached any other way. It exists for the render between arriving and being redirected, and
+ * for the case where a role has no landing page at all, where a blank panel would look like a
+ * failure rather than a decision.
+ */
+function NoAccess() {
+    return (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#5a4e42' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#9a8a75' }}>Not available for your role</div>
+            <div style={{ fontSize: 13 }}>Ask an administrator if you need access to this page.</div>
         </div>
     );
 }
@@ -138,6 +156,29 @@ export default function Dashboard({ user, onLogout }) {
     const [sidebarOpen,    setSidebarOpen]    = useState(true);
     const [reportSection,  setReportSection]  = useState(DEFAULT_REPORT_SECTION);
     const [fleetPage,      setFleetPage]      = useState('Dashboard');
+
+    // What this role may open, straight from the profile. The sidebar already hides what it
+    // cannot reach; this is the second half — a page can also be arrived at without the nav (the
+    // SOS card jumps to the device map, a stale tab restores an old page) and must not render
+    // just because the state says so.
+    const can = moduleChecker(user);
+
+    // Nothing is rendered for a page this login cannot open; it is redirected to one it can.
+    // Done as an effect rather than by overriding the value so the sidebar highlight, the header
+    // title and the page stay describing the same thing.
+    useEffect(() => {
+        if (!can(PAGE_MODULES[page])) {
+            const target = firstAllowedPage(user);
+            if (target) setPage(target);
+        }
+    }, [page, user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (!can(FLEET_PAGE_MODULES[fleetPage])) {
+            const target = firstAllowedFleetPage(user);
+            if (target) setFleetPage(target);
+        }
+    }, [fleetPage, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Live Traccar data (Device Management + Device Map & Video) — initial load via REST,
     // then kept live via Traccar's own websocket (see effect below).
@@ -330,7 +371,7 @@ export default function Dashboard({ user, onLogout }) {
     return (
         // Shell background: darker than the panels it holds, so a page reads as sitting on top of
         // the shell rather than merging into it.
-        <div style={{ display: 'flex', height: '100vh', fontFamily: 'Inter,system-ui,sans-serif', background: '#080d18', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', height: '100vh', fontFamily: 'Inter,system-ui,sans-serif', background: '#0f0f0f', overflow: 'hidden' }}>
             <Sidebar
                 page={page}
                 setPage={setPage}
@@ -351,7 +392,9 @@ export default function Dashboard({ user, onLogout }) {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <AppHeader user={user} title={headerTitle} />
                 <Suspense fallback={<PageLoading />}>
-                {page === 'Device Management' ? (
+                {!can(PAGE_MODULES[page]) ? (
+                    <NoAccess />
+                ) : page === 'Device Management' ? (
                     <DeviceManagement devices={liveDevices} loading={liveLoading} onRefresh={fetchLiveDevices} />
                 ) : page === 'Sim Data Management' ? (
                     <SimDataManagementPage />
@@ -362,7 +405,7 @@ export default function Dashboard({ user, onLogout }) {
                 ) : page === 'Face Logs' ? (
                     <FaceLogsPage />
                 ) : page === 'Media Gallery' ? (
-                    <MediaGalleryPage />
+                    <MediaGalleryPage user={user} />
                 ) : page === 'Companies' ? (
                     <CompanyManagementPage user={user} />
                 ) : page === 'Geofence' ? (

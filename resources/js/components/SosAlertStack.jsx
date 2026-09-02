@@ -61,9 +61,9 @@ export default function SosAlertStack({ alerts, onDismiss, onLocate }) {
                                 <div style={{ fontSize: 13.5, fontWeight: 800, color: '#991b1b', letterSpacing: 0.2 }}>
                                     SOS — {alert.deviceName}
                                 </div>
-                                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{alert.time}</div>
+                                <div style={{ fontSize: 12, color: '#5a4e42', marginTop: 2 }}>{alert.time}</div>
                                 {alert.imei && (
-                                    <div style={{ fontSize: 11.5, color: '#9ca3af', fontFamily: 'monospace', marginTop: 1 }}>{alert.imei}</div>
+                                    <div style={{ fontSize: 11.5, color: '#9a8a75', fontFamily: 'monospace', marginTop: 1 }}>{alert.imei}</div>
                                 )}
                             </div>
 
@@ -85,12 +85,12 @@ export default function SosAlertStack({ alerts, onDismiss, onLocate }) {
                             {hasCoords ? (
                                 <>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <span style={{ fontFamily: 'monospace', fontSize: 12.5, color: '#111827', fontWeight: 600 }}>
+                                        <span style={{ fontFamily: 'monospace', fontSize: 12.5, color: '#1a1a1a', fontWeight: 600 }}>
                                             {coords}
                                         </span>
                                         <button onClick={() => copyCoords(alert)} title="Copy coordinates" style={{
                                             marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer',
-                                            color: copiedKey === alert.key ? '#15803d' : '#6b7280',
+                                            color: copiedKey === alert.key ? '#15803d' : '#5a4e42',
                                             fontSize: 11.5, fontWeight: 600, padding: 0,
                                         }}>
                                             {copiedKey === alert.key ? 'Copied' : 'Copy'}
@@ -102,11 +102,11 @@ export default function SosAlertStack({ alerts, onDismiss, onLocate }) {
                                             location to a responder who has no login here. */}
                                         <a href={`https://www.google.com/maps/search/?api=1&query=${alert.lat},${alert.lng}`}
                                             target="_blank" rel="noopener noreferrer"
-                                            style={{ fontSize: 12, fontWeight: 600, color: '#1d4ed8', textDecoration: 'none' }}>
+                                            style={{ fontSize: 12, fontWeight: 600, color: '#b45309', textDecoration: 'none' }}>
                                             Open in Google Maps ↗
                                         </a>
                                         {alert.speed != null && (
-                                            <span style={{ marginLeft: 'auto', fontSize: 11.5, color: '#6b7280' }}>
+                                            <span style={{ marginLeft: 'auto', fontSize: 11.5, color: '#5a4e42' }}>
                                                 {Math.round(alert.speed)} km/h
                                             </span>
                                         )}
@@ -130,8 +130,8 @@ export default function SosAlertStack({ alerts, onDismiss, onLocate }) {
                         <div style={{ display: 'flex', gap: 8, padding: '0 14px 12px' }}>
                             {alert.deviceId != null && (
                                 <button onClick={() => onLocate(alert)} style={{
-                                    flex: 1, padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 7,
-                                    background: '#fff', color: '#374151', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                                    flex: 1, padding: '7px 10px', border: '1px solid #d5c9b8', borderRadius: 7,
+                                    background: '#fff', color: '#3a3a3a', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                                 }}>Show on map</button>
                             )}
                             <button onClick={() => onDismiss(alert.key)} style={{

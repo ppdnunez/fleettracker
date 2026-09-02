@@ -14,9 +14,9 @@ import { api } from '../api.js';
  * changed keys would wipe everything else on the device.
  */
 
-const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
-const TD = { padding: '9px 12px', fontSize: 12.5, borderBottom: '1px solid #1e2c46', color: '#cfdcf0' };
-const num = { padding: '6px 8px', border: '1px solid #24344f', borderRadius: 6, fontSize: 12.5, color: '#eaeff9', background: '#16233c', outline: 'none', width: 84 };
+const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#d5c9b8', borderBottom: '2px solid #2c2c2c', whiteSpace: 'nowrap', background: '#222222' };
+const TD = { padding: '9px 12px', fontSize: 12.5, borderBottom: '1px solid #2c2c2c', color: '#d5c9b8' };
+const num = { padding: '6px 8px', border: '1px solid #383838', borderRadius: 6, fontSize: 12.5, color: '#f5f0e8', background: '#222222', outline: 'none', width: 84 };
 
 /* Starting points by vehicle size — roughly 10% of tank capacity for a drop, a little less for a
    refuel, which is large and unambiguous. Fuel slosh on a hill easily swings a half-full tank by
@@ -46,7 +46,7 @@ function ThresholdRow({ label, sublabel, values, effective, onSave, saving, canW
             {/* Where the value comes from when this level sets none — otherwise an empty box reads
                 as "no threshold" when a group or the server is quietly providing one. */}
             {effective && (form[key] === '' || form[key] == null) && effective[key]?.source && (
-                <div style={{ fontSize: 10.5, color: '#5e7094', marginTop: 2 }}>from {effective[key].source}</div>
+                <div style={{ fontSize: 10.5, color: '#5a4e42', marginTop: 2 }}>from {effective[key].source}</div>
             )}
         </td>
     );
@@ -58,8 +58,8 @@ function ThresholdRow({ label, sublabel, values, effective, onSave, saving, canW
             {/* Fixed width and no wrapping: this column holds an explanatory sublabel, and left to
                 itself it collapses to one word per line as soon as the table is in a narrow panel. */}
             <td style={{ ...TD, minWidth: 230, maxWidth: 300 }}>
-                <div style={{ fontWeight: 700, color: '#eaeff9' }}>{label}</div>
-                {sublabel && <div style={{ fontSize: 11, color: '#5e7094', lineHeight: 1.45 }}>{sublabel}</div>}
+                <div style={{ fontWeight: 700, color: '#f5f0e8' }}>{label}</div>
+                {sublabel && <div style={{ fontSize: 11, color: '#5a4e42', lineHeight: 1.45 }}>{sublabel}</div>}
             </td>
             {cell('fuelDropThreshold')}
             {cell('fuelIncreaseThreshold')}
@@ -69,8 +69,8 @@ function ThresholdRow({ label, sublabel, values, effective, onSave, saving, canW
                     title={canWrite ? undefined : 'Only a platform administrator can set this level'}
                     style={{
                         padding: '5px 12px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700,
-                        background: enabled ? '#3b82f6' : '#16233c',
-                        color: enabled ? '#fff' : '#5e7094',
+                        background: enabled ? '#d97706' : '#222222',
+                        color: enabled ? '#fff' : '#5a4e42',
                         cursor: enabled ? 'pointer' : 'not-allowed',
                     }}>
                     {saving ? 'Saving…' : 'Save'}
@@ -116,12 +116,12 @@ export default function FuelThresholdsPage() {
         } finally { setSaving(''); }
     };
 
-    if (loading) return <p style={{ padding: 40, textAlign: 'center', color: '#5e7094', fontSize: 13 }}>Loading fuel settings…</p>;
+    if (loading) return <p style={{ padding: 40, textAlign: 'center', color: '#5a4e42', fontSize: 13 }}>Loading fuel settings…</p>;
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#111c33' }}>
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #1e2c46', flexShrink: 0 }}>
-                <p style={{ margin: 0, fontSize: 12.5, color: '#9daec9', lineHeight: 1.6, maxWidth: 900 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#1a1a1a' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #2c2c2c', flexShrink: 0 }}>
+                <p style={{ margin: 0, fontSize: 12.5, color: '#9a8a75', lineHeight: 1.6, maxWidth: 900 }}>
                     Thresholds are in <b>litres</b>, and Traccar compares two consecutive positions —
                     a drop fires when the change between them reaches the threshold. It resolves
                     device → group → server, first value found wins, so leaving a level blank inherits from the one above.
@@ -182,7 +182,7 @@ export default function FuelThresholdsPage() {
                     </table>
                 </div>
 
-                <h3 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#eaeff9' }}>Suggested starting points</h3>
+                <h3 style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#f5f0e8' }}>Suggested starting points</h3>
                 <table style={{ borderCollapse: 'collapse', marginBottom: 10 }}>
                     <thead><tr>{['Vehicle', 'Tank', 'Drop', 'Increase'].map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
@@ -191,7 +191,7 @@ export default function FuelThresholdsPage() {
                         ))}
                     </tbody>
                 </table>
-                <p style={{ margin: 0, fontSize: 12, color: '#5e7094', maxWidth: 820, lineHeight: 1.6 }}>
+                <p style={{ margin: 0, fontSize: 12, color: '#5a4e42', maxWidth: 820, lineHeight: 1.6 }}>
                     About 10% of capacity for a drop, a little less for an increase. Set these at group level and override
                     a device only where its sensor is noisy. Note that these catch fast, obvious siphoning only — a slow
                     draw never differs enough between two consecutive positions to trip any threshold, which is what

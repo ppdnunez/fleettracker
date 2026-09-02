@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\ModuleAccess;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AlertRecipientController;
 use App\Http\Controllers\AuthController;
@@ -26,8 +27,12 @@ use App\Http\Controllers\VehicleSettingController;
 Route::post('/login',  [AuthController::class, 'login']);
 
 // Protected
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+// The bare `module` middleware carries no module name, so it enforces only the other half of
+// ModuleAccess: a read-only role may not write. Applied to the whole surface rather than route
+// by route so a route added later cannot grant a viewer write access by forgetting to think
+// about it. Signing out is exempt — it is a POST, and refusing it would trap a viewer in the app.
+Route::middleware(['auth:sanctum', 'module'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->withoutMiddleware('module');
     Route::get('/user',    [AuthController::class, 'me']);
 
     // Tenancy administration. A company is one Traccar group + one Traccar user + however many
@@ -58,15 +63,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // Who gets emailed for each alert category. `channels` reports whether either half of the
     // pipeline can actually deliver, and is declared before the resource so "channels" is not
     // swallowed as an {alert_recipient} id.
-    Route::get('/alert-recipients/channels', [AlertRecipientController::class, 'channels']);
-    Route::apiResource('alert-recipients', AlertRecipientController::class)->except(['show']);
+    Route::middleware('module:' . ModuleAccess::ALERT_RECIPIENTS)->group(function () {
+        Route::get('/alert-recipients/channels', [AlertRecipientController::class, 'channels']);
+        Route::apiResource('alert-recipients', AlertRecipientController::class)->except(['show']);
+    });
 
     // Work-zone rules. Local rather than Traccar-side because each device link carries an
     // alert direction that Traccar's geofence permissions cannot express.
-    Route::apiResource('geofences', GeofenceController::class)->except(['show']);
-    Route::post('/geofences/{geofence}/devices',          [GeofenceController::class, 'linkDevice']);
-    Route::put('/geofences/{geofence}/devices/{imei}',    [GeofenceController::class, 'updateDeviceDirection']);
-    Route::delete('/geofences/{geofence}/devices/{imei}', [GeofenceController::class, 'unlinkDevice']);
+    // Reading is open: MapCanvas draws these zones as an overlay on every map in the app,
+    // including the ones a read-only login can reach. Only changing them belongs to the module.
+    Route::get('/geofences', [GeofenceController::class, 'index']);
+    Route::middleware('module:' . ModuleAccess::GEOFENCE)->group(function () {
+        Route::post('/geofences',               [GeofenceController::class, 'store']);
+        Route::put('/geofences/{geofence}',     [GeofenceController::class, 'update']);
+        Route::delete('/geofences/{geofence}',  [GeofenceController::class, 'destroy']);
+        Route::post('/geofences/{geofence}/devices',          [GeofenceController::class, 'linkDevice']);
+        Route::put('/geofences/{geofence}/devices/{imei}',    [GeofenceController::class, 'updateDeviceDirection']);
+        Route::delete('/geofences/{geofence}/devices/{imei}', [GeofenceController::class, 'unlinkDevice']);
+    });
 
     // Per-vehicle configuration and driver assignment, both keyed by the vehicle's IMEI.
     Route::get('/vehicle-settings',          [VehicleSettingController::class, 'index']);
@@ -94,12 +108,15 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Everything in public/img/uploads — face templates plus the stills and clips devices push back.
-    Route::get('/media', [MediaLibraryController::class, 'index']);
+    Route::middleware('module:' . ModuleAccess::MEDIA_GALLERY)->group(function () {
+        Route::get('/media',    [MediaLibraryController::class, 'index']);
+        Route::delete('/media', [MediaLibraryController::class, 'destroy']);
+    });
 
     // The Command module. Local rather than a straight proxy to Traccar because Traccar keeps no
     // record of a command once it has accepted it, and the device's reply arrives later on an
     // unrelated path — correlating the two is what these rows are for. See the controller.
-    Route::prefix('device-commands')->group(function () {
+    Route::prefix('device-commands')->middleware('module:' . ModuleAccess::COMMAND . ',' . ModuleAccess::REPORTS)->group(function () {
         Route::get('/',  [DeviceCommandController::class, 'index']);
         Route::post('/', [DeviceCommandController::class, 'send']);
         // Polled by the page until the row settles: has the device answered this one yet?
@@ -119,7 +136,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Not platform-admin-only: a company's own administrator may set thresholds for its own
         // group and devices, which is the level the guidance actually recommends. Only the
         // server-wide default is reserved. The check is per-scope, inside updateSettings().
-        Route::put('/settings',   [FuelController::class, 'updateSettings']);
+        Route::put('/settings',   [FuelController::class, 'updateSettings'])
+            ->middleware('module:' . ModuleAccess::FUEL_THRESHOLDS);
     });
 
     // Temperature / humidity and tyre (TPMS) readings. Traccar has no sensor endpoint — these are
@@ -140,8 +158,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('traccar')->group(function () {
         Route::get('/devices',   [TraccarController::class, 'devices']);
-        Route::post('/devices',  [TraccarController::class, 'storeDevice']);
-        Route::put('/devices/{id}', [TraccarController::class, 'updateDevice']);
+        Route::post('/devices',  [TraccarController::class, 'storeDevice'])->middleware('module:' . ModuleAccess::DEVICE_MANAGEMENT);
+        Route::put('/devices/{id}', [TraccarController::class, 'updateDevice'])->middleware('module:' . ModuleAccess::DEVICE_MANAGEMENT);
         Route::get('/groups',    [TraccarController::class, 'groups']);
         Route::post('/groups',   [TraccarController::class, 'storeGroup']);
         Route::put('/groups/{id}',    [TraccarController::class, 'updateGroup']);
@@ -156,7 +174,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Raw device text commands over Traccar's SMS channel — the iButton and driving-behaviour
         // panels in Device Management. Declared before /devices/{id} so "sms-command" is not
         // swallowed as a device id.
-        Route::post('/devices/sms-command', [TraccarController::class, 'sendTextCommand']);
+        Route::post('/devices/sms-command', [TraccarController::class, 'sendTextCommand'])
+            ->middleware('module:' . ModuleAccess::DEVICE_MANAGEMENT);
 
         Route::get('/positions', [TraccarController::class, 'latestPositions']);
         // A single historical fix by position id — where an event was raised. The SOS card reads

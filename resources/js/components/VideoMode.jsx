@@ -16,9 +16,9 @@ function GridIcon({ cols, rows, active, onClick }) {
     const cells = [];
     for (let r = 0; r < rows; r++)
         for (let c = 0; c < cols; c++)
-            cells.push(<rect key={`${r}-${c}`} x={c * (cw + gap)} y={r * (ch + gap)} width={cw} height={ch} fill={active ? '#3b82f6' : '#94a3b8'} rx={0.5} />);
+            cells.push(<rect key={`${r}-${c}`} x={c * (cw + gap)} y={r * (ch + gap)} width={cw} height={ch} fill={active ? '#d97706' : '#9a8a75'} rx={0.5} />);
     return (
-        <button onClick={onClick} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', border: active ? '1.5px solid #3b82f6' : '1.5px solid #1e2c46', borderRadius: 6, background: active ? '#152a4a' : '#111c33', cursor: 'pointer', padding: 0 }}>
+        <button onClick={onClick} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', border: active ? '1.5px solid #d97706' : '1.5px solid #2c2c2c', borderRadius: 6, background: active ? '#372817' : '#1a1a1a', cursor: 'pointer', padding: 0 }}>
             <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`}>{cells}</svg>
         </button>
     );
@@ -87,7 +87,7 @@ const CornerSVG = () => (
 
 const iconBtn = (active) => ({
     background: 'none', border: 'none', cursor: 'pointer',
-    color: active ? '#3b82f6' : '#5e7094',
+    color: active ? '#d97706' : '#5a4e42',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: 4, borderRadius: 4, transition: 'color 0.15s',
 });
@@ -99,9 +99,9 @@ function VideoPanel({ index, onExpand }) {
     const [editing,   setEditing]   = useState(false);
 
     return (
-        <div style={{ position: 'relative', background: 'linear-gradient(135deg,#24507f 0%,#1c3a63 45%,#152a4a 100%)', display: 'flex', flexDirection: 'column', border: '1px solid #1e2c46', overflow: 'hidden', minHeight: 0 }}>
+        <div style={{ position: 'relative', background: 'linear-gradient(135deg,#78440a 0%,#4a3410 45%,#372817 100%)', display: 'flex', flexDirection: 'column', border: '1px solid #2c2c2c', overflow: 'hidden', minHeight: 0 }}>
             {/* Top-right corner icon */}
-            <button onClick={onExpand} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.9)', borderRadius: 4, padding: 3, cursor: 'pointer', color: '#9daec9', display: 'flex', lineHeight: 0 }}>
+            <button onClick={onExpand} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.9)', borderRadius: 4, padding: 3, cursor: 'pointer', color: '#9a8a75', display: 'flex', lineHeight: 0 }}>
                 <CornerSVG />
             </button>
 
@@ -111,7 +111,7 @@ function VideoPanel({ index, onExpand }) {
             </div>
 
             {/* Toolbar */}
-            <div style={{ display: 'flex', alignItems: 'center', padding: '5px 8px', background: '#111c33', borderTop: '1px solid #1e2c46', gap: 2, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '5px 8px', background: '#1a1a1a', borderTop: '1px solid #2c2c2c', gap: 2, flexShrink: 0 }}>
                 <button onClick={() => setPlaying(p => !p)} style={iconBtn(playing)}><PlaySVG /></button>
                 <button style={iconBtn(false)}><RecordSVG /></button>
                 <button onClick={() => setMuted(m => !m)} style={iconBtn(muted)}><MuteSVG on={muted} /></button>
@@ -121,9 +121,9 @@ function VideoPanel({ index, onExpand }) {
                     {editing ? (
                         <input autoFocus value={chName} onChange={e => setChName(e.target.value)}
                             onBlur={() => setEditing(false)} onKeyDown={e => e.key === 'Enter' && setEditing(false)}
-                            style={{ width: 52, fontSize: 11, fontWeight: 700, color: '#3b82f6', border: 'none', borderBottom: '1px solid #3b82f6', outline: 'none', textAlign: 'center', background: 'transparent' }} />
+                            style={{ width: 52, fontSize: 11, fontWeight: 700, color: '#d97706', border: 'none', borderBottom: '1px solid #d97706', outline: 'none', textAlign: 'center', background: 'transparent' }} />
                     ) : (
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#3b82f6', whiteSpace: 'nowrap' }}>{chName}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706', whiteSpace: 'nowrap' }}>{chName}</span>
                     )}
                     <button onClick={() => setEditing(true)} style={{ ...iconBtn(false), padding: 2 }}><EditSVG /></button>
                 </div>
@@ -141,9 +141,9 @@ export default function VideoMode({ selectedDevice }) {
     const count = cols * rows;
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#16233c' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#222222' }}>
             {/* Grid selector bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px 16px', borderBottom: '1px solid #1e2c46', background: '#111c33', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px 16px', borderBottom: '1px solid #2c2c2c', background: '#1a1a1a', flexShrink: 0 }}>
                 {GRID_LAYOUTS.map((g, i) => (
                     <GridIcon key={i} cols={g.cols} rows={g.rows} active={i === gridIdx} onClick={() => { setGridIdx(i); setExpanded(null); }} />
                 ))}

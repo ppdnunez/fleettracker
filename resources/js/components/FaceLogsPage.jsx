@@ -15,10 +15,10 @@ import { api } from '../api.js';
  * debugging the app and debugging the web server.
  */
 
-const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#cfdcf0', borderBottom: '2px solid #1e2c46', whiteSpace: 'nowrap', background: '#16233c' };
-const TD = { padding: '9px 12px', fontSize: 12.5, borderBottom: '1px solid #1e2c46', color: '#cfdcf0', verticalAlign: 'top' };
-const input  = { padding: '7px 10px', border: '1px solid #24344f', borderRadius: 6, fontSize: 13, color: '#cfdcf0', background: '#111c33', outline: 'none' };
-const button = { padding: '7px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
+const TH = { padding: '9px 12px', textAlign: 'left', fontWeight: 600, fontSize: 12.5, color: '#d5c9b8', borderBottom: '2px solid #2c2c2c', whiteSpace: 'nowrap', background: '#222222' };
+const TD = { padding: '9px 12px', fontSize: 12.5, borderBottom: '1px solid #2c2c2c', color: '#d5c9b8', verticalAlign: 'top' };
+const input  = { padding: '7px 10px', border: '1px solid #383838', borderRadius: 6, fontSize: 13, color: '#d5c9b8', background: '#1a1a1a', outline: 'none' };
+const button = { padding: '7px 16px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' };
 
 const TABS = ['Upload Log', 'Face Import Log', 'Raw Log'];
 
@@ -75,7 +75,7 @@ function UploadLog() {
                     <thead><tr>{['Received', 'Device', 'Driver', 'File', 'Size', 'Signature', 'Response', 'From'].map(c => <th key={c} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {rows.length === 0 ? (
-                            <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', padding: 34, color: '#5e7094' }}>
+                            <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', padding: 34, color: '#5a4e42' }}>
                                 Nothing received yet. Devices post here after <code style={{ fontFamily: 'monospace' }}>UPLOADFACE,URL</code> is set and a photo is captured.
                             </td></tr>
                         ) : rows.map(r => (
@@ -85,15 +85,15 @@ function UploadLog() {
                                 <td style={TD}>{r.driverName ? `${r.driverName}${r.badgeNo ? ` (${r.badgeNo})` : ''}` : '—'}</td>
                                 <td style={TD}>
                                     {r.fileUrl
-                                        ? <a href={r.fileUrl} target="_blank" rel="noreferrer" style={{ color: '#7fc4ff', fontFamily: 'monospace', fontSize: 11.5 }}>{r.fileName}</a>
+                                        ? <a href={r.fileUrl} target="_blank" rel="noreferrer" style={{ color: '#f59e0b', fontFamily: 'monospace', fontSize: 11.5 }}>{r.fileName}</a>
                                         : <span style={{ fontFamily: 'monospace', fontSize: 11.5 }}>{r.fileName ?? '—'}</span>}
                                 </td>
                                 <td style={TD}>{fmtBytes(r.fileSize)}</td>
-                                <td style={{ ...TD, color: r.signatureValid === false ? '#fca5a5' : r.signatureValid ? '#4ade80' : '#5e7094' }}>
+                                <td style={{ ...TD, color: r.signatureValid === false ? '#fca5a5' : r.signatureValid ? '#4ade80' : '#5a4e42' }}>
                                     {r.signatureValid === null ? '—' : r.signatureValid ? 'valid' : 'invalid'}
                                 </td>
                                 <td style={TD}><CodePill code={r.responseCode} /> <span style={{ marginLeft: 6 }}>{r.responseMessage}</span></td>
-                                <td style={{ ...TD, fontFamily: 'monospace', fontSize: 11.5, color: '#5e7094' }}>{r.ip ?? '—'}</td>
+                                <td style={{ ...TD, fontFamily: 'monospace', fontSize: 11.5, color: '#5a4e42' }}>{r.ip ?? '—'}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -127,7 +127,7 @@ function ImportLog() {
                     <thead><tr>{['Received', 'Endpoint', 'Device', 'Instruction', 'File', 'Signature', 'Response', ''].map((c, i) => <th key={i} style={TH}>{c}</th>)}</tr></thead>
                     <tbody>
                         {rows.length === 0 ? (
-                            <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', padding: 34, color: '#5e7094' }}>
+                            <tr><td colSpan={8} style={{ ...TD, textAlign: 'center', padding: 34, color: '#5a4e42' }}>
                                 No face-library callbacks received yet. These arrive after a FACE,DOWN batch is imported by the device.
                             </td></tr>
                         ) : rows.map(r => (
@@ -137,14 +137,14 @@ function ImportLog() {
                                 <td style={{ ...TD, fontFamily: 'monospace', fontSize: 11.5 }}>{r.imei ?? '—'}</td>
                                 <td style={{ ...TD, fontFamily: 'monospace', fontSize: 11.5 }}>{r.instruction_id ?? '—'}</td>
                                 <td style={TD}>{r.original_file_name ?? '—'}</td>
-                                <td style={{ ...TD, color: r.signature_valid === false ? '#fca5a5' : r.signature_valid ? '#4ade80' : '#5e7094' }}>
+                                <td style={{ ...TD, color: r.signature_valid === false ? '#fca5a5' : r.signature_valid ? '#4ade80' : '#5a4e42' }}>
                                     {r.signature_valid === null ? '—' : r.signature_valid ? 'valid' : 'invalid'}
                                 </td>
                                 <td style={TD}><CodePill code={r.response_code} /> <span style={{ marginLeft: 6 }}>{r.response_message}</span></td>
                                 <td style={{ ...TD, textAlign: 'right' }}>
                                     {r.file_content && (
                                         <button onClick={() => setOpen(open === r.id ? null : r.id)}
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7fc4ff', fontSize: 12, fontWeight: 600, padding: 0 }}>
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f59e0b', fontSize: 12, fontWeight: 600, padding: 0 }}>
                                             {open === r.id ? 'Hide' : 'Contents'}
                                         </button>
                                     )}
@@ -160,8 +160,8 @@ function ImportLog() {
                 import aborted". Worth reading verbatim rather than summarising. */}
             {open && (
                 <pre style={{
-                    marginTop: 12, padding: 14, background: '#0c1322', border: '1px solid #1e2c46', borderRadius: 8,
-                    fontSize: 12, color: '#cfdcf0', whiteSpace: 'pre-wrap', maxHeight: 320, overflowY: 'auto',
+                    marginTop: 12, padding: 14, background: '#141414', border: '1px solid #2c2c2c', borderRadius: 8,
+                    fontSize: 12, color: '#d5c9b8', whiteSpace: 'pre-wrap', maxHeight: 320, overflowY: 'auto',
                 }}>
                     {rows.find(r => r.id === open)?.file_content}
                 </pre>
@@ -186,7 +186,7 @@ function RawLog() {
         <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <button onClick={load} style={button}>{loading ? 'Reading…' : 'Refresh'}</button>
-                <span style={{ fontSize: 12, color: '#5e7094' }}>
+                <span style={{ fontSize: 12, color: '#5a4e42' }}>
                     Tail of <code style={{ fontFamily: 'monospace' }}>{data?.file ?? 'storage/logs/laravel.log'}</code>, newest first —
                     every request these endpoints received, logged before any validation ran.
                 </span>
@@ -202,8 +202,8 @@ function RawLog() {
 
             {data && data.lines.length > 0 && (
                 <pre style={{
-                    padding: 14, background: '#0c1322', border: '1px solid #1e2c46', borderRadius: 8,
-                    fontSize: 11.5, color: '#cfdcf0', whiteSpace: 'pre-wrap', maxHeight: 560, overflowY: 'auto', lineHeight: 1.6,
+                    padding: 14, background: '#141414', border: '1px solid #2c2c2c', borderRadius: 8,
+                    fontSize: 11.5, color: '#d5c9b8', whiteSpace: 'pre-wrap', maxHeight: 560, overflowY: 'auto', lineHeight: 1.6,
                 }}>
                     {data.lines.join('\n')}
                 </pre>
@@ -216,17 +216,17 @@ export default function FaceLogsPage() {
     const [tab, setTab] = useState(TABS[0]);
 
     return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#111c33' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#1a1a1a' }}>
             <div style={{ padding: '4px 20px 0', flexShrink: 0 }}>
-                <div role="tablist" style={{ display: 'flex', gap: 4, borderBottom: '1px solid #1e2c46', overflowX: 'auto' }}>
+                <div role="tablist" style={{ display: 'flex', gap: 4, borderBottom: '1px solid #2c2c2c', overflowX: 'auto' }}>
                     {TABS.map(t => {
                         const active = t === tab;
                         return (
                             <button key={t} role="tab" aria-selected={active} onClick={() => setTab(t)} style={{
                                 padding: '9px 14px', border: 'none', background: 'none', cursor: 'pointer',
                                 whiteSpace: 'nowrap', fontSize: 13.5, fontWeight: active ? 700 : 500,
-                                color: active ? '#4da8ff' : '#9daec9',
-                                borderBottom: `2px solid ${active ? '#4da8ff' : 'transparent'}`, marginBottom: -1,
+                                color: active ? '#f59e0b' : '#9a8a75',
+                                borderBottom: `2px solid ${active ? '#f59e0b' : 'transparent'}`, marginBottom: -1,
                             }}>{t}</button>
                         );
                     })}
