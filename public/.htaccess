@@ -1,3 +1,20 @@
+# Stop Apache adding a trailing slash to a directory URL.
+#
+# public/img/uploads is a real directory and the device posts to exactly that path. mod_dir
+# answers such a request with a 301 to the slashed form, and it does so before the rewrite
+# below is consulted — proven on production 2026-09-02, where POST /img/uploads/ reached
+# Laravel and returned its JSON while POST /img/uploads (no slash) still answered 301. The
+# rewrite was firing correctly the whole time; it simply never got the request.
+#
+# A device following that 301 re-issues as GET and drops the body, so the upload is lost with
+# a redirect in the access log and nothing at all in Laravel's.
+#
+# Safe here because Options -Indexes is set in the block below: the usual hazard of this
+# directive is that a directory URL without its slash can serve a listing, and listings are off.
+<IfModule mod_dir.c>
+    DirectorySlash Off
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
