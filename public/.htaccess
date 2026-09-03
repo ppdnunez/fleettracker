@@ -63,7 +63,12 @@
     # lives above the document root and runs first.
     RewriteCond %{HTTPS} !=on
     RewriteCond %{HTTP:X-Forwarded-Proto} !=https
-    RewriteCond %{REQUEST_URI} !^/img/uploads
+    # THE_REQUEST, not REQUEST_URI. The rule above rewrites /img/uploads to index.php and its
+    # [L] restarts the whole ruleset; on that second pass REQUEST_URI reads /index.php, the
+    # exemption stops matching and this rule fires on the very request it was written to spare.
+    # THE_REQUEST holds the original request line — "POST /img/uploads HTTP/1.1" — and no
+    # rewrite touches it, so the exemption survives however many passes the engine makes.
+    RewriteCond %{THE_REQUEST} !\s/+img/uploads
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Redirect Trailing Slashes If Not A Folder...
