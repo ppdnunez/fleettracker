@@ -46,6 +46,26 @@
     RewriteCond %{REQUEST_METHOD} =POST
     RewriteRule ^img/uploads/?$ index.php [L]
 
+    # Force HTTPS for browsers, but not for the dashcam.
+    #
+    # The JC171 uploader posts over plain HTTP whatever scheme UPLOADFACE,URL is set to —
+    # confirmed 2026-09-03, where every device request landed in the non-SSL access log after
+    # the device had been reconfigured to https. Redirecting those POSTs loses them: the device
+    # does not resend the body, so Apache waits out its read timeout and answers 408, which is
+    # exactly the 307/408 pairs in that log.
+    #
+    # The upload endpoint therefore stays reachable over plain HTTP and everything else is
+    # redirected. The trade-off is deliberate and worth stating: device media then crosses the
+    # network unencrypted. It already does — the hardware speaks HTTP whatever we configure —
+    # so the real choice is between receiving the evidence and not receiving it.
+    #
+    # This only takes effect once cPanel's own Force HTTPS Redirect is turned off; that one
+    # lives above the document root and runs first.
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{REQUEST_URI} !^/img/uploads
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
